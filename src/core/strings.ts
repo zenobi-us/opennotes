@@ -31,3 +31,14 @@ export function renderTemplateString(
     return value !== undefined ? String(value) : '';
   });
 }
+
+export function objectToFrontmatter(obj: Record<string, any>): string {
+  const entries = Object.entries(obj).map(([key, value]) => {
+    if (Array.isArray(value)) {
+      return `${key}:\n${value.map((item) => `  - ${item}`).join('\n')}`;
+    } else {
+      return `${key}: ${value}`;
+    }
+  });
+  return entries.join('\n');
+}

@@ -5,8 +5,9 @@ import type { DbService } from './Db.ts';
 import { VARCHAR } from '@duckdb/node-api';
 import { Logger } from './LoggerService.ts';
 import { promises as fs } from 'fs';
-import { join, dirname } from 'node:path';
-import { slugify, dedent } from '../core/strings.ts';
+import { join, dirname, relative } from 'node:path';
+import { slugify } from '../core/strings.ts';
+import { stringify } from 'gray-matter';
 
 const NoteSchema = type({
   metadata: type({ '[string]': 'string | number | boolean' }),
@@ -28,7 +29,7 @@ export function createNoteService(options: {
   notebook: Notebook | null;
   config: Config;
 }) {
-  async function query<T>(query: string) {
+  async function query(query: string) {
     const database = await options.dbService.getDb();
 
     const result = await database.run(query);
@@ -104,17 +105,16 @@ export function createNoteService(options: {
   /**
    * Create a new notebook template
    */
-  async function createNotebookTemplate(args: {
+  async function createTemplate(args: {
     name: string;
     template: { frontmatter: NotebookMetadata; content: string };
-    notebookPath: string;
   }): Promise<void> {
     if (!options.notebook) {
       throw new Error('No notebook selected');
     }
 
     const slug = slugify(args.name);
-    const templatePath = join(args.notebookPath, 'templates', `${slug}.md`);
+    const templatePath = join(options.notebook.path, 'templates', `${slug}.md`);
 
     try {
       await fs.mkdir(dirname(templatePath), { recursive: true });
@@ -128,17 +128,7 @@ export function createNoteService(options: {
       // Write template file
       await fs.writeFile(
         templatePath,
-        dedent(
-          `
-      ---
-      ${Object.entries(args.template.frontmatter)
-            .map(([key, value]) => `${key}: ${value}`)
-            .join('\n')}
-      ---
-      
-      ${args.template.content}
-      `
-        ),
+        stringify(args.template.content || '', args.template.frontmatter),
         'utf-8'
       );
     } catch (error) {
@@ -146,6 +136,12 @@ export function createNoteService(options: {
       Log.error(`[ERROR] Error writing template file: ${errorMsg}`);
       throw error;
     }
+
+    // add the template to the notebook config.
+    options.notebook.config.templates = {
+      ...(options.notebook.config.templates || {}),
+      [args.name]: relative(templatePath, options.notebook.path),
+    };
 
     Log.info(`Created template '${args.name}' at '${templatePath}'`);
   }

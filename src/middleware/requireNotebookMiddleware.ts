@@ -1,16 +1,17 @@
-import { dedent } from "../core/strings";
-import { RenderMarkdownTui } from "../services/Display";
-import type { NotebookService } from "../services/NotebookService";
+import { dedent } from '../core/strings';
+import { RenderMarkdownTui } from '../services/Display';
+import type { NotebookService } from '../services/NotebookService';
 
 export async function requireNotebookMiddleware(args: {
-  path?: string,
-  notebookService?: NotebookService
+  path?: string;
+  notebookService?: NotebookService;
 }) {
-
-  const notebook = args?.path || await args.notebookService?.discoverNotebookPath();
+  const notebook = args?.path || (await args.notebookService?.infer());
 
   if (!notebook) {
-    console.error(await RenderMarkdownTui(dedent(`
+    console.error(
+      await RenderMarkdownTui(
+        dedent(`
 
         # No Notebook Yet
         
@@ -21,10 +22,11 @@ export async function requireNotebookMiddleware(args: {
         \`\`\`bash
         wiki notebook create [path]
         \`\`\`
-    `)))
+    `)
+      )
+    );
     return null;
   }
-
 
   return notebook;
 }
