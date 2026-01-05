@@ -2,10 +2,14 @@
 
 ## Build & Test Commands
 
-- **Build**: `mise run build` or `bun build ./src/index.ts --outdir dist --target bun`
-- **Test**: `mise run test` or `bun test`
-- **Single Test**: `bun test BackgroundTask.test.ts` (use file glob pattern)
-- **Watch Mode**: `bun test --watch`
+Always run commands from the project root using `mise run <command>`.
+
+If you think you need to use `bun <command>`, stop and get help first.
+
+- **Build**: `mise run build` 
+- **Test**: `mise run test`
+- **Single Test**: `mise run test BackgroundTask.test.ts` (use file glob pattern)
+- **Watch Mode**: `mise run test --watch`
 - **Lint**: `mise run lint` (eslint)
 - **Fix Lint**: `mise run lint:fix` (eslint --fix)
 - **Format**: `mise run format` (prettier)
@@ -54,12 +58,41 @@
 - Style: Descriptive nested test cases with clear expectations
 - Assertion library: `expect()` (vitest)
 
-## Memory
-
-- Store temporary data in `.memory/` directory (gitignored)
-
 ## Project Context
 
 - **Type**: ES Module package for OpenCode plugin system
 - **Target**: Bun runtime, ES2021+
 - **Purpose**: Background task execution and lifecycle management
+
+## Architecture
+
+opennotes is currently a cli tool for managing notes.
+
+### Data Flow
+
+1. Cli instance initialises
+2. Commands are registered
+3. User invokes a command via CLI
+4. Root interceptor initialises context.store with the following services:
+  - ConfigService
+  - DbService
+  - NotebookService
+  - NotesService
+5. Command handler routes to the appropriate command handler.
+
+### Components
+
+#### ConfigService
+
+Manages application configuration settings, including loading, saving, and validating config data.
+
+Only user global config settings here. Per-notebook settings go in NotebookService.
+
+#### DbService
+
+We use this when we have a notebook opened. It gives us SQL query layer on top of a filesystem of markdown files.
+
+#### NotebookService
+
+Abstracts all the notebook-level operations, including 
+

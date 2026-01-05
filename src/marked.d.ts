@@ -1,4 +1,3 @@
-
 module 'marked-terminal' {
   import type { Renderer } from 'marked';
 
@@ -14,5 +13,3 @@ module 'marked-terminal' {
     constructor(options?: TerminalRendererOptions);
   }
 }
-
-

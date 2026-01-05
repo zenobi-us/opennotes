@@ -1,3 +1,12 @@
 #!/usr/bin/env bash
 #MISE description="Run tests"
-bun test
+#USAGE arg "[files]" var=#true help="Optional specific test files to run"
+#USAGE flag "-w --watch" help="Run tests in watch mode"
+
+args=()
+
+if [ "$usage_watch" = "true" ]; then
+	args+=("--watch")
+fi
+
+bun test "${args[@]}" "$usage_files"
