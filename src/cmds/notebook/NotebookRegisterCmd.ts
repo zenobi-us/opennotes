@@ -9,6 +9,13 @@ export const NotebookRegisterCommand = defineCommand(
     description: 'Register an existing notebook folder globally',
     alias: ['nb register'],
     parameters: ['<path>'],
+    flags: {
+      addContext: {
+        type: Boolean,
+        description: 'Add the current directory as a context path to the notebook',
+        short: 'c',
+      },
+    },
   },
   async (ctx) => {
     const notebookPath = ctx.parameters.path;
@@ -23,6 +30,11 @@ export const NotebookRegisterCommand = defineCommand(
     }
 
     await notebook.saveConfig({ register: true });
+
+    if (ctx.flags.addContext) {
+      await notebook.addContext(process.cwd());
+      Log.info('Added current directory as context: %s', process.cwd());
+    }
 
     Log.info('Registered notebook: %o', { notebook });
   }
