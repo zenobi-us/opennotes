@@ -1,12 +1,13 @@
 import { NotebookConfigFile, type ConfigService } from './ConfigService';
 import { promises as fs } from 'fs';
-import { dirname, join, resolve } from 'path';
+import { dirname, join, relative, resolve } from 'path';
 import { type } from 'arktype';
 import { dedent } from '../core/strings';
 import { Logger } from './LoggerService';
 import { TuiRender } from './Display';
 import { createNoteService, type NoteService } from './NoteService';
 import type { DbService } from './Db';
+import { prettifyArktypeErrors } from '../core/schema';
 
 const Log = Logger.child({ namespace: 'NotebookService' });
 
@@ -31,11 +32,11 @@ const NotebookGroupSchema = type({
 
 export type NotebookGroup = typeof NotebookGroupSchema.infer;
 
-const NotebookConfigSchema = type({
+const StoredNotebookConfigSchema = type({
   /**
    * The root of where notes are stored for this notebook
    **/
-  path: 'string',
+  root: 'string',
   /**
    * The display name of the notebook
    **/
@@ -58,6 +59,13 @@ const NotebookConfigSchema = type({
    **/
   groups: NotebookGroupSchema.array().optional(),
 });
+
+const NotebookConfigSchema = type({
+  /**
+   * The path to the notebook config file
+   **/
+  path: 'string',
+}).merge(StoredNotebookConfigSchema);
 
 type NotebookConfig = typeof NotebookConfigSchema.infer;
 
@@ -132,7 +140,8 @@ export const TuiTemplates = {
      Your new notebook has been successfully created!
 
      - **Name**: {{notebook.config.name}}
-     - **Path**: {{notebook.config.path}}
+     - **Path**: {{notebook.config.root}}
+     - **Config Path**: {{notebook.config.path}}
 
      You can start adding notes to your notebook right away.
    `),
@@ -146,7 +155,8 @@ export const TuiTemplates = {
     The context path is already associated with this notebook.
 
     - **Context**: {{path}}
-    - **Notebook**: {{notebook.config.path}}
+    - **Notebook**: {{notebook.config.root}}
+    - **Config Path**: {{notebook.config.path}}
 
     No changes were made.
   `),
@@ -160,7 +170,8 @@ export const TuiTemplates = {
     The context path has been successfully added to your notebook.
 
     - **Context**: {{path}}
-    - **Notebook**: {{notebook.config.path}}
+    - **Notebook**: {{notebook.config.root}}
+    - **Config Path**: {{notebook.config.path}}
 
     This notebook will now be available when working in that directory.
   `),
@@ -187,7 +198,8 @@ export const TuiTemplates = {
     # Notebook Information
 
     - **Name**: {{notebook.config.name}}
-    - **Path**: {{notebook.config.path}}
+    - **Path**: {{notebook.config.root}}
+    - **Config Path**: {{notebook.config.path}}
     - **Notes**: {{ noteCount }}
 
     ## Contexts
@@ -296,20 +308,41 @@ export function createNotebookService(serviceOptions: {
 
       try {
         const content = await fs.readFile(configPath, 'utf-8');
+        Log.debug('Notebook.loadConfig: read config %s. %s', configPath, content);
         const parsed = JSON.parse(content);
-        const config = NotebookConfigSchema(parsed);
+        Log.debug('Notebook.loadConfig: parsed config %o', parsed);
+        const storedConfig = StoredNotebookConfigSchema(parsed);
 
-        if (config instanceof type.errors) {
-          Log.error('NotebookService.loadNotebookConfig: INVALID_CONFIG path=%s', configPath);
+        if (storedConfig instanceof type.errors) {
+          Log.error(
+            'NotebookService.loadNotebookConfig: INVALID_CONFIG path=%s. \n %s',
+            configPath,
+            prettifyArktypeErrors(storedConfig)
+          );
           return null;
         }
 
         // verify if the declared config.path exists
-        const notebookNotesPath = resolve(path, config.path);
+        const notebookNotesPath = resolve(path, storedConfig.root);
         if (!(await fs.exists(notebookNotesPath))) {
           Log.error(
             'NotebookService.loadNotebookConfig: NOTES_PATH_NOT_FOUND path=%s',
             notebookNotesPath
+          );
+          return null;
+        }
+
+        const config = NotebookConfigSchema({
+          ...storedConfig,
+          root: notebookNotesPath,
+          path: configPath,
+        });
+
+        if (config instanceof type.errors) {
+          Log.error(
+            'NotebookService.loadNotebookConfig: INVALID_CONFIG_AFTER_RESOLVE path=%s. \n %s',
+            configPath,
+            prettifyArktypeErrors(config)
           );
           return null;
         }
@@ -336,7 +369,7 @@ export function createNotebookService(serviceOptions: {
       }
       const noteService = createNoteService({
         configService: serviceOptions.configService,
-        notebookPath: resolve(path, config.path),
+        notebookPath: resolve(path, config.root),
         dbService: serviceOptions.dbService,
       });
 
@@ -350,7 +383,7 @@ export function createNotebookService(serviceOptions: {
          * Store notes relative to the notebook path in a .notes folder
          * This keeps notes organized and separate from other project files.
          */
-        path: join('.', '.notes'),
+        root: join('.', '.notes'),
         templates: {},
         groups: [
           {
@@ -361,7 +394,7 @@ export function createNotebookService(serviceOptions: {
         ],
         contexts: [args.path],
       };
-      Log.debug('Notebook.new: path=%s name=%s', config.path, config.name);
+      Log.debug('Notebook.new: path=%s name=%s', config.root, config.name);
 
       const noteService = createNoteService({
         configService: serviceOptions.configService,
@@ -400,9 +433,16 @@ export function createNotebookService(serviceOptions: {
         throw new Error(`Invalid notebook config: ${config.toString()}`);
       }
 
-      const configPath = dirname(config.path);
+      const { path, root, ...configToSave } = config;
+      const configPath = path;
+      const rootDir = relative(dirname(configPath), root);
+
       try {
-        const content = JSON.stringify(this.config, null, 2);
+        const content = JSON.stringify(
+          { ...configToSave, root: rootDir === '' ? '.' : rootDir },
+          null,
+          2
+        );
         await fs.mkdir(dirname(configPath), { recursive: true });
         await fs.writeFile(configPath, content, 'utf-8');
       } catch (error) {
@@ -417,7 +457,7 @@ export function createNotebookService(serviceOptions: {
 
       // Register the notebook globally if requested
       if (args?.register) {
-        const notebookPath = this.config.path;
+        const notebookPath = this.config.root;
         const notebooks = serviceOptions.configService.store.notebooks || [];
         if (!notebooks.includes(notebookPath)) {
           notebooks.push(notebookPath);
@@ -542,7 +582,7 @@ export function createNotebookService(serviceOptions: {
         continue;
       }
 
-      Log.debug('Notebook.infer: MATCHED_LISTED_NOTEBOOK %s', notebook.config.path);
+      Log.debug('Notebook.infer: MATCHED_LISTED_NOTEBOOK %s', notebook.config.root);
       return notebook;
     }
 
@@ -556,6 +596,7 @@ export function createNotebookService(serviceOptions: {
 
     // STEP 2: Check for notebook configs in config.notebooks
     for (const notebookPath of serviceOptions.configService.store.notebooks) {
+      Log.debug('list.CheckRegisteredNotebook: %s', notebookPath);
       const configFilePath = await Notebook.hasNotebook(notebookPath);
       if (!configFilePath) {
         continue;

@@ -1,11 +1,11 @@
 import { type } from 'arktype';
 import type { ConfigService } from './ConfigService.ts';
 import type { DbService } from './Db.ts';
-import { VARCHAR } from '@duckdb/node-api';
 import { Logger } from './LoggerService.ts';
 import { join } from 'node:path';
 import { TuiRender } from './Display.ts';
 import { dedent } from '../core/strings.ts';
+import { prettifyArktypeErrors } from '../core/schema.ts';
 
 const NoteDbSchema = type({
   file_path: 'string',
@@ -61,7 +61,7 @@ export function createNoteService(options: {
   async function query(query: string) {
     const database = await options.dbService.getDb();
 
-    const result = await database.run(query);
+    const result = await database.query(query);
 
     if (!result) {
       return [];
@@ -76,26 +76,25 @@ export function createNoteService(options: {
    * @returns The markdown content as a string, or null if not found
    */
   async function readNote(filepath: string) {
-    const db = await options.dbService.getDb();
-
-    try {
-      const prepared = await db.prepare(`SELECT content, metadata FROM read_markdown('$filepath')`);
-      prepared.bind({ filepath });
-      const result = await prepared.run();
-
-      const rows = await result.getRowObjectsJson();
-
-      if (rows?.length === 0) {
-        return null;
-      }
-      if (!rows[0]) {
-        return null;
-      }
-
-      return rows[0];
-    } catch {
-      return null;
-    }
+    Log.debug('readNote: filepath=%s', filepath);
+    // const db = await options.dbService.getDb();
+    //
+    // try {
+    //   const result = await db.query<{}>(`SELECT content, metadata FROM read_markdown('$filepath')`);
+    //
+    //   const rows = await result.getRowObjectsJson();
+    //
+    //   if (rows?.length === 0) {
+    //     return null;
+    //   }
+    //   if (!rows[0]) {
+    //     return null;
+    //   }
+    //
+    //   return rows[0];
+    // } catch {
+    //   return null;
+    // }
   }
 
   /**
@@ -115,18 +114,12 @@ export function createNoteService(options: {
     const prepared = await db.prepare(`
       SELECT * FROM read_markdown($filepath, include_filepath:=true)
     `);
-    prepared.bind(
-      {
-        filepath: join(options.notebookPath, '**', '*.md'),
-      },
-      {
-        filepath: VARCHAR,
-      }
-    );
 
-    const result = await prepared.run();
+    const results = await prepared.send({
+      filepath: join(options.notebookPath, '**', '*.md'),
+    });
 
-    const rows = await result.getRowObjectsJson();
+    const rows = await results.readAll();
 
     const parsedRows = NoteDbSchema.array()(rows);
     if (parsedRows instanceof type.errors) {
@@ -148,7 +141,7 @@ export function createNoteService(options: {
     );
 
     if (parsed instanceof type.errors) {
-      Log.error('searchNotes: failed to parse notes: %o', parsed);
+      Log.error('searchNotes: failed to parse notes: %s', prettifyArktypeErrors(parsed));
       return [];
     }
 
@@ -199,21 +192,15 @@ export function createNoteService(options: {
     const glob = join(notebookPath, '**', '*.md');
     const prepared = await db.prepare(`SELECT COUNT(*) as count FROM read_markdown($pattern)`);
     Log.debug('count: notebookPath=%s glob=%s', notebookPath, glob);
-    prepared.bind(
-      {
-        pattern: glob,
-      },
-      {
-        pattern: VARCHAR,
-      }
-    );
+    const result = await prepared.send({
+      pattern: glob,
+    });
 
-    const result = await prepared.run();
-    const rows = await result.getRowObjectsJson();
+    const rows = await result.readAll();
 
     const parsed = CountResultSchema(rows);
     if (parsed instanceof type.errors) {
-      Log.error('count: failed to parse count result: %o', parsed);
+      Log.error('count: failed to parse count result: %s', prettifyArktypeErrors(parsed));
       return 0;
     }
     Log.debug('count: rows=%o', rows);
