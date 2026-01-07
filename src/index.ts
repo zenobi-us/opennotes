@@ -53,9 +53,10 @@ Cli() // Create a new CLI with help and version plugins
   .interceptor(async (ctx, next) => {
     Log.debug('Interceptor.before');
 
-    const configService = await createConfigService();
-    const notebookService = createNotebookService({ config: configService.store });
     const dbService = createDbService();
+    const configService = await createConfigService();
+
+    const notebookService = createNotebookService({ configService, dbService });
 
     ctx.store.config = configService;
     ctx.store.notebooKService = notebookService;

@@ -1,9 +1,9 @@
 import { type } from 'arktype';
-import type { Config } from './ConfigService.ts';
-import type { INotebook } from './NotebookService.ts';
+import type { ConfigService } from './ConfigService.ts';
 import type { DbService } from './Db.ts';
 import { VARCHAR } from '@duckdb/node-api';
 import { Logger } from './LoggerService.ts';
+import { join } from 'node:path';
 
 const _NoteSchema = type({
   metadata: type({ '[string]': 'string | number | boolean' }),
@@ -18,10 +18,12 @@ export type Note = typeof _NoteSchema.infer;
 
 const Log = Logger.child({ namespace: 'NoteService' });
 
+export type NoteService = ReturnType<typeof createNoteService>;
+
 export function createNoteService(options: {
   dbService: DbService;
-  notebook: INotebook | null;
-  config: Config;
+  notebookPath?: string;
+  configService: ConfigService;
 }) {
   async function query(query: string) {
     const database = await options.dbService.getDb();
@@ -70,11 +72,11 @@ export function createNoteService(options: {
    * @returns Array of note IDs (filenames without extension) matching the query
    */
   async function searchNotes(args?: { query?: string }) {
-    if (!options.notebook) {
+    if (!options.notebookPath) {
       throw new Error('No notebook selected');
     }
 
-    Log.debug('searchNotes: query=%s notebookPath=%s', args?.query, options.notebook.path);
+    Log.debug('searchNotes: query=%s notebookPath=%s', args?.query, options.notebookPath);
 
     const db = await options.dbService.getDb();
     const prepared = await db.prepare(`
@@ -82,7 +84,7 @@ export function createNoteService(options: {
     `);
     prepared.bind(
       {
-        filepath: `${options.notebook.path}/**/*.md`,
+        filepath: join(options.notebookPath, '**', '*.md'),
       },
       {
         filepath: VARCHAR,
@@ -124,6 +126,43 @@ export function createNoteService(options: {
     // Not implemented
   }
 
+  /**
+   * TODO: implement note counting
+   */
+  const CountResultSchema = type({
+    count: 'string.integer.parse',
+  }).array();
+
+  async function count(): Promise<number> {
+    // Not implemented
+    const db = await options.dbService.getDb();
+    const notebookPath = options.notebookPath || '';
+    const glob = join(notebookPath, '**', '*.md');
+    const prepared = await db.prepare(`SELECT COUNT(*) as count FROM read_markdown($pattern)`);
+    Log.debug('count: notebookPath=%s glob=%s', notebookPath, glob);
+    prepared.bind(
+      {
+        pattern: glob,
+      },
+      {
+        pattern: VARCHAR,
+      }
+    );
+
+    const result = await prepared.run();
+    const rows = await result.getRowObjectsJson();
+
+    const parsed = CountResultSchema(rows);
+    if (parsed instanceof type.errors) {
+      Log.error('count: failed to parse count result: %o', parsed);
+      return 0;
+    }
+    Log.debug('count: rows=%o', rows);
+    const count = parsed[0]?.count || 0;
+
+    return count;
+  }
+
   return {
     createNote,
     readNote,
@@ -131,5 +170,6 @@ export function createNoteService(options: {
     editNote,
     searchNotes,
     query,
+    count,
   };
 }

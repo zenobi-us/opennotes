@@ -8,14 +8,48 @@ import { Logger } from './LoggerService';
 
 const Log = Logger.child({ namespace: 'ConfigService' });
 
-const Paths = envPaths('wiki', { suffix: '' });
+const Paths = envPaths('opennotes', { suffix: '' });
 
+/**
+ * Config File found in the user's config directory
+ * We consider this to be the global config
+ */
 export const UserConfigFile = join(Paths.config, 'config.json');
+/**
+ * Config File
+ *
+ * These look like:
+ *
+ * .opennotes.json (path: ./SomeNotebook)
+ * SomeNotebook/
+ *   SomeNote.md
+ *   AnotherNote.md
+ *   AFolder/
+ *     NestedNote.md
+ *     etc.md
+ *
+ * or
+ *
+ * AnotherNotebook/
+ *   .opennotes.json (path: ./)
+ *   Notes.md
+ */
+export const NotebookConfigFile = '.opennotes.json';
 
 export const ConfigSchema = type({
+  /**
+   * Notebook paths are directories where there is a NotebookConfigFile
+   */
   notebooks: 'string[]',
+  /**
+   * Current notebook path
+   *
+   * This can be provided from either (first one found wins):
+   * - OPENNOTES_NOTEBOOK_PATH env variable
+   * - --notebookPath CLI flag
+   * - or stored in global config.
+   */
   notebookPath: 'string?',
-  configFilePath: 'string',
 });
 
 export type Config = typeof ConfigSchema.infer;
@@ -32,7 +66,6 @@ const options: ConfigShape<Config> = {
   cwd: './',
   defaultConfig: {
     notebooks: [join(Paths.config, 'notebooks')],
-    configFilePath: 'wiki/config.json',
   },
 };
 

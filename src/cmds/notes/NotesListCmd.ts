@@ -21,7 +21,7 @@ export const NotesListCommand = defineCommand(
       return;
     }
 
-    Logger.debug('NotesListCmd %s', notebook.path);
+    Logger.debug('NotesListCmd %s', notebook.config.path);
 
     const config = ctx.store.config?.store;
     const dbService = ctx.store.dbService;
@@ -34,7 +34,7 @@ export const NotesListCommand = defineCommand(
 
     const noteService = createNoteService({
       notebook,
-      config,
+      configService: config,
       dbService,
     });
 

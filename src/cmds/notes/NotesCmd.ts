@@ -16,14 +16,14 @@ export const NotesCommand = defineCommand(
     parameters: [],
   },
   async (ctx) => {
-    const notebookPath = await requireNotebookMiddleware({
+    const notebook = await requireNotebookMiddleware({
       notebookService: ctx.store.notebooKService,
       path: ctx.flags.notebook,
     });
 
-    Logger.debug('NotesCmd: %s', notebookPath);
+    Logger.debug('NotesCmd: %s', notebook?.config.name);
 
-    if (!notebookPath) {
+    if (!notebook) {
       return;
     }
   }

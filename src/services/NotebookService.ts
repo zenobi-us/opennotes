@@ -1,77 +1,138 @@
-import type { Config } from './ConfigService';
+import { NotebookConfigFile, type ConfigService } from './ConfigService';
 import { promises as fs } from 'fs';
-import { dirname, join } from 'path';
+import { dirname, join, resolve } from 'path';
 import { type } from 'arktype';
 import { dedent } from '../core/strings';
 import { Logger } from './LoggerService';
 import { TuiRender } from './Display';
+import { createNoteService, type NoteService } from './NoteService';
+import type { DbService } from './Db';
 
 const Log = Logger.child({ namespace: 'NotebookService' });
 
 const NotebookGroupSchema = type({
+  /**
+   * The name of the notebook group
+   **/
   name: 'string',
-  description: 'string?',
+  /**
+   * Notes created in these globs will belong to this group
+   **/
   globs: 'string[]',
+  /**
+   * Metadata that notes created here will automatically have
+   **/
   metadata: type({ '[string]': 'string | number | boolean' }),
+  /**
+   * Template used for notes created in this group
+   **/
+  template: 'string?',
 });
 
 export type NotebookGroup = typeof NotebookGroupSchema.infer;
 
 const NotebookConfigSchema = type({
+  /**
+   * The root of where notes are stored for this notebook
+   **/
+  path: 'string',
+  /**
+   * The display name of the notebook
+   **/
   name: 'string',
+  /**
+   * The context paths associated with this notebook
+   *
+   * Context paths are used to determine which notes belong to which notebooks.
+   * A context is simply a path that is considered related to the notebook.
+   **/
   contexts: 'string[]?',
+  /**
+   * Templates associated with this notebook
+   *
+   * This is a mapping of template name to file path
+   **/
   templates: type({ '[string]': 'string' }).optional(),
+  /**
+   * Groups of notes within the notebook
+   **/
   groups: NotebookGroupSchema.array().optional(),
 });
 
 type NotebookConfig = typeof NotebookConfigSchema.infer;
 
 export interface INotebook {
-  path: string;
+  /**
+   * The notebook configuration
+   *
+   * This is loaded fron the notebook's config.json file
+   */
   config: NotebookConfig;
+
+  /**
+   * A NotesService bound to this notebook
+   */
+  notes: NoteService;
+
+  /**
+   * Save the notebook configuration to disk
+   */
   saveConfig(): Promise<void>;
+
+  /**
+   * Add a context path to the notebook
+   */
   addContext(_contextPath?: string): Promise<void>;
+
+  /**
+   * Match a context path to see if it belongs to this notebook
+   */
+  matchContext(path: string): string | null;
+
+  /**
+   * Load a template by name
+   */
   loadTemplate(_name: string): Promise<string | null>;
 }
 
 export const TuiTemplates = {
-  NotebookCreated: (ctx: { name: string; path: string }) =>
+  NotebookCreated: (ctx: { notebook: INotebook }) =>
     TuiRender(
       dedent(`
     # Notebook Created
 
     Your new notebook has been successfully created!
 
-    - **Name**: {{name}}
-    - **Path**: {{path}}
+    - **Name**: {{notebook.config.name}}
+    - **Path**: {{notebook.config.path}}
 
     You can start adding notes to your notebook right away.
   `),
       ctx
     ),
-  ContextAlreadyExists: (ctx: { contextPath: string; notebookPath: string }) =>
+  ContextAlreadyExists: (ctx: { path: string; notebook: INotebook }) =>
     TuiRender(
       dedent(`
     # Context Already Exists
 
     The context path is already associated with this notebook.
 
-    - **Context**: {{contextPath}}
-    - **Notebook**: {{notebookPath}}
+    - **Context**: {{path}}
+    - **Notebook**: {{notebook.config.path}}
 
     No changes were made.
   `),
       ctx
     ),
-  ContextAdded: (ctx: { contextPath: string; notebookPath: string }) =>
+  ContextAdded: (ctx: { path: string; notebook: INotebook }) =>
     TuiRender(
       dedent(`
     # Context Added
 
     The context path has been successfully added to your notebook.
 
-    - **Context**: {{contextPath}}
-    - **Notebook**: {{notebookPath}}
+    - **Context**: {{path}}
+    - **Notebook**: {{notebook.config.path}}
 
     This notebook will now be available when working in that directory.
   `),
@@ -91,13 +152,15 @@ export const TuiTemplates = {
   `),
       ctx
     ),
-  NotebookInfo: (notebook: INotebook) =>
-    TuiRender(
+  NotebookInfo: async (ctx: { notebook: INotebook }) => {
+    const count = await ctx.notebook.notes.count();
+    return TuiRender(
       dedent(`
     # Notebook Information
 
     - **Name**: {{notebook.config.name}}
-    - **Path**: {{notebook.path}}
+    - **Path**: {{notebook.config.path}}
+    - **Notes**: {{ noteCount }}
 
     ## Contexts
 
@@ -110,8 +173,14 @@ export const TuiTemplates = {
     ## Groups
 
     {% for group in notebook.config.groups %}
-      - **Name**: {{group.name}}
-        - Description: {{group.description}}
+      - **Name**: {{ group.name }}
+        **Template**: {{ group.template | default('_No template defined_') }}
+        **Metadata**:
+        {% for key, value in group.metadata %}
+          - {{ key }}: {{ value }}
+        {% empty %}
+          - _No metadata defined_
+        {% endfor %}
         - Globs:
         {% for glob in group.globs %}
           - {{ glob }}
@@ -120,8 +189,12 @@ export const TuiTemplates = {
         {% endfor %}
     {% endfor %}
   `),
-      notebook
-    ),
+      {
+        notebook: ctx.notebook,
+        noteCount: count,
+      }
+    );
+  },
   CreateYourFirstNotebook: () =>
     TuiRender(
       dedent(`
@@ -139,25 +212,54 @@ export const TuiTemplates = {
   `),
       {}
     ),
+  DisplayNotebookList: (ctx: { notebooks?: INotebook[] }) =>
+    TuiRender(
+      dedent(`
+    {% if notebooks.length > 0 %}
+    {% for notebook in notebooks %}
+    - **{{notebook.config.name}}**: {{notebook.path}}
+    {% endfor %}
+
+    {% else %}
+    No notebooks are currently registered.
+
+    To create a new notebook, use the command:
+
+    \`\`\`bash
+    wiki notebook create --name "My Notebook Name" --global
+    \`\`\`
+
+    {% endif %}
+  `),
+      ctx
+    ),
 };
 
-export function createNotebookService(serviceOptions: { config: Config }) {
+export function createNotebookService(serviceOptions: {
+  configService: ConfigService;
+  dbService: DbService;
+}) {
   class Notebook implements INotebook {
     static createNotebookConfigPath(path: string) {
-      return join(path, `.${serviceOptions.config.configFilePath}`);
+      return join(path, NotebookConfigFile);
     }
 
-    static async isNotebookPath(path?: string) {
+    /**
+     * Check if a given path is a notebook path
+     *
+     * @see {NotebookConfigFile}
+     */
+    static async hasNotebook(path?: string) {
       if (!path) {
         return false;
       }
 
       const configPath = Notebook.createNotebookConfigPath(path);
-      if (!(await fs.exists(configPath))) {
-        return false;
+      if (await fs.exists(configPath)) {
+        return true;
       }
 
-      return true;
+      return false;
     }
 
     static async loadConfig(path: string): Promise<NotebookConfig | null> {
@@ -194,36 +296,54 @@ export function createNotebookService(serviceOptions: { config: Config }) {
       if (!config) {
         return null;
       }
-      return new Notebook(path, config);
+      const noteService = createNoteService({
+        configService: serviceOptions.configService,
+        notebookPath: resolve(path, config.path),
+        dbService: serviceOptions.dbService,
+      });
+
+      return new Notebook(config, noteService);
     }
 
     static async new(args: { path: string; name: string }): Promise<Notebook> {
       const config: NotebookConfig = {
         name: args.name,
+        /*
+         * Store notes relative to the notebook path in a .notes folder
+         * This keeps notes organized and separate from other project files.
+         */
+        path: join('.', '.notes'),
         templates: {},
         groups: [
           {
             name: 'Default',
-            description: 'Default group for all notes',
-            globs: ['**/*.md'],
+            globs: [join('**', '*.md')],
             metadata: {},
           },
         ],
         contexts: [args.path],
       };
-      Log.debug('Notebook.new: path=%s name=%s', args.path, args.name);
+      Log.debug('Notebook.new: path=%s name=%s', config.path, config.name);
 
-      const notebook = new Notebook(args.path, config);
+      const noteService = createNoteService({
+        configService: serviceOptions.configService,
+        notebookPath: join(args.path, '.notes'),
+        dbService: serviceOptions.dbService,
+      });
+
+      const notebook = new Notebook(config, noteService);
       await notebook.saveConfig();
 
-      await TuiTemplates.NotebookCreated(args);
+      await TuiTemplates.NotebookCreated({
+        notebook,
+      });
 
       return notebook;
     }
 
     constructor(
-      public path: string,
-      public config: NotebookConfig
+      public config: NotebookConfig,
+      public notes: NoteService
     ) {
       //
     }
@@ -237,7 +357,12 @@ export function createNotebookService(serviceOptions: { config: Config }) {
      * Write a notebook config to a given path
      */
     async saveConfig() {
-      const configPath = Notebook.createNotebookConfigPath(this.path);
+      const config = NotebookConfigSchema(this.config);
+      if (config instanceof type.errors) {
+        throw new Error(`Invalid notebook config: ${config.toString()}`);
+      }
+
+      const configPath = dirname(config.path);
       try {
         const content = JSON.stringify(this.config, null, 2);
         await fs.mkdir(dirname(configPath), { recursive: true });
@@ -263,8 +388,8 @@ export function createNotebookService(serviceOptions: { config: Config }) {
       // Check if context already exists
       if (this.config.contexts?.includes(_contextPath)) {
         await TuiTemplates.ContextAlreadyExists({
-          contextPath: _contextPath,
-          notebookPath: this.path,
+          path: _contextPath,
+          notebook: this,
         });
 
         return;
@@ -275,8 +400,8 @@ export function createNotebookService(serviceOptions: { config: Config }) {
       await this.saveConfig();
 
       await TuiTemplates.ContextAdded({
-        contextPath: _contextPath,
-        notebookPath: this.path,
+        path: _contextPath,
+        notebook: this,
       });
     }
 
@@ -320,14 +445,16 @@ export function createNotebookService(serviceOptions: { config: Config }) {
   }
 
   async function create(args: { name: string; path?: string }): Promise<Notebook> {
-    const notebookPath = args.path || process.cwd();
-    return Notebook.new({ name: args.name, path: notebookPath });
+    return Notebook.new({
+      name: args.name,
+      path: args.path || process.cwd(),
+    });
   }
 
   /**
    * Discover the notebook path based on the current working directory.
    *
-   * A notebook path is any folder that contains a .wiki/config.json
+   * A notebook path is any folder that contains a .opennotes/config.json
    *
    * Priority:
    *
@@ -340,9 +467,9 @@ export function createNotebookService(serviceOptions: { config: Config }) {
    */
   async function infer(cwd: string = process.cwd()): Promise<Notebook | null> {
     Log.debug('NotebookService.infer: cwd=%s', cwd);
-    const notebookPath = serviceOptions.config.notebookPath;
+    const notebookPath = serviceOptions.configService.store.notebookPath;
     // Step 1: Check environment/cli-arg variable (resolved and provided by the ConfigService)
-    if (notebookPath && (await Notebook.isNotebookPath(notebookPath))) {
+    if (notebookPath && (await Notebook.hasNotebook(notebookPath))) {
       const notebook = await Notebook.load(notebookPath);
       if (notebook) {
         Log.debug('Notebook.infer: USE_DECLARED_PATH %s', notebookPath);
@@ -355,7 +482,7 @@ export function createNotebookService(serviceOptions: { config: Config }) {
         continue;
       }
 
-      Log.debug('Notebook.infer: MATCHED_LISTED_NOTEBOOK %s', notebook.path);
+      Log.debug('Notebook.infer: MATCHED_LISTED_NOTEBOOK %s', notebook.config.path);
       return notebook;
     }
 
@@ -368,8 +495,8 @@ export function createNotebookService(serviceOptions: { config: Config }) {
     const registered_notebooks: Notebook[] = [];
 
     // STEP 2: Check for notebook configs in config.notebooks
-    for (const notebookPath of serviceOptions.config.notebooks) {
-      const configFilePath = await Notebook.isNotebookPath(notebookPath);
+    for (const notebookPath of serviceOptions.configService.store.notebooks) {
+      const configFilePath = await Notebook.hasNotebook(notebookPath);
       if (!configFilePath) {
         continue;
       }
@@ -387,13 +514,14 @@ export function createNotebookService(serviceOptions: { config: Config }) {
     // Step 3: Search ancestor directories
     let next = cwd;
     while (next !== '/') {
-      const configFilePath = await Notebook.isNotebookPath(next);
+      const configFilePath = await Notebook.hasNotebook(next);
       const notebookPath = next;
       next = dirname(next);
 
       if (!configFilePath) {
         continue;
       }
+      Log.debug('list.AttemptLoadAncestorNotebook: %s', notebookPath);
 
       const notebook = await Notebook.load(notebookPath);
       if (!notebook) {
@@ -423,7 +551,7 @@ export function createNotebookService(serviceOptions: { config: Config }) {
       return null;
     }
 
-    const content = await TuiTemplates.NotebookInfo(notebook);
+    const content = await TuiTemplates.NotebookInfo({ notebook });
     // eslint-disable-next-line no-console
     console.log(content);
   }

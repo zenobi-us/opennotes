@@ -1,10 +1,10 @@
 {
   "name": "opennotes",
+  "path": ".notes",
   "templates": {},
   "groups": [
     {
       "name": "Default",
-      "description": "Default group for all notes",
       "globs": [
         "**/*.md"
       ],

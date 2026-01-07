@@ -13,7 +13,7 @@ export async function requireNotebookMiddleware(args: {
 
   if (!notebook) {
     // eslint-disable-next-line no-console
-    console.error(NotebookTuiTemplates.CreateYourFirstNotebook());
+    console.error(await NotebookTuiTemplates.CreateYourFirstNotebook());
     return null;
   }
 
