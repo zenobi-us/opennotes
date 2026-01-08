@@ -42,23 +42,29 @@ func init() {
 }
 
 func displayNotebookInfo(nb *services.Notebook) error {
-	fmt.Printf("Notebook: %s\n", nb.Config.Name)
-	fmt.Printf("  Config: %s\n", nb.Config.Path)
-	fmt.Printf("  Root:   %s\n", nb.Config.Root)
+	output, err := services.TuiRender(services.Templates.NotebookInfo, nb)
+	if err != nil {
+		// Fallback to simple output
+		fmt.Printf("Notebook: %s\n", nb.Config.Name)
+		fmt.Printf("  Config: %s\n", nb.Config.Path)
+		fmt.Printf("  Root:   %s\n", nb.Config.Root)
 
-	if len(nb.Config.Contexts) > 0 {
-		fmt.Printf("  Contexts:\n")
-		for _, ctx := range nb.Config.Contexts {
-			fmt.Printf("    - %s\n", ctx)
+		if len(nb.Config.Contexts) > 0 {
+			fmt.Printf("  Contexts:\n")
+			for _, ctx := range nb.Config.Contexts {
+				fmt.Printf("    - %s\n", ctx)
+			}
 		}
+
+		if len(nb.Config.Groups) > 0 {
+			fmt.Printf("  Groups:\n")
+			for _, g := range nb.Config.Groups {
+				fmt.Printf("    - %s (%v)\n", g.Name, g.Globs)
+			}
+		}
+		return nil
 	}
 
-	if len(nb.Config.Groups) > 0 {
-		fmt.Printf("  Groups:\n")
-		for _, g := range nb.Config.Groups {
-			fmt.Printf("    - %s (%v)\n", g.Name, g.Globs)
-		}
-	}
-
+	fmt.Print(output)
 	return nil
 }

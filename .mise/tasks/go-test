@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#MISE description="Run Go tests"
+#USAGE arg "[packages]" var=#true help="Optional specific packages to test (default: ./...)"
+#USAGE flag "-v --verbose" help="Verbose test output"
+
+set -e
+
+args=()
+
+if [ "$usage_verbose" = "true" ]; then
+	args+=("-v")
+fi
+
+packages="${usage_packages:-./...}"
+
+go test "${args[@]}" $packages

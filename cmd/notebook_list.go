@@ -34,17 +34,24 @@ func init() {
 }
 
 func displayNotebookList(notebooks []*services.Notebook) error {
-	fmt.Printf("Found %d notebook(s):\n\n", len(notebooks))
-
-	for _, nb := range notebooks {
-		fmt.Printf("  %s\n", nb.Config.Name)
-		fmt.Printf("    Path: %s\n", nb.Config.Path)
-		fmt.Printf("    Root: %s\n", nb.Config.Root)
-		if len(nb.Config.Contexts) > 0 {
-			fmt.Printf("    Contexts: %v\n", nb.Config.Contexts)
+	output, err := services.TuiRender(services.Templates.NotebookList, map[string]any{
+		"Notebooks": notebooks,
+	})
+	if err != nil {
+		// Fallback to simple output
+		fmt.Printf("Found %d notebook(s):\n\n", len(notebooks))
+		for _, nb := range notebooks {
+			fmt.Printf("  %s\n", nb.Config.Name)
+			fmt.Printf("    Path: %s\n", nb.Config.Path)
+			fmt.Printf("    Root: %s\n", nb.Config.Root)
+			if len(nb.Config.Contexts) > 0 {
+				fmt.Printf("    Contexts: %v\n", nb.Config.Contexts)
+			}
+			fmt.Println()
 		}
-		fmt.Println()
+		return nil
 	}
 
+	fmt.Print(output)
 	return nil
 }

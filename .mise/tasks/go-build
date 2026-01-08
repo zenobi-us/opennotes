@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="Build the Go binary"
+
+set -e
+
+OUTPUT="${1:-dist/opennotes}"
+
+go build -o "$OUTPUT" .
+
+echo "Built: $OUTPUT"

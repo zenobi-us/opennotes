@@ -51,8 +51,8 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, er
 	glob := filepath.Join(s.notebookPath, "**", "*.md")
 	s.log.Debug().Str("glob", glob).Str("query", query).Msg("searching notes")
 
-	// Use DuckDB's read_markdown function
-	sqlQuery := `SELECT * FROM read_markdown(?)`
+	// Use DuckDB's read_markdown function with filepath included
+	sqlQuery := `SELECT * FROM read_markdown(?, include_filepath:=true)`
 	rows, err := db.QueryContext(ctx, sqlQuery, glob)
 	if err != nil {
 		return nil, fmt.Errorf("query failed: %w", err)

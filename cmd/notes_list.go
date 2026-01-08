@@ -32,17 +32,23 @@ func init() {
 }
 
 func displayNoteList(notes []services.Note) error {
-	if len(notes) == 0 {
-		fmt.Println("No notes found.")
+	output, err := services.TuiRender(services.Templates.NoteList, map[string]any{
+		"Notes": notes,
+	})
+	if err != nil {
+		// Fallback to simple output
+		if len(notes) == 0 {
+			fmt.Println("No notes found.")
+			return nil
+		}
+		fmt.Printf("Found %d note(s):\n\n", len(notes))
+		for _, note := range notes {
+			fmt.Printf("  %s\n", note.File.Relative)
+		}
 		return nil
 	}
 
-	fmt.Printf("Found %d note(s):\n\n", len(notes))
-
-	for _, note := range notes {
-		fmt.Printf("  %s\n", note.File.Relative)
-	}
-
+	fmt.Print(output)
 	return nil
 }
 

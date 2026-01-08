@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#MISE description="Lint Go code"
+#USAGE flag "-f --fix" help="Auto-fix issues"
+
+set -e
+
+# Check if golangci-lint is available
+if ! command -v golangci-lint &> /dev/null; then
+    echo "golangci-lint not found, using go vet and gofmt"
+    echo "Running go vet..."
+    go vet ./...
+    
+    echo "Checking formatting..."
+    if [ "$usage_fix" = "true" ]; then
+        gofmt -w .
+    else
+        gofmt -l . | xargs -r -I {} sh -c 'echo "needs formatting: {}"; exit 1'
+    fi
+else
+    args=("run")
+    
+    if [ "$usage_fix" = "true" ]; then
+        args+=("--fix")
+    fi
+    
+    golangci-lint "${args[@]}" ./...
+fi
