@@ -18,18 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Install mise
-        uses: jdx/setup-jdx@v1
+      - uses: jdx/mise-action@v3
         with:
           install: true
           cache: true
           experimental: true
 
-      - name: Setup
-        run: mise run setup
+      - name: Build
+        run: mise run build
+
+      - id: inputs
+        uses: simenandre/setup-inputs@v1
 
       - name: Publish
         run: mise run publish
