@@ -9,7 +9,6 @@ coverage/
 .eslintcache
 .bun/
 .bun.lockb
-.memory/
 
 # dependencies (bun install)
 node_modules
