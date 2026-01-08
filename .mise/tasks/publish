@@ -36,10 +36,7 @@ else
   echo " > provenance: enabled (GitHub Actions with OIDC)"
 fi
 
-# Publish directly from source (allows provenance generation in CI)
-npm publish \
-  --access public \
-  --tag "${usage_tag}" \
-  $PROVENANCE_FLAG
+# Publish release to GitHub with GoReleaser
+goreleaser release --clean
 
 echo "Published successfully!"
