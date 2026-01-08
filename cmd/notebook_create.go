@@ -8,15 +8,33 @@ import (
 )
 
 var notebookCreateCmd = &cobra.Command{
-	Use:   "create",
+	Use:   "create [path]",
 	Short: "Create a new notebook",
-	Long:  `Creates a new notebook in the specified directory (or current directory).`,
+	Long: `Creates a new notebook in the specified directory (or current directory).
+
+This creates a .opennotes.json config file and a notes/ directory.
+Use --register to also add the notebook to your global config.
+
+Examples:
+  # Create notebook in current directory
+  opennotes notebook create --name "My Notes"
+
+  # Create notebook at specific path
+  opennotes notebook create ~/work/notes --name "Work"
+
+  # Create and register globally
+  opennotes notebook create --name "Personal" --register`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, _ := cmd.Flags().GetString("name")
-		path, _ := cmd.Flags().GetString("path")
-		global, _ := cmd.Flags().GetBool("global")
+		register, _ := cmd.Flags().GetBool("register")
 
-		nb, err := notebookService.Create(name, path, global)
+		path := ""
+		if len(args) > 0 {
+			path = args[0]
+		}
+
+		nb, err := notebookService.Create(name, path, register)
 		if err != nil {
 			return fmt.Errorf("failed to create notebook: %w", err)
 		}
@@ -25,7 +43,7 @@ var notebookCreateCmd = &cobra.Command{
 		fmt.Printf("  Config: %s\n", nb.Config.Path)
 		fmt.Printf("  Notes:  %s\n", nb.Config.Root)
 
-		if global {
+		if register {
 			fmt.Println("  Registered globally")
 		}
 
@@ -35,9 +53,7 @@ var notebookCreateCmd = &cobra.Command{
 
 func init() {
 	notebookCreateCmd.Flags().StringP("name", "n", "", "Notebook name (required)")
-	notebookCreateCmd.Flags().StringP("path", "p", "", "Notebook path (default: current directory)")
-	notebookCreateCmd.Flags().BoolP("global", "g", false, "Register globally")
-	notebookCreateCmd.MarkFlagRequired("name")
+	notebookCreateCmd.Flags().BoolP("register", "r", false, "Register this notebook globally")
 	notebookCmd.AddCommand(notebookCreateCmd)
 }
 

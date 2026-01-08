@@ -9,9 +9,19 @@ import (
 )
 
 var notesListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all notes in the notebook",
-	Long:  `Lists all markdown notes in the current notebook.`,
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List all notes in the notebook",
+	Long: `Lists all markdown notes in the current notebook.
+
+Shows all .md files in the notebook's notes directory with metadata.
+
+Examples:
+  # List notes in current notebook
+  opennotes notes list
+
+  # List notes from specific notebook
+  opennotes notes list --notebook /path/to/notebook`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		nb, err := requireNotebook(cmd)
 		if err != nil {

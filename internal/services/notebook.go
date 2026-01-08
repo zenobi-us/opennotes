@@ -133,7 +133,7 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 
 	config := NotebookConfig{
 		StoredNotebookConfig: StoredNotebookConfig{
-			Root:     ".notes",
+			Root:     notesDir, // Store absolute path; SaveConfig will convert to relative
 			Name:     name,
 			Contexts: []string{path},
 			Groups: []NotebookGroup{

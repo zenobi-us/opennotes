@@ -1,10 +1,12 @@
 # OpenNotes - Project Memory
 
 ## Project Overview
+
 OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks. It uses DuckDB for SQL-powered search and supports templates.
 
 ## Current Status
-- **Phase**: Phase 1-4 (Partial), Phase 5 Planned
+
+- **Phase**: Phase 1-4 COMPLETE, Phase 5 Planned
 - **Last Updated**: 2026-01-09
 - **Next Action**: Implement P0 testing tasks (ConfigService, DbService, NotebookService)
 
@@ -13,52 +15,57 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 ### Progress Review
 
 #### Phase 1: Core Infrastructure - COMPLETE
-| Task | Status | Notes |
-|------|--------|-------|
-| 1.1 Project Setup | Done | go.mod, directory structure, all deps |
-| 1.2 LoggerService | Done | `internal/services/logger.go` with DEBUG/LOG_LEVEL support |
-| 1.3 ConfigService | Done | `internal/services/config.go` with koanf, env vars, Write() |
-| 1.4 DbService | Done | `internal/services/db.go` with markdown extension |
-| 1.5 Root Command | Done | `cmd/root.go` with interceptor pattern, `main.go` |
+
+| Task              | Status | Notes                                                       |
+| ----------------- | ------ | ----------------------------------------------------------- |
+| 1.1 Project Setup | Done   | go.mod, directory structure, all deps                       |
+| 1.2 LoggerService | Done   | `internal/services/logger.go` with DEBUG/LOG_LEVEL support  |
+| 1.3 ConfigService | Done   | `internal/services/config.go` with koanf, env vars, Write() |
+| 1.4 DbService     | Done   | `internal/services/db.go` with markdown extension           |
+| 1.5 Root Command  | Done   | `cmd/root.go` with interceptor pattern, `main.go`           |
 
 #### Phase 2: Notebook Management - COMPLETE
-| Task | Status | Notes |
-|------|--------|-------|
-| 2.1 NotebookService Types | Done | All types defined in `notebook.go` |
-| 2.2 Core Methods | Done | HasNotebook, LoadConfig, Open |
-| 2.3 Discovery | Done | Infer (3-step priority), List |
-| 2.4 Notebook Methods | Done | MatchContext, AddContext, SaveConfig |
-| 2.5 CRUD | Done | Create with notes dir and config |
-| 2.6 Require Middleware | Done | `requireNotebook()` in `notes_list.go` |
-| 2.7 Commands | Done | notebook, list, create, register, add-context |
+
+| Task                      | Status | Notes                                         |
+| ------------------------- | ------ | --------------------------------------------- |
+| 2.1 NotebookService Types | Done   | All types defined in `notebook.go`            |
+| 2.2 Core Methods          | Done   | HasNotebook, LoadConfig, Open                 |
+| 2.3 Discovery             | Done   | Infer (3-step priority), List                 |
+| 2.4 Notebook Methods      | Done   | MatchContext, AddContext, SaveConfig          |
+| 2.5 CRUD                  | Done   | Create with notes dir and config              |
+| 2.6 Require Middleware    | Done   | `requireNotebook()` in `notes_list.go`        |
+| 2.7 Commands              | Done   | notebook, list, create, register, add-context |
 
 #### Phase 3: Note Operations - COMPLETE
-| Task | Status | Notes |
-|------|--------|-------|
-| 3.1 NoteService Types | Done | Note struct in `note.go` |
-| 3.2 Query Methods | Done | SearchNotes, Count |
-| 3.3 Raw Query | Done | Query() method |
-| 3.4 Notes List Cmd | Done | `cmd/notes_list.go` |
-| 3.5 Notes Search Cmd | Done | `cmd/notes_search.go` |
-| 3.6 Notes Add Cmd | Done | `cmd/notes_add.go` with template support |
-| 3.7 Notes Remove Cmd | Done | `cmd/notes_remove.go` with --force flag |
-| 3.8 Display Service | Done | `internal/services/display.go` with glamour |
-| 3.9 Display Templates | Done | `internal/services/templates.go` - NoteList, NotebookList, NotebookInfo |
 
-#### Phase 4: Polish - PARTIAL
-| Task | Status | Notes |
-|------|--------|-------|
-| 4.1 Error Handling | Done | Using fmt.Errorf with context |
-| 4.2 Input Validation | Done | `internal/core/schema.go` with validators |
-| 4.3 String Utilities | Done | `internal/core/strings.go` (Slugify, Dedent, ObjectToFrontmatter) |
-| 4.4 Help Text | TODO | Need comprehensive help text |
-| 4.5 Init Command | Done | `cmd/init.go` |
-| 4.6 Integration Tests | Partial | Core tests passing, service tests in Phase 5 |
-| 4.7 Build Config | Done | mise tasks: go-build, go-test, go-lint |
-| 4.8 Config Compatibility | TODO | Need verification |
-| 4.9 Feature Parity | TODO | Need comparison |
+| Task                  | Status | Notes                                                                   |
+| --------------------- | ------ | ----------------------------------------------------------------------- |
+| 3.1 NoteService Types | Done   | Note struct in `note.go`                                                |
+| 3.2 Query Methods     | Done   | SearchNotes, Count                                                      |
+| 3.3 Raw Query         | Done   | Query() method                                                          |
+| 3.4 Notes List Cmd    | Done   | `cmd/notes_list.go`                                                     |
+| 3.5 Notes Search Cmd  | Done   | `cmd/notes_search.go`                                                   |
+| 3.6 Notes Add Cmd     | Done   | `cmd/notes_add.go` with template support                                |
+| 3.7 Notes Remove Cmd  | Done   | `cmd/notes_remove.go` with --force flag                                 |
+| 3.8 Display Service   | Done   | `internal/services/display.go` with glamour                             |
+| 3.9 Display Templates | Done   | `internal/services/templates.go` - NoteList, NotebookList, NotebookInfo |
+
+#### Phase 4: Polish - COMPLETE
+
+| Task                     | Status  | Notes                                                             |
+| ------------------------ | ------- | ----------------------------------------------------------------- |
+| 4.1 Error Handling       | Done    | Using fmt.Errorf with context                                     |
+| 4.2 Input Validation     | Done    | `internal/core/schema.go` with validators                         |
+| 4.3 String Utilities     | Done    | `internal/core/strings.go` (Slugify, Dedent, ObjectToFrontmatter) |
+| 4.4 Help Text            | Done    | Comprehensive help with examples, env vars, aliases               |
+| 4.5 Init Command         | Done    | `cmd/init.go`                                                     |
+| 4.6 Integration Tests    | Partial | Core tests passing, service tests in Phase 5                      |
+| 4.7 Build Config         | Done    | mise tasks: go-build, go-test, go-lint                            |
+| 4.8 Config Compatibility | Done    | Go reads/writes same format as TypeScript                         |
+| 4.9 Feature Parity       | Done    | All commands match, added aliases (nb, ls, rm)                    |
 
 #### Phase 5: Testing Tasks - PLANNED
+
 See `.memory/tasks/05-testing-tasks.md` for detailed task breakdown.  
 See `.memory/research/testing-gaps.md` for gap analysis.
 
@@ -70,6 +77,7 @@ See `.memory/research/testing-gaps.md` for gap analysis.
 | P2 Nice to Have | 5.5-5.8 | display_test.go, templates_test.go, logger_test.go, e2e | 6-10 hrs |
 
 ### Build Status
+
 - `go build` succeeds
 - `./opennotes --help` works
 - All commands functional with glamour output
@@ -78,14 +86,16 @@ See `.memory/research/testing-gaps.md` for gap analysis.
 
 ### Testing Coverage Matrix
 
-| Package | Files | Test Files | Coverage |
-|---------|-------|------------|----------|
-| internal/core | 2 | 2 | Good |
-| internal/services | 7 | 0 | **None** |
-| cmd | 12 | 0 | **None** |
+| Package           | Files | Test Files | Coverage |
+| ----------------- | ----- | ---------- | -------- |
+| internal/core     | 2     | 2          | Good     |
+| internal/services | 7     | 0          | **None** |
+| cmd               | 12    | 0          | **None** |
 
 ### Uncommitted Work
+
 Files modified but not committed:
+
 - `cmd/notebook_create.go` - Updated display integration
 - `cmd/notebook_list.go` - Updated display integration
 - `cmd/notes_list.go` - Updated display integration
@@ -93,6 +103,7 @@ Files modified but not committed:
 - `internal/services/note.go` - Minor fixes
 
 New files (untracked):
+
 - `.mise/tasks/go-build` - Build Go binary task
 - `.mise/tasks/go-lint` - Lint Go code task
 - `.mise/tasks/go-test` - Run Go tests task
@@ -105,22 +116,26 @@ New files (untracked):
 ### Remaining Work
 
 **Immediate (This Sprint):**
+
 1. Commit uncommitted Go work
 2. Task 5.1: ConfigService tests (P0)
 3. Task 5.2: DbService tests (P0)
 4. Task 5.3: NotebookService tests (P0)
 
 **Next Sprint:**
+
 1. Task 5.4: NoteService tests (P1)
 2. Task 4.4: Help text improvements
 3. Task 4.8: Config compatibility verification
 
 **Future:**
+
 1. Tasks 5.5-5.7: Display/Templates/Logger tests
 2. Task 5.8: E2E tests
 3. Task 4.9: Feature parity checklist
 
 ### Key Files
+
 ```
 cmd/
   init.go                   # init command
@@ -160,6 +175,7 @@ main.go                     # Entry point
 ```
 
 ### Memory Structure
+
 ```
 .memory/
   summary.md                # This file - project overview
@@ -175,6 +191,7 @@ main.go                     # Entry point
 ```
 
 ### Principles
+
 - Preserve Node.js version (don't remove src/)
 - Match same structure and patterns as Node code
 - Config priority: env vars > config file > defaults

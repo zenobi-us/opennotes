@@ -14,8 +14,21 @@ import (
 var notesAddCmd = &cobra.Command{
 	Use:   "add [name]",
 	Short: "Add a new note to the notebook",
-	Long:  `Creates a new markdown note in the current notebook with optional template support.`,
-	Args:  cobra.MaximumNArgs(1),
+	Long: `Creates a new markdown note in the current notebook with optional template support.
+
+If no name is provided, generates one from the title or timestamp.
+Templates can be defined in the notebook's .opennotes.json config.
+
+Examples:
+  # Add note with auto-generated name
+  opennotes notes add --title "Meeting Notes"
+
+  # Add note with specific filename
+  opennotes notes add my-note.md --title "My Note"
+
+  # Add note using template
+  opennotes notes add --title "Bug Report" --template bug`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		nb, err := requireNotebook(cmd)
 		if err != nil {

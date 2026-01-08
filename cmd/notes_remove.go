@@ -11,10 +11,21 @@ import (
 )
 
 var notesRemoveCmd = &cobra.Command{
-	Use:   "remove <note>",
-	Short: "Remove a note from the notebook",
-	Long:  `Removes a markdown note from the current notebook.`,
-	Args:  cobra.ExactArgs(1),
+	Use:     "remove <note>",
+	Aliases: []string{"rm"},
+	Short:   "Remove a note from the notebook",
+	Long: `Removes a markdown note from the current notebook.
+
+Prompts for confirmation unless --force is used. The .md extension
+is optional when specifying the note name.
+
+Examples:
+  # Remove with confirmation
+  opennotes notes remove my-note
+
+  # Remove without confirmation
+  opennotes notes remove my-note.md --force`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		nb, err := requireNotebook(cmd)
 		if err != nil {

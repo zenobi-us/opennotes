@@ -11,7 +11,17 @@ var notebookAddContextCmd = &cobra.Command{
 	Use:   "add-context [path]",
 	Short: "Add a context path to the current notebook",
 	Long: `Adds a directory path as a context for the current notebook.
-When working in a context directory, the notebook will be automatically selected.`,
+
+When working in a context directory (or any subdirectory), the notebook
+will be automatically selected. This is useful for associating project
+directories with specific notebooks.
+
+Examples:
+  # Add current directory as context
+  opennotes notebook add-context
+
+  # Add specific path as context
+  opennotes notebook add-context ~/projects/myapp`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		contextPath := ""

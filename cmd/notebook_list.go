@@ -8,9 +8,18 @@ import (
 )
 
 var notebookListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all notebooks",
-	Long:  `Lists all registered notebooks and notebooks found in ancestor directories.`,
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List all notebooks",
+	Long: `Lists all registered notebooks and notebooks found in ancestor directories.
+
+Shows notebooks from:
+  - Global config (~/.config/opennotes/config.json)
+  - Ancestor directories containing .opennotes.json
+
+Examples:
+  # List all known notebooks
+  opennotes notebook list`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		notebooks, err := notebookService.List("")
 		if err != nil {

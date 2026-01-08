@@ -10,8 +10,17 @@ import (
 var notesSearchCmd = &cobra.Command{
 	Use:   "search [query]",
 	Short: "Search notes",
-	Long:  `Searches notes by content or filename.`,
-	Args:  cobra.ExactArgs(1),
+	Long: `Searches notes by content or filename using DuckDB SQL.
+
+The query searches both file names and content of markdown files.
+
+Examples:
+  # Search for notes containing "meeting"
+  opennotes notes search "meeting"
+
+  # Search with specific notebook
+  opennotes notes search "todo" --notebook ~/notes`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		nb, err := requireNotebook(cmd)
 		if err != nil {
