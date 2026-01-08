@@ -6,9 +6,9 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ## Current Status
 
-- **Phase**: Phase 5 ALL COMPLETE
+- **Phase**: Go Rewrite COMPLETE
 - **Last Updated**: 2026-01-09
-- **Next Action**: Commit all test work
+- **Next Action**: Push to remote or create PR
 
 ## Active Task: Go Rewrite
 
@@ -101,9 +101,9 @@ See `.memory/research/testing-gaps.md` for gap analysis.
 | tests/e2e         | 1     | 1          | 23         | Good (E2E complete)      |
 | cmd               | 12    | 0          | 0          | Covered by E2E tests     |
 
-### Uncommitted Work
+### Committed Work
 
-New files (untracked):
+All Phase 5 test files committed (67fcf42):
 
 - `internal/services/note_test.go` - NoteService tests (16 tests)
 - `internal/services/display_test.go` - Display tests (13 tests)
@@ -113,14 +113,11 @@ New files (untracked):
 
 ### Remaining Work
 
-**Immediate:**
-
-1. Commit all testing work
-
 **Optional Future:**
 
 1. Performance optimization
 2. Documentation updates
+3. Push branch and create PR
 
 ### Key Files
 
@@ -183,8 +180,8 @@ main.go                     # Entry point
     01-core-infrastructure.md   # Phase 1 tasks (COMPLETE)
     02-notebook-management.md   # Phase 2 tasks (COMPLETE)
     03-note-operations.md       # Phase 3 tasks (COMPLETE)
-    04-polish.md                # Phase 4 tasks (PARTIAL)
-    05-testing-tasks.md         # Phase 5 tasks (PLANNED)
+    04-polish.md                # Phase 4 tasks (COMPLETE)
+    05-testing-tasks.md         # Phase 5 tasks (COMPLETE)
   research/
     testing-gaps.md             # Testing gap analysis
 ```
