@@ -6,9 +6,9 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ## Current Status
 
-- **Phase**: Phase 5 IN PROGRESS (P0 Complete)
+- **Phase**: Phase 5 ALL COMPLETE
 - **Last Updated**: 2026-01-09
-- **Next Action**: Commit P0 testing work, then implement P1 (NoteService tests)
+- **Next Action**: Commit all test work
 
 ## Active Task: Go Rewrite
 
@@ -64,7 +64,7 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 | 4.8 Config Compatibility | Done    | Go reads/writes same format as TypeScript                         |
 | 4.9 Feature Parity       | Done    | All commands match, added aliases (nb, ls, rm)                    |
 
-#### Phase 5: Testing Tasks - IN PROGRESS
+#### Phase 5: Testing Tasks - ALL COMPLETE
 
 See `.memory/tasks/05-testing-tasks.md` for detailed task breakdown.  
 See `.memory/research/testing-gaps.md` for gap analysis.
@@ -76,14 +76,13 @@ See `.memory/research/testing-gaps.md` for gap analysis.
 | 5.1 ConfigService | ✅ Complete | 10 tests |
 | 5.2 DbService | ✅ Complete | 14 tests |
 | 5.3 NotebookService | ✅ Complete | 28 tests |
-| 5.4 NoteService | Pending | - |
-| 5.5-5.8 P2 tasks | Pending | - |
+| 5.4 NoteService | ✅ Complete | 16 tests |
+| 5.5 Display Service | ✅ Complete | 13 tests (incl. subtests) |
+| 5.6 Templates | ✅ Complete | 10 tests |
+| 5.7 Logger | ✅ Complete | 17 tests (incl. subtests) |
+| 5.8 E2E tests | ✅ Complete | 23 tests |
 
-**Remaining:**
-| Priority | Tasks | Files | Est. Effort |
-|----------|-------|-------|-------------|
-| P1 Important | 5.4 | note_test.go | 2-3 hrs |
-| P2 Nice to Have | 5.5-5.8 | display_test.go, templates_test.go, logger_test.go, e2e | 6-10 hrs |
+**Total: 131 tests across all packages**
 
 ### Build Status
 
@@ -94,40 +93,31 @@ See `.memory/research/testing-gaps.md` for gap analysis.
 
 ### Testing Coverage Matrix
 
-| Package           | Files | Test Files | Test Count | Coverage           |
-| ----------------- | ----- | ---------- | ---------- | ------------------ |
-| internal/core     | 2     | 2          | 27         | Good               |
-| internal/services | 7     | 3          | 52         | Good (P0 complete) |
-| internal/testutil | 2     | 0          | (helpers)  | N/A                |
-| cmd               | 12    | 0          | 0          | **None**           |
+| Package           | Files | Test Files | Test Count | Coverage                 |
+| ----------------- | ----- | ---------- | ---------- | ------------------------ |
+| internal/core     | 2     | 2          | 27         | Good                     |
+| internal/services | 7     | 7          | 108        | Good (P0/P1/P2 complete) |
+| internal/testutil | 2     | 0          | (helpers)  | N/A                      |
+| tests/e2e         | 1     | 1          | 23         | Good (E2E complete)      |
+| cmd               | 12    | 0          | 0          | Covered by E2E tests     |
 
 ### Uncommitted Work
 
-Files modified:
-
-- `internal/services/config.go` - Added `NewConfigServiceWithPath()` for testability
-
 New files (untracked):
 
-- `internal/services/config_test.go` - ConfigService tests (10 tests)
-- `internal/services/db_test.go` - DbService tests (14 tests)
-- `internal/services/notebook_test.go` - NotebookService tests (28 tests)
-- `internal/testutil/config.go` - Test helper utilities
-- `internal/testutil/notebook.go` - Test helper utilities
+- `internal/services/note_test.go` - NoteService tests (16 tests)
+- `internal/services/display_test.go` - Display tests (13 tests)
+- `internal/services/templates_test.go` - Templates tests (10 tests)
+- `internal/services/logger_test.go` - Logger tests (17 tests)
+- `tests/e2e/go_smoke_test.go` - E2E CLI tests (23 tests)
 
 ### Remaining Work
 
 **Immediate:**
 
-1. Commit P0 testing work (52 tests, testutil helpers)
-2. Task 5.4: NoteService tests (P1)
+1. Commit all testing work
 
-**Next Sprint:**
-
-1. Tasks 5.5-5.7: Display/Templates/Logger tests (P2)
-2. Task 5.8: E2E tests (P2)
-
-**Future:**
+**Optional Future:**
 
 1. Performance optimization
 2. Documentation updates
@@ -160,12 +150,16 @@ internal/services/
   config_test.go            # ConfigService tests (10 tests) ✅
   db.go                     # DbService with DuckDB
   db_test.go                # DbService tests (14 tests) ✅
-  display.go                # Display service with glamour - NEEDS TESTS
-  logger.go                 # zerolog logging - NEEDS TESTS
+  display.go                # Display service with glamour
+  display_test.go           # Display tests (13 tests) ✅
+  logger.go                 # zerolog logging
+  logger_test.go            # Logger tests (17 tests) ✅
   notebook.go               # NotebookService (complete)
   notebook_test.go          # NotebookService tests (28 tests) ✅
-  note.go                   # NoteService (complete) - NEEDS TESTS
-  templates.go              # TUI templates - NEEDS TESTS
+  note.go                   # NoteService (complete)
+  note_test.go              # NoteService tests (16 tests) ✅
+  templates.go              # TUI templates
+  templates_test.go         # Templates tests (10 tests) ✅
 
 internal/testutil/
   config.go                 # Test helper utilities (NEW)

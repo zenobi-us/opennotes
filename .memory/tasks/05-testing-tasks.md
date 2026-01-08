@@ -23,17 +23,17 @@ Prioritized and grouped tasks to address testing gaps in the Go implementation.
 
 ### Group B: Data Services (P1 - Important)
 
-- [ ] 5.4 NoteService Integration Tests (`note_test.go`) - 2-3 hrs
+- [x] 5.4 NoteService Integration Tests (`note_test.go`) - 2-3 hrs ✅ (2026-01-09) - 16 tests
 
 ### Group C: Display Layer (P2 - Nice to Have)
 
-- [ ] 5.5 Display Service Tests (`display_test.go`) - 1-2 hrs
-- [ ] 5.6 Templates Tests (`templates_test.go`) - 1 hr
-- [ ] 5.7 Logger Tests (`logger_test.go`) - 30 min
+- [x] 5.5 Display Service Tests (`display_test.go`) - 1-2 hrs ✅ (2026-01-09) - 13 tests
+- [x] 5.6 Templates Tests (`templates_test.go`) - 1 hr ✅ (2026-01-09) - 10 tests
+- [x] 5.7 Logger Tests (`logger_test.go`) - 30 min ✅ (2026-01-09) - 17 tests
 
 ### Group D: E2E/Integration (P2 - Future)
 
-- [ ] 5.8 CLI E2E Tests (`tests/e2e/go_smoke_test.go`) - 4-6 hrs
+- [x] 5.8 CLI E2E Tests (`tests/e2e/go_smoke_test.go`) - 4-6 hrs ✅ (2026-01-09) - 23 tests
 
 ---
 
