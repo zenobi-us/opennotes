@@ -191,8 +191,12 @@ export const TuiTemplates = {
   `),
       ctx
     ),
-  NotebookInfo: async (ctx: { notebook: INotebook }) => {
-    const count = await ctx.notebook.notes.count();
+  NotebookInfo: async (ctx: {
+    notebook: INotebook;
+    notes: {
+      count: number;
+    };
+  }) => {
     return TuiRender(
       dedent(`
     # Notebook Information
@@ -200,7 +204,7 @@ export const TuiTemplates = {
     - **Name**: {{notebook.config.name}}
     - **Path**: {{notebook.config.root}}
     - **Config Path**: {{notebook.config.path}}
-    - **Notes**: {{ noteCount }}
+    - **Notes**: {{ notes.count }}
 
     ## Contexts
 
@@ -229,10 +233,7 @@ export const TuiTemplates = {
         {% endfor %}
     {% endfor %}
   `),
-      {
-        notebook: ctx.notebook,
-        noteCount: count,
-      }
+      ctx
     );
   },
   CreateYourFirstNotebook: () =>
@@ -666,7 +667,11 @@ export function createNotebookService(serviceOptions: {
       return null;
     }
 
-    const content = await TuiTemplates.NotebookInfo({ notebook });
+    const notes = {
+      count: await notebook.notes.count(),
+    };
+
+    const content = await TuiTemplates.NotebookInfo({ notebook, notes });
     // eslint-disable-next-line no-console
     console.log(content);
   }

@@ -24,7 +24,7 @@ import { createNotebookService } from './services/NotebookService.ts';
 
 import type { ConfigService } from './services/ConfigService.ts';
 import type { NotebookService } from './services/NotebookService.ts';
-import { createDbService, type DbService } from './services/Db.ts';
+import { createDbService, type DbService } from './services/Db';
 
 declare module '@clerc/core' {
   export interface ContextStore {

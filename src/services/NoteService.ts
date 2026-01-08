@@ -1,6 +1,6 @@
 import { type } from 'arktype';
 import type { ConfigService } from './ConfigService.ts';
-import type { DbService } from './Db.ts';
+import type { DbService } from './Db';
 import { Logger } from './LoggerService.ts';
 import { join } from 'node:path';
 import { TuiRender } from './Display.ts';
@@ -61,7 +61,9 @@ export function createNoteService(options: {
   async function query(query: string) {
     const database = await options.dbService.getDb();
 
-    const result = await database.query(query);
+    const prepared = await database.prepare(query);
+    const request = await prepared.send();
+    const result = await request.readAll();
 
     if (!result) {
       return [];
@@ -115,11 +117,15 @@ export function createNoteService(options: {
       SELECT * FROM read_markdown($filepath, include_filepath:=true)
     `);
 
-    const results = await prepared.send({
+    const request = await prepared.send({
       filepath: join(options.notebookPath, '**', '*.md'),
     });
+    const rows = await request.readAll();
 
-    const rows = await results.readAll();
+    if (!rows || rows.length === 0) {
+      Log.debug('searchNotes: no results');
+      return [];
+    }
 
     const parsedRows = NoteDbSchema.array()(rows);
     if (parsedRows instanceof type.errors) {
@@ -185,18 +191,19 @@ export function createNoteService(options: {
     count: 'string.integer.parse',
   }).array();
 
+  /**
+   * Counts the number of markdown notes in the notebook path.
+   * @returns The count of markdown notes
+   */
   async function count(): Promise<number> {
-    // Not implemented
     const db = await options.dbService.getDb();
     const notebookPath = options.notebookPath || '';
     const glob = join(notebookPath, '**', '*.md');
-    const prepared = await db.prepare(`SELECT COUNT(*) as count FROM read_markdown($pattern)`);
     Log.debug('count: notebookPath=%s glob=%s', notebookPath, glob);
-    const result = await prepared.send({
-      pattern: glob,
-    });
+    const prepared = await db.prepare(`SELECT COUNT(*) as count FROM read_markdown($pattern)`);
+    Log.debug('count: prepared=%o', prepared);
 
-    const rows = await result.readAll();
+    const rows = await prepared.send({ pattern: glob });
 
     const parsed = CountResultSchema(rows);
     if (parsed instanceof type.errors) {
