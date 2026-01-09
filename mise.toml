@@ -1,12 +1,29 @@
-[tools]
-bun = "1.3.2"
-duckdb = "latest"
-goreleaser = "latest"
-npm = "11.6.3"
-semver = "3.4.0"
-usage = "2.8.0"
-
+# OpenTask - mise configuration
+# Specifies development environment requirements
 [env]
-_.path = [
-    "{{config_root}}/node_modules/.bin",
-]
+_.path = ["./bin", "./node_modules/.bin"]
+
+[tools]
+# Go version - pinned to match go.mod
+go = "1.25.3"
+duckdb = "latest"
+goreleaser = "2.12.7"
+"npm:release-please" = "17.1.3"
+golangci-lint = "2.6.2"
+gitleaks = "latest"
+usage = "2.8.0"
+hk = "latest"
+pkl = "latest"
+trufflehog = "latest"
+"go:golang.org/x/vuln/cmd/govulncheck" = "latest"
+shellcheck = "latest"
+
+# VS Code Go tools
+"go:github.com/golangci/golangci-lint/cmd/golangci-lint" = "latest"
+"go:github.com/go-delve/delve/cmd/dlv" = "latest"
+"go:golang.org/x/tools/gopls" = "latest"
+"go:honnef.co/go/tools/cmd/staticcheck" = "latest"
+"npm:semver" = "7.7.3"
+
+# Tasks are defined as file tasks in .mise/tasks/
+# Run `mise tasks` to see available tasks
