@@ -5,7 +5,6 @@ project_name: opennotes
 env:
   # Use Go 1.21 (from go.mod)
   - GO111MODULE=on
-  - CGO_ENABLED=0
 
 before:
   hooks:
@@ -13,39 +12,18 @@ before:
     - go mod tidy
 
 builds:
-  - id: default
+  - id: linux-amd64
     main: ./main.go
     binary: opennotes
-
-    # Build for multiple platforms
     goos:
       - linux
-      - darwin
-      - windows
-
     goarch:
       - amd64
-      - arm64
-      - arm
-
-    goarm:
-      - '6'
-      - '7'
-
     ldflags:
       - -s -w
       - -X github.com/zenobius/opennotes/cmd.Version={{.Version}}
       - -X github.com/zenobius/opennotes/cmd.Commit={{.Commit}}
       - -X github.com/zenobius/opennotes/cmd.Date={{.Date}}
-
-    # Build matrix - skip some combinations
-    ignore:
-      - goos: windows
-        goarch: arm
-      - goos: windows
-        goarch: arm64
-      - goos: darwin
-        goarch: arm
 
 archives:
   - id: default
@@ -83,7 +61,7 @@ release:
   # Publish to GitHub Releases
   github:
     owner: zenobi-us
-    repo: opennotes
+    name: opennotes
 
   prerelease: auto # Auto-detect prerelease from tag (rc, alpha, beta, etc.)
   mode: keep-existing # Don't overwrite existing
