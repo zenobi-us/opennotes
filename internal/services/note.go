@@ -146,6 +146,52 @@ func (s *NoteService) Count(ctx context.Context) (int, error) {
 	return count, nil
 }
 
+// ValidateSQL validates a user-provided SQL query for safety.
+// Only SELECT and WITH (CTE) queries are allowed.
+// Dangerous keywords (DROP, DELETE, UPDATE, etc.) are blocked.
+func ValidateSQL(query string) error {
+	// Trim and normalize to uppercase
+	normalized := strings.TrimSpace(strings.ToUpper(query))
+
+	if normalized == "" {
+		return fmt.Errorf("query cannot be empty")
+	}
+
+	// Check query type - only SELECT and WITH allowed
+	if !strings.HasPrefix(normalized, "SELECT") && !strings.HasPrefix(normalized, "WITH") {
+		return fmt.Errorf("only SELECT queries are allowed")
+	}
+
+	// Dangerous keywords blocklist - check with word boundaries
+	// Split query by spaces and other delimiters to find keywords
+	tokens := strings.FieldsFunc(normalized, func(r rune) bool {
+		return r == ' ' || r == '\t' || r == '\n' || r == '(' || r == ')' ||
+			r == ',' || r == ';' || r == '=' || r == '<' || r == '>'
+	})
+
+	dangerous := map[string]bool{
+		"DROP":    true,
+		"DELETE":  true,
+		"UPDATE":  true,
+		"INSERT":  true,
+		"ALTER":   true,
+		"CREATE":  true,
+		"TRUNCATE": true,
+		"REPLACE": true,
+		"ATTACH":  true,
+		"DETACH":  true,
+		"PRAGMA":  true,
+	}
+
+	for _, token := range tokens {
+		if dangerous[token] {
+			return fmt.Errorf("keyword '%s' is not allowed", token)
+		}
+	}
+
+	return nil
+}
+
 // Query executes a raw SQL query.
 func (s *NoteService) Query(ctx context.Context, sql string) ([]map[string]any, error) {
 	return s.dbService.Query(ctx, sql)

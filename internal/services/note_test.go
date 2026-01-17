@@ -395,3 +395,233 @@ func TestNewNoteService(t *testing.T) {
 
 	assert.NotNil(t, svc)
 }
+
+// Tests for ValidateSQL
+
+func TestValidateSQL_SelectQuery(t *testing.T) {
+	tests := []string{
+		"SELECT * FROM markdown",
+		"SELECT id, title FROM markdown WHERE id > 5",
+		"  SELECT  *  FROM  markdown  ",
+		"select * from markdown",
+		"SeLeCt * FrOm markdown",
+	}
+
+	for _, query := range tests {
+		t.Run(fmt.Sprintf("valid_select_%s", query[:10]), func(t *testing.T) {
+			err := services.ValidateSQL(query)
+			assert.NoError(t, err, "valid SELECT query should pass: %s", query)
+		})
+	}
+}
+
+func TestValidateSQL_WithQuery(t *testing.T) {
+	tests := []string{
+		"WITH cte AS (SELECT * FROM markdown) SELECT * FROM cte",
+		"  WITH  cte  AS  (SELECT * FROM markdown) SELECT * FROM cte  ",
+		"with cte as (select * from markdown) select * from cte",
+	}
+
+	for _, query := range tests {
+		t.Run(fmt.Sprintf("valid_with_%s", query[:10]), func(t *testing.T) {
+			err := services.ValidateSQL(query)
+			assert.NoError(t, err, "valid WITH (CTE) query should pass: %s", query)
+		})
+	}
+}
+
+func TestValidateSQL_EmptyQuery(t *testing.T) {
+	tests := []string{
+		"",
+		"   ",
+		"\n\t",
+	}
+
+	for _, query := range tests {
+		t.Run("empty_query", func(t *testing.T) {
+			err := services.ValidateSQL(query)
+			assert.Error(t, err, "empty query should fail")
+			assert.Contains(t, err.Error(), "empty")
+		})
+	}
+}
+
+func TestValidateSQL_InvalidQueryType(t *testing.T) {
+	tests := []string{
+		"INSERT INTO markdown VALUES (...)",
+		"UPDATE markdown SET col = val",
+		"DELETE FROM markdown",
+		"SHOW TABLES",
+		"DESCRIBE markdown",
+	}
+
+	for _, query := range tests {
+		t.Run(fmt.Sprintf("invalid_type_%s", query[:10]), func(t *testing.T) {
+			err := services.ValidateSQL(query)
+			assert.Error(t, err, "non-SELECT query should fail: %s", query)
+			assert.Contains(t, err.Error(), "only SELECT queries are allowed")
+		})
+	}
+}
+
+func TestValidateSQL_BlockedKeyword_Drop(t *testing.T) {
+	err := services.ValidateSQL("SELECT * FROM markdown DROP TABLE temp")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "DROP")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Delete(t *testing.T) {
+	err := services.ValidateSQL("SELECT * DELETE FROM markdown")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "DELETE")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Update(t *testing.T) {
+	err := services.ValidateSQL("SELECT * UPDATE markdown")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "UPDATE")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Insert(t *testing.T) {
+	err := services.ValidateSQL("SELECT * INSERT INTO markdown")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "INSERT")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Alter(t *testing.T) {
+	err := services.ValidateSQL("SELECT * ALTER TABLE markdown")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "ALTER")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Create(t *testing.T) {
+	err := services.ValidateSQL("SELECT * CREATE TABLE markdown")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "CREATE")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Truncate(t *testing.T) {
+	err := services.ValidateSQL("SELECT * TRUNCATE TABLE x")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "TRUNCATE")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Replace(t *testing.T) {
+	err := services.ValidateSQL("SELECT * REPLACE INTO markdown")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "REPLACE")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Attach(t *testing.T) {
+	err := services.ValidateSQL("SELECT * ATTACH DATABASE 'file.db'")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "ATTACH")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Detach(t *testing.T) {
+	err := services.ValidateSQL("SELECT * DETACH DATABASE db")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "DETACH")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_BlockedKeyword_Pragma(t *testing.T) {
+	err := services.ValidateSQL("SELECT * PRAGMA table_info")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "PRAGMA")
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestValidateSQL_CaseInsensitive(t *testing.T) {
+	// Same queries in different cases should all be blocked
+	tests := []string{
+		"drop table markdown",
+		"DROP TABLE markdown",
+		"DrOp TaBlE markdown",
+	}
+
+	for _, query := range tests {
+		t.Run(fmt.Sprintf("case_insensitive_%s", query[:10]), func(t *testing.T) {
+			err := services.ValidateSQL(query)
+			assert.Error(t, err, "DROP in any case should be blocked: %s", query)
+		})
+	}
+}
+
+func TestValidateSQL_KeywordInStrings(t *testing.T) {
+	// With word boundary checking, keywords in string literals are now allowed
+	// This is better UX - users can search for content containing these words
+	err := services.ValidateSQL("SELECT 'DROP' as dangerous FROM markdown")
+	assert.NoError(t, err, "keywords in string literals should be allowed")
+
+	// But if the keyword appears outside strings, it should still be blocked
+	err = services.ValidateSQL("SELECT 'drop' as text DROP TABLE markdown")
+	assert.Error(t, err, "actual DROP keyword should be blocked")
+	assert.Contains(t, err.Error(), "DROP")
+}
+
+func TestValidateSQL_ComplexValidQuery(t *testing.T) {
+	query := `
+	WITH recent_notes AS (
+		SELECT id, title, content
+		FROM markdown
+		WHERE published_date > NOW() - INTERVAL 7 DAY
+	),
+	tagged_notes AS (
+		SELECT id, title, 'recent' as tag
+		FROM recent_notes
+	)
+	SELECT * FROM tagged_notes
+	ORDER BY id DESC
+	LIMIT 100
+	`
+
+	err := services.ValidateSQL(query)
+	assert.NoError(t, err, "complex valid CTE query should pass")
+}
+
+func TestValidateSQL_SubqueryValid(t *testing.T) {
+	query := `
+	SELECT * FROM (
+		SELECT id, COUNT(*) as cnt
+		FROM markdown
+		GROUP BY id
+		HAVING COUNT(*) > 5
+	) AS subquery
+	`
+
+	err := services.ValidateSQL(query)
+	assert.NoError(t, err, "subquery should pass validation")
+}
+
+func TestValidateSQL_JoinValid(t *testing.T) {
+	query := `
+	SELECT m1.id, m2.id
+	FROM markdown m1
+	JOIN markdown m2 ON m1.id = m2.id
+	WHERE m1.content LIKE '%test%'
+	`
+
+	err := services.ValidateSQL(query)
+	assert.NoError(t, err, "JOIN should be allowed")
+}
+
+func TestValidateSQL_UnionValid(t *testing.T) {
+	query := `
+	SELECT id FROM markdown WHERE id > 10
+	UNION
+	SELECT id FROM markdown WHERE title LIKE '%test%'
+	`
+
+	err := services.ValidateSQL(query)
+	assert.NoError(t, err, "UNION should be allowed")
+}
