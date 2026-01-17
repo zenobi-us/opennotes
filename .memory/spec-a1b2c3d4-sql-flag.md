@@ -456,15 +456,15 @@ WHERE md_to_text(content) LIKE '%search term%'
 
 ## Tasks
 
-This phase contains the following tasks (to be created as separate task files):
+This phase contains the following tasks (created as separate task files):
 
 ### Story 1: Core Functionality (MVP)
-- [ ] `task-xxxxxxxx-add-readonly-db.md` - Add `DbService.GetReadOnlyDB()` method
-- [ ] `task-xxxxxxxx-sql-validation.md` - Add `NoteService.validateSQLQuery()` helper
-- [ ] `task-xxxxxxxx-execute-sql-safe.md` - Add `NoteService.ExecuteSQLSafe()` method
-- [ ] `task-xxxxxxxx-render-sql-results.md` - Add `DisplayService.RenderSQLResults()` method
-- [ ] `task-xxxxxxxx-sql-flag-cli.md` - Add `--sql` flag to `cmd/search.go`
-- [ ] `task-xxxxxxxx-sql-unit-tests.md` - Write unit tests (>80% coverage)
+- [ ] [task-4f209693-add-readonly-db.md](.memory/task-4f209693-add-readonly-db.md) - Add `DbService.GetReadOnlyDB()` method
+- [ ] [task-d4548dcd-sql-validation.md](.memory/task-d4548dcd-sql-validation.md) - Add `NoteService.validateSQLQuery()` helper
+- [ ] [task-bef53880-execute-sql-safe.md](.memory/task-bef53880-execute-sql-safe.md) - Add `NoteService.ExecuteSQLSafe()` method
+- [ ] [task-c7fc4f57-render-sql-results.md](.memory/task-c7fc4f57-render-sql-results.md) - Add `DisplayService.RenderSQLResults()` method
+- [ ] [task-710bd5bd-sql-flag-cli.md](.memory/task-710bd5bd-sql-flag-cli.md) - Add `--sql` flag to `cmd/search.go`
+- [ ] [task-a1e4fa4c-sql-unit-tests.md](.memory/task-a1e4fa4c-sql-unit-tests.md) - Write unit tests (>80% coverage)
 
 **Deliverables:**
 - Working `--sql` flag with validated query execution
@@ -474,16 +474,16 @@ This phase contains the following tasks (to be created as separate task files):
 **Estimated Effort**: 3-4 hours (reduced from 4-6 due to existing infrastructure)
 
 ### Story 2: Enhanced Display (Optional)
-- [ ] `task-xxxxxxxx-table-formatting.md` - Improve table formatting (colors, alignment)
-- [ ] `task-xxxxxxxx-content-truncation.md` - Handle long content (truncation with ...)
-- [ ] `task-xxxxxxxx-format-flag.md` - Support `--format json|csv|table` flag
+- [ ] [task-90e473c7-table-formatting.md](.memory/task-90e473c7-table-formatting.md) - Improve table formatting (colors, alignment)
+- [ ] [task-57bf589a-content-truncation.md](.memory/task-57bf589a-content-truncation.md) - Handle long content (truncation with ...)
+- [ ] [task-35b138e9-format-flag.md](.memory/task-35b138e9-format-flag.md) - Support `--format json|csv|table` flag
 
 **Estimated Effort**: 2-3 hours
 
 ### Story 3: Documentation
-- [ ] `task-xxxxxxxx-cli-help.md` - Update `opennotes search --help` text
-- [ ] `task-xxxxxxxx-user-guide.md` - Write user guide with examples
-- [ ] `task-xxxxxxxx-function-docs.md` - Document available SQL functions
+- [ ] [task-3cc36897-cli-help.md](.memory/task-3cc36897-cli-help.md) - Update `opennotes search --help` text
+- [ ] [task-66c1bc07-user-guide.md](.memory/task-66c1bc07-user-guide.md) - Write user guide with examples
+- [ ] [task-ed37261d-function-docs.md](.memory/task-ed37261d-function-docs.md) - Document available SQL functions
 
 **Estimated Effort**: 2-3 hours
 
