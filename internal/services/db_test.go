@@ -283,3 +283,227 @@ func TestDbService_Query_WithArgs(t *testing.T) {
 	assert.Equal(t, int64(42), results[0]["value"])
 	assert.Equal(t, "test", results[0]["name"])
 }
+
+// Tests for GetReadOnlyDB
+
+func TestDbService_GetReadOnlyDB_ReturnsConnection(t *testing.T) {
+	ctx := context.Background()
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	db, err := svc.GetReadOnlyDB(ctx)
+	require.NoError(t, err)
+	assert.NotNil(t, db)
+}
+
+func TestDbService_GetReadOnlyDB_LoadsMarkdownExtension(t *testing.T) {
+	ctx := context.Background()
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	db, err := svc.GetReadOnlyDB(ctx)
+	require.NoError(t, err)
+
+	// Verify markdown extension is loaded
+	rows, err := db.QueryContext(ctx, "SELECT extension_name FROM duckdb_extensions() WHERE extension_name = 'markdown' AND loaded = true")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		if err := rows.Close(); err != nil {
+			t.Logf("warning: failed to close rows: %v", err)
+		}
+	})
+
+	// Should find the markdown extension
+	assert.True(t, rows.Next(), "markdown extension should be loaded on read-only connection")
+}
+
+func TestDbService_GetReadOnlyDB_LazyInit(t *testing.T) {
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	// Before GetReadOnlyDB, readOnly should be nil
+	assert.Nil(t, svc.readOnly)
+
+	// After GetReadOnlyDB, readOnly should be initialized
+	ctx := context.Background()
+	_, err := svc.GetReadOnlyDB(ctx)
+	require.NoError(t, err)
+	assert.NotNil(t, svc.readOnly)
+}
+
+func TestDbService_GetReadOnlyDB_ReturnsSameConnection(t *testing.T) {
+	ctx := context.Background()
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	db1, err := svc.GetReadOnlyDB(ctx)
+	require.NoError(t, err)
+
+	db2, err := svc.GetReadOnlyDB(ctx)
+	require.NoError(t, err)
+
+	// Should return the same connection
+	assert.Same(t, db1, db2)
+}
+
+func TestDbService_GetReadOnlyDB_IsSeparateFromMainDB(t *testing.T) {
+	ctx := context.Background()
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	db, err := svc.GetDB(ctx)
+	require.NoError(t, err)
+
+	roDb, err := svc.GetReadOnlyDB(ctx)
+	require.NoError(t, err)
+
+	// Should be different connections
+	assert.NotSame(t, db, roDb)
+}
+
+func TestDbService_GetReadOnlyDB_ExecutesQuery(t *testing.T) {
+	ctx := context.Background()
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	db, err := svc.GetReadOnlyDB(ctx)
+	require.NoError(t, err)
+
+	// Should be able to execute a simple query
+	rows, err := db.QueryContext(ctx, "SELECT 1 as value")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		if err := rows.Close(); err != nil {
+			t.Logf("warning: failed to close rows: %v", err)
+		}
+	})
+
+	assert.True(t, rows.Next())
+	var value int
+	err = rows.Scan(&value)
+	require.NoError(t, err)
+	assert.Equal(t, 1, value)
+}
+
+func TestDbService_Close_BothConnections(t *testing.T) {
+	ctx := context.Background()
+	svc := NewDbService()
+
+	// Initialize both connections
+	_, err := svc.GetDB(ctx)
+	require.NoError(t, err)
+
+	_, err = svc.GetReadOnlyDB(ctx)
+	require.NoError(t, err)
+
+	// Close should close both
+	err = svc.Close()
+	assert.NoError(t, err)
+}
+
+func TestDbService_GetReadOnlyDB_ConcurrentAccess(t *testing.T) {
+	ctx := context.Background()
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	// Run multiple goroutines calling GetReadOnlyDB concurrently
+	const numGoroutines = 10
+	var wg sync.WaitGroup
+	errs := make(chan error, numGoroutines)
+	dbs := make(chan interface{}, numGoroutines)
+
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			db, err := svc.GetReadOnlyDB(ctx)
+			if err != nil {
+				errs <- err
+				return
+			}
+			dbs <- db
+		}()
+	}
+
+	wg.Wait()
+	close(errs)
+	close(dbs)
+
+	// No errors should have occurred
+	for err := range errs {
+		t.Errorf("concurrent GetReadOnlyDB failed: %v", err)
+	}
+
+	// All goroutines should have received the same DB instance
+	var firstDB interface{}
+	for db := range dbs {
+		if firstDB == nil {
+			firstDB = db
+		} else {
+			assert.Same(t, firstDB, db)
+		}
+	}
+}
+
+func TestDbService_GetReadOnlyDB_ReadMarkdown(t *testing.T) {
+	ctx := context.Background()
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	// Create a temporary markdown file
+	tmpDir := t.TempDir()
+	mdFile := filepath.Join(tmpDir, "test.md")
+	content := `# Read Only Test
+
+This should be readable from read-only connection.
+`
+	err := os.WriteFile(mdFile, []byte(content), 0644)
+	require.NoError(t, err)
+
+	// Query using read-only connection
+	db, err := svc.GetReadOnlyDB(ctx)
+	require.NoError(t, err)
+
+	rows, err := db.QueryContext(ctx, "SELECT * FROM read_markdown(?)", mdFile)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		if err := rows.Close(); err != nil {
+			t.Logf("warning: failed to close rows: %v", err)
+		}
+	})
+
+	// Should be able to read the markdown file
+	assert.True(t, rows.Next(), "read-only connection should be able to read markdown files")
+}
