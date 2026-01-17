@@ -1,4 +1,11 @@
-# OpenNotes - TODO
+# OpenNotes - SQL Flag Feature TODO
+
+**Epic**: [SQL Flag Feature](epic-2f3c4d5e-sql-flag-feature.md)  
+**Overall Status**: ✅ READY FOR IMPLEMENTATION  
+**Review Chain**: Architecture ✅ | Planning ✅ | Code Review ⏳  
+**Expected Completion**: 7-9 hours (MVP + Documentation)
+
+---
 
 ## Active Tasks
 

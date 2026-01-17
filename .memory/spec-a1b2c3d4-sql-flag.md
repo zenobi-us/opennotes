@@ -1,11 +1,11 @@
 # Specification: SQL Flag for Search Command
 
 **Spec ID**: a1b2c3d4
-**Epic**: [TBD - No epic defined yet]
-**Status**: Planning
+**Epic**: [SQL Flag Feature](epic-2f3c4d5e-sql-flag-feature.md)
+**Status**: Ready for Implementation
 **Priority**: Medium
 **Created**: 2026-01-09
-**Updated**: 2026-01-17 (Reorganized as spec file with stories)
+**Updated**: 2026-01-17 (Complete specification with all stories and tasks)
 
 ## Overview
 

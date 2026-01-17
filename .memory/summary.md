@@ -6,9 +6,10 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ## Current Status
 
+- **Epic**: [SQL Flag Feature](epic-2f3c4d5e-sql-flag-feature.md)
 - **Phase**: Planning (Ready for Implementation)
-- **Last Updated**: 2026-01-09
-- **Next Action**: Review and approve specification, then implement Phase 1
+- **Last Updated**: 2026-01-17
+- **Next Action**: Execute Pre-Start Verification Checklist, then implement Phase 1
 
 ## Active Work
 
@@ -165,17 +166,20 @@ Comprehensive codebase analysis using CodeMapper skill:
 
 ```
 .memory/
-  summary.md                              # This file - project overview
+  summary.md                              # Project overview
   team.md                                 # Current work tracking
   todo.md                                 # Active tasks & implementation status
+  epic-2f3c4d5e-sql-flag-feature.md      # SQL flag feature epic with all phases
   research-b8f3d2a1-duckdb-go-markdown.md # DuckDB research
   spec-a1b2c3d4-sql-flag.md              # SQL flag specification with stories
   learning-8f6a2e3c-*.md                  # Learning: Architecture review
   learning-7d9c4e1b-*.md                  # Learning: Implementation planning
   learning-5e4c3f2a-*.md                  # Learning: Codebase architecture
-  task-*.md                               # 12 individual story tasks
-  audit-20260117-naming-review.md         # Audit report (miniproject compliance)
+  review-cleanup-report.md                # Cleanup review report
+  task-*.md (12 files)                    # Individual story tasks
   archive/
+    ├── audits/2026-01-17/
+    │   └── audit-20260117-naming-review.md   # Archived naming audit
     ├── reviews/2026-01-17/
     │   ├── review-architect-sql-flag-summary.md    # Architecture summary
     │   ├── review-planning-summary.md              # Planning summary

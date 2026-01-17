@@ -1,5 +1,7 @@
 # Task: Add NoteService.ExecuteSQLSafe() Method
 
+**Epic**: [SQL Flag Feature](epic-2f3c4d5e-sql-flag-feature.md)
+
 **Spec**: [SQL Flag Specification](spec-a1b2c3d4-sql-flag.md)
 **Story**: Story 1 - Core Functionality (MVP)
 **Priority**: HIGH
