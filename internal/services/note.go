@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 )
@@ -190,6 +191,52 @@ func ValidateSQL(query string) error {
 	}
 
 	return nil
+}
+
+// ExecuteSQLSafe executes a user-provided SQL query safely.
+// Validates the query, executes with a 30-second timeout on a read-only connection,
+// and returns results as maps.
+func (s *NoteService) ExecuteSQLSafe(ctx context.Context, query string) ([]map[string]any, error) {
+	// 1. Validate query
+	if err := ValidateSQL(query); err != nil {
+		s.log.Warn().Err(err).Msg("SQL query validation failed")
+		return nil, fmt.Errorf("invalid query: %w", err)
+	}
+
+	// 2. Get read-only connection
+	db, err := s.dbService.GetReadOnlyDB(ctx)
+	if err != nil {
+		s.log.Error().Err(err).Msg("failed to get read-only database connection")
+		return nil, fmt.Errorf("database error: %w", err)
+	}
+
+	// 3. Create context with 30-second timeout
+	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	s.log.Debug().Str("query", query).Msg("executing SQL query")
+
+	// 4. Execute query
+	rows, err := db.QueryContext(timeoutCtx, query)
+	if err != nil {
+		s.log.Error().Err(err).Str("query", query).Msg("query execution failed")
+		return nil, fmt.Errorf("query execution failed: %w", err)
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.log.Warn().Err(err).Msg("failed to close result rows")
+		}
+	}()
+
+	// 5. Convert rows to maps
+	results, err := rowsToMaps(rows)
+	if err != nil {
+		s.log.Error().Err(err).Msg("failed to scan query results")
+		return nil, fmt.Errorf("failed to read results: %w", err)
+	}
+
+	s.log.Debug().Int("rows", len(results)).Msg("query executed successfully")
+	return results, nil
 }
 
 // Query executes a raw SQL query.

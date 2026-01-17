@@ -625,3 +625,289 @@ func TestValidateSQL_UnionValid(t *testing.T) {
 	err := services.ValidateSQL(query)
 	assert.NoError(t, err, "UNION should be allowed")
 }
+
+// Tests for ExecuteSQLSafe
+
+func TestNoteService_ExecuteSQLSafe_ValidSelect(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+	testutil.CreateTestNote(t, notebookDir, "note1.md", "# Note 1\n\nContent with numbers 42 and 100.")
+	testutil.CreateTestNote(t, notebookDir, "note2.md", "# Note 2\n\nAnother note.")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	results, err := svc.ExecuteSQLSafe(ctx, "SELECT 1 as value, 'test' as message")
+	require.NoError(t, err)
+
+	require.Len(t, results, 1)
+	assert.Equal(t, int32(1), results[0]["value"])
+	assert.Equal(t, "test", results[0]["message"])
+}
+
+func TestNoteService_ExecuteSQLSafe_InvalidQuery(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Try to execute DROP query
+	_, err := svc.ExecuteSQLSafe(ctx, "DROP TABLE markdown")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid query")
+}
+
+func TestNoteService_ExecuteSQLSafe_EmptyResult(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Query that returns no results
+	results, err := svc.ExecuteSQLSafe(ctx, "SELECT 1 WHERE 1=0")
+	require.NoError(t, err)
+
+	assert.Empty(t, results)
+	assert.Len(t, results, 0)
+}
+
+func TestNoteService_ExecuteSQLSafe_MultipleRows(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Query that returns multiple rows
+	results, err := svc.ExecuteSQLSafe(ctx, `
+		SELECT * FROM (
+			VALUES (1, 'a'), (2, 'b'), (3, 'c')
+		) AS t(id, letter)
+	`)
+	require.NoError(t, err)
+
+	require.Len(t, results, 3)
+	assert.Equal(t, int32(1), results[0]["id"])
+	assert.Equal(t, "a", results[0]["letter"])
+	assert.Equal(t, int32(2), results[1]["id"])
+	assert.Equal(t, "b", results[1]["letter"])
+	assert.Equal(t, int32(3), results[2]["id"])
+	assert.Equal(t, "c", results[2]["letter"])
+}
+
+func TestNoteService_ExecuteSQLSafe_WithClause(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// WITH (CTE) query
+	results, err := svc.ExecuteSQLSafe(ctx, `
+		WITH cte AS (
+			SELECT 1 as num, 'first' as label
+			UNION ALL
+			SELECT 2 as num, 'second' as label
+		)
+		SELECT * FROM cte WHERE num > 1
+	`)
+	require.NoError(t, err)
+
+	require.Len(t, results, 1)
+	assert.Equal(t, int32(2), results[0]["num"])
+	assert.Equal(t, "second", results[0]["label"])
+}
+
+func TestNoteService_ExecuteSQLSafe_InvalidSyntax(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Invalid SQL syntax
+	_, err := svc.ExecuteSQLSafe(ctx, "SELECT * INVALID SYNTAX HERE")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "query execution failed")
+}
+
+func TestNoteService_ExecuteSQLSafe_ContextCancellation(t *testing.T) {
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Create cancelled context
+	cancelledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	// Should fail due to cancelled context
+	_, err := svc.ExecuteSQLSafe(cancelledCtx, "SELECT 1")
+	assert.Error(t, err)
+}
+
+func TestNoteService_ExecuteSQLSafe_TypeConversions(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Query with various types
+	results, err := svc.ExecuteSQLSafe(ctx, `
+		SELECT 
+			42 as int_val,
+			3.14 as float_val,
+			'text' as str_val,
+			true as bool_val,
+			NULL as null_val
+	`)
+	require.NoError(t, err)
+
+	require.Len(t, results, 1)
+	row := results[0]
+
+	// Check type conversions
+	assert.NotNil(t, row["int_val"])
+	assert.NotNil(t, row["str_val"])
+	assert.Equal(t, true, row["bool_val"])
+	assert.Nil(t, row["null_val"])
+}
+
+func TestNoteService_ExecuteSQLSafe_ComplexQuery(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Complex query with joins, aggregation, filtering
+	results, err := svc.ExecuteSQLSafe(ctx, `
+		WITH numbered AS (
+			SELECT 1 as n, 'a' as letter
+			UNION ALL
+			SELECT 2 as n, 'b' as letter
+			UNION ALL
+			SELECT 3 as n, 'c' as letter
+		)
+		SELECT 
+			n,
+			letter,
+			LENGTH(letter) as letter_len
+		FROM numbered
+		WHERE n >= 2
+		ORDER BY n DESC
+	`)
+	require.NoError(t, err)
+
+	require.Len(t, results, 2)
+	
+	// First result (n=3)
+	assert.Equal(t, int32(3), results[0]["n"])
+	assert.Equal(t, "c", results[0]["letter"])
+	
+	// Second result (n=2)
+	assert.Equal(t, int32(2), results[1]["n"])
+	assert.Equal(t, "b", results[1]["letter"])
+}
+
+func TestNoteService_ExecuteSQLSafe_ReadOnlyEnforcement(t *testing.T) {
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	ctx := context.Background()
+
+	// Even if validation didn't catch it, read-only connection prevents writes
+	// This is caught by ValidateSQL, but the read-only connection is a defense-in-depth layer
+	_, err := svc.ExecuteSQLSafe(ctx, "SELECT 1")
+	require.NoError(t, err)
+	
+	// DELETE would be caught by validation before reaching the DB
+	_, err = svc.ExecuteSQLSafe(ctx, "DELETE FROM markdown")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid query")
+}
