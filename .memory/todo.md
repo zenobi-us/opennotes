@@ -105,6 +105,10 @@
 - [ ] Story 3 documentation complete (if doing MVP + docs)
 - [ ] Code review approved
 
+## Bug Reports
+
+- [ ] [task-c03646d9-clipboard-filename-slugify.md](.memory/task-c03646d9-clipboard-filename-slugify.md) - **BUG**: Clipboard temp filename should be slugified (not UUID format)
+
 ## Awaiting Review
 
 - [ ] [NEEDS-HUMAN] Resolve 3 implementation blockers
