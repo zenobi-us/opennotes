@@ -1,7 +1,7 @@
 {
   "name": "sql-flag-story1-implementation",
   "taskFile": ".ralph/sql-flag-story1-implementation.md",
-  "iteration": 1,
+  "iteration": 2,
   "maxIterations": 10,
   "itemsPerIteration": 1,
   "reflectEvery": 0,

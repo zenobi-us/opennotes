@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/zenobi-us/opennotes/internal/services"
 )
 
 var notesSearchCmd = &cobra.Command{
@@ -19,9 +20,42 @@ Examples:
   opennotes notes search "meeting"
 
   # Search with specific notebook
-  opennotes notes search "todo" --notebook ~/notes`,
-	Args: cobra.ExactArgs(1),
+  opennotes notes search "todo" --notebook ~/notes
+
+  # Execute custom SQL query
+  opennotes notes search --sql "SELECT * FROM markdown LIMIT 10"`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Get --sql flag if provided
+		sqlQuery, _ := cmd.Flags().GetString("sql")
+
+		// If --sql flag is provided, run SQL mode
+		if sqlQuery != "" {
+			nb, err := requireNotebook(cmd)
+			if err != nil {
+				return err
+			}
+
+			// Execute the SQL query using NoteService
+			results, err := nb.Notes.ExecuteSQLSafe(context.Background(), sqlQuery)
+			if err != nil {
+				return fmt.Errorf("SQL query failed: %w", err)
+			}
+
+			// Create display service and render results
+			display, err := services.NewDisplay()
+			if err != nil {
+				return fmt.Errorf("failed to create display: %w", err)
+			}
+
+			return display.RenderSQLResults(results)
+		}
+
+		// Normal search mode - require a query argument
+		if len(args) == 0 {
+			return fmt.Errorf("query argument required (or use --sql flag)")
+		}
+
 		nb, err := requireNotebook(cmd)
 		if err != nil {
 			return err
@@ -44,4 +78,11 @@ Examples:
 
 func init() {
 	notesCmd.AddCommand(notesSearchCmd)
+
+	// Add --sql flag for custom SQL queries
+	notesSearchCmd.Flags().String(
+		"sql",
+		"",
+		"Execute custom SQL query against notes (bypasses normal search)",
+	)
 }
