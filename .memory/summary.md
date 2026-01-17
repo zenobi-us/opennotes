@@ -30,7 +30,7 @@ Created comprehensive specification for adding `--sql` flag to search command:
 
 **Files**:
   - Research: `.memory/research-b8f3d2a1-duckdb-go-markdown.md` ✅
-  - Spec: `.memory/task-a1b2c3d4-sql-flag-spec.md` ✅
+  - Specification: `.memory/spec-a1b2c3d4-sql-flag.md` ✅
 
 **Key Features**:
 - Custom SQL query support in search command
@@ -126,7 +126,8 @@ Comprehensive codebase analysis using CodeMapper skill:
   team.md                                 # Current work tracking
   todo.md                                 # Active tasks
   research-b8f3d2a1-duckdb-go-markdown.md # DuckDB research (aligned)
-  task-a1b2c3d4-sql-flag-spec.md         # SQL flag specification (aligned)
+  spec-a1b2c3d4-sql-flag.md              # SQL flag specification with stories
+  analysis-20260117-103843-codebase-exploration.md  # Codebase analysis
   archived/
     01-migrate-to-golang/                 # Completed Go migration
       spec.md                             # Original specification

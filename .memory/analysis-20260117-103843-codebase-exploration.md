@@ -59,14 +59,14 @@ TOTAL           79       712          243         21         44
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                     CLI Layer (cmd/)                      │
-│  ┌────────┐  ┌─────────┐  ┌────────┐  ┌──────────┐     │
-│  │  init  │  │notebook │  │ notes  │  │   root   │     │
-│  └────────┘  └─────────┘  └────────┘  └──────────┘     │
+│                     CLI Layer (cmd/)                     │
+│  ┌────────┐  ┌─────────┐  ┌────────┐  ┌──────────┐       │
+│  │  init  │  │notebook │  │ notes  │  │   root   │       │
+│  └────────┘  └─────────┘  └────────┘  └──────────┘       │
 └──────────────────────────────────────────────────────────┘
                           ▼
 ┌──────────────────────────────────────────────────────────┐
-│              Middleware Layer (internal/middleware/)      │
+│              Middleware Layer (internal/middleware/)     │
 │              ┌──────────────────────────┐                │
 │              │  requireNotebook         │                │
 │              │  (resolves notebook path)│                │
@@ -74,28 +74,28 @@ TOTAL           79       712          243         21         44
 └──────────────────────────────────────────────────────────┘
                           ▼
 ┌──────────────────────────────────────────────────────────┐
-│               Service Layer (internal/services/)          │
-│  ┌──────────────┐  ┌────────────────┐  ┌─────────────┐ │
-│  │ ConfigService│  │ NotebookService│  │ NoteService │ │
-│  │ (user config)│  │ (notebook ops) │  │ (SQL query) │ │
-│  └──────────────┘  └────────────────┘  └─────────────┘ │
+│               Service Layer (internal/services/)         │
+│  ┌──────────────┐  ┌────────────────┐  ┌─────────────┐   │
+│  │ ConfigService│  │ NotebookService│  │ NoteService │   │
+│  │ (user config)│  │ (notebook ops) │  │ (SQL query) │   │
+│  └──────────────┘  └────────────────┘  └─────────────┘   │
 │                                                          │
-│  ┌──────────────┐  ┌────────────────┐  ┌─────────────┐ │
-│  │   DbService  │  │ DisplayService │  │   Logger    │ │
-│  │   (DuckDB)   │  │   (TUI/Binja)  │  │   (slog)    │ │
-│  └──────────────┘  └────────────────┘  └─────────────┘ │
+│  ┌──────────────┐  ┌────────────────┐  ┌─────────────┐   │
+│  │   DbService  │  │ DisplayService │  │   Logger    │   │
+│  │   (DuckDB)   │  │   (TUI/Binja)  │  │   (slog)    │   │
+│  └──────────────┘  └────────────────┘  └─────────────┘   │
 └──────────────────────────────────────────────────────────┘
                           ▼
 ┌──────────────────────────────────────────────────────────┐
-│                Core Utilities (internal/core/)            │
-│  ┌────────────┐  ┌──────────────┐  ┌─────────────────┐ │
-│  │   schema   │  │   strings    │  │   validation    │ │
-│  │ (arktype)  │  │ (slugify,etc)│  │  (errors)       │ │
-│  └────────────┘  └──────────────┘  └─────────────────┘ │
+│                Core Utilities (internal/core/)           │
+│  ┌────────────┐  ┌──────────────┐  ┌─────────────────┐   │
+│  │   schema   │  │   strings    │  │   validation    │   │
+│  │ (arktype)  │  │ (slugify,etc)│  │  (errors)       │   │
+│  └────────────┘  └──────────────┘  └─────────────────┘   │
 └──────────────────────────────────────────────────────────┘
                           ▼
 ┌──────────────────────────────────────────────────────────┐
-│                   Data Layer (DuckDB)                     │
+│                   Data Layer (DuckDB)                    │
 │              ┌────────────────────────────┐              │
 │              │  Markdown Extension        │              │
 │              │  (read_markdown tables)    │              │
@@ -335,38 +335,38 @@ opennotes
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│                    FIRST-TIME USER                          │
+│                    FIRST-TIME USER                         │
 └────────────────────────────────────────────────────────────┘
 
 Step 1: Initialize Configuration
 ┌─────────────────────────────────────────────────────────────┐
 │ $ opennotes init                                            │
-│                                                              │
+│                                                             │
 │ Creates: ~/.config/opennotes/config.json                    │
-│ {                                                            │
-│   "notebooks": []                                            │
-│ }                                                            │
+│ {                                                           │
+│   "notebooks": []                                           │
+│ }                                                           │
 └─────────────────────────────────────────────────────────────┘
 
 Step 2: Create First Notebook
 ┌─────────────────────────────────────────────────────────────┐
-│ $ opennotes notebook create --path ~/notes/work            │
-│                                                              │
-│ Creates:                                                     │
+│ $ opennotes notebook create --path ~/notes/work             │
+│                                                             │
+│ Creates:                                                    │
 │   ~/notes/work/.opennotes.json                              │
 │   ~/notes/work/notes/ (directory)                           │
 │   ~/notes/work/templates/ (directory)                       │
-│                                                              │
+│                                                             │
 │ Registers in ~/.config/opennotes/config.json:               │
-│ {                                                            │
-│   "notebooks": [                                             │
-│     {                                                        │
-│       "name": "work",                                        │
+│ {                                                           │
+│   "notebooks": [                                            │
+│     {                                                       │
+│       "name": "work",                                       │
 │       "path": "/home/user/notes/work",                      │
-│       "contexts": []                                         │
-│     }                                                        │
-│   ]                                                          │
-│ }                                                            │
+│       "contexts": []                                        │
+│     }                                                       │
+│   ]                                                         │
+│ }                                                           │
 └─────────────────────────────────────────────────────────────┘
 
 Step 3: Add Context for Smart Resolution
