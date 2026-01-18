@@ -30,7 +30,9 @@ Examples:
 
 		notes, err := nb.Notes.SearchNotes(context.Background(), "")
 		if err != nil {
-			return fmt.Errorf("failed to list notes: %w", err)
+			// DuckDB returns an error when the glob pattern matches no files
+			// Treat this as an empty notebook
+			return displayNoteList([]services.Note{})
 		}
 
 		return displayNoteList(notes)

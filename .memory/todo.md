@@ -93,8 +93,9 @@
 - [ ] Story 3 documentation complete (if doing MVP + docs)
 - [ ] Code review approved
 
-## Bug Reports
+## Bug Reports & New Tasks
 
+- [x] [task-b5c8a9f2-notes-list-format.md](.memory/task-b5c8a9f2-notes-list-format.md) - **✅ COMPLETE**: `opennotes notes list` now formats output with title and filepath
 - [ ] [task-c03646d9-clipboard-filename-slugify.md](.memory/task-c03646d9-clipboard-filename-slugify.md) - **BUG**: Clipboard temp filename should be slugified (not UUID format)
 
 ## Ready for Implementation

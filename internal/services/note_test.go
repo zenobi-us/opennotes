@@ -911,3 +911,104 @@ func TestNoteService_ExecuteSQLSafe_ReadOnlyEnforcement(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid query")
 }
+
+func TestNoteService_SearchNotes_DisplayNameWithTitle(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	// Create note with title in frontmatter
+	testutil.CreateTestNoteWithFrontmatter(t, notebookDir, "my-file.md",
+		map[string]interface{}{
+			"title": "My Custom Title",
+		},
+		"# Note\n\nContent here.",
+	)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	notes, err := svc.SearchNotes(ctx, "")
+	require.NoError(t, err)
+
+	require.Len(t, notes, 1)
+	assert.Equal(t, "My Custom Title", notes[0].DisplayName())
+}
+
+func TestNoteService_SearchNotes_DisplayNameSlugifyFilename(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	// Create note without title - should slugify filename
+	testutil.CreateTestNote(t, notebookDir, "Hello World.md", "# Hello\n\nContent here.")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	notes, err := svc.SearchNotes(ctx, "")
+	require.NoError(t, err)
+
+	require.Len(t, notes, 1)
+	assert.Equal(t, "hello-world", notes[0].DisplayName())
+}
+
+func TestNoteService_SearchNotes_DisplayNameMultipleNotes(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "test-notebook")
+
+	// Create notes with mixed title/no title
+	testutil.CreateTestNoteWithFrontmatter(t, notebookDir, "note1.md",
+		map[string]interface{}{"title": "First Note"},
+		"Content",
+	)
+	testutil.CreateTestNote(t, notebookDir, "note2.md", "Content")
+	testutil.CreateTestNoteWithFrontmatter(t, notebookDir, "note3.md",
+		map[string]interface{}{"title": "Third Note"},
+		"Content",
+	)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	notes, err := svc.SearchNotes(ctx, "")
+	require.NoError(t, err)
+
+	require.Len(t, notes, 3)
+
+	// Verify display names
+	displayNames := make([]string, len(notes))
+	for i, note := range notes {
+		displayNames[i] = note.DisplayName()
+	}
+
+	// Check that we have expected display names (order may vary)
+	assert.Contains(t, displayNames, "First Note")
+	assert.Contains(t, displayNames, "note2")
+	assert.Contains(t, displayNames, "Third Note")
+}

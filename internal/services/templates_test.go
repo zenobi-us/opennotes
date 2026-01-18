@@ -5,15 +5,71 @@ import (
 	"testing"
 )
 
+func TestNote_DisplayName_WithTitle(t *testing.T) {
+	note := Note{}
+	note.File.Relative = "notes/my-note.md"
+	note.File.Filepath = "/path/to/notes/my-note.md"
+	note.Metadata = map[string]any{
+		"title": "My Custom Title",
+	}
+
+	expected := "My Custom Title"
+	if result := note.DisplayName(); result != expected {
+		t.Errorf("DisplayName() = %q, want %q", result, expected)
+	}
+}
+
+func TestNote_DisplayName_WithoutTitle(t *testing.T) {
+	note := Note{}
+	note.File.Relative = "notes/my-note-name.md"
+	note.File.Filepath = "/path/to/notes/my-note-name.md"
+	note.Metadata = map[string]any{}
+
+	expected := "my-note-name"
+	if result := note.DisplayName(); result != expected {
+		t.Errorf("DisplayName() = %q, want %q", result, expected)
+	}
+}
+
+func TestNote_DisplayName_EmptyTitle(t *testing.T) {
+	note := Note{}
+	note.File.Relative = "notes/hello-world.md"
+	note.File.Filepath = "/path/to/notes/hello-world.md"
+	note.Metadata = map[string]any{
+		"title": "",
+	}
+
+	expected := "hello-world"
+	if result := note.DisplayName(); result != expected {
+		t.Errorf("DisplayName() = %q, want %q", result, expected)
+	}
+}
+
+func TestNote_DisplayName_SpecialCharacters(t *testing.T) {
+	note := Note{}
+	note.File.Relative = "notes/My Special Note!.md"
+	note.File.Filepath = "/path/to/notes/My Special Note!.md"
+	note.Metadata = map[string]any{}
+
+	expected := "my-special-note"
+	if result := note.DisplayName(); result != expected {
+		t.Errorf("DisplayName() = %q, want %q", result, expected)
+	}
+}
+
 func TestTuiRender_NoteList_WithNotes(t *testing.T) {
 	// Create notes with the anonymous struct format
 	note1 := Note{}
 	note1.File.Relative = "notes/test1.md"
 	note1.File.Filepath = "/path/to/notes/test1.md"
+	note1.Metadata = map[string]any{
+		"title": "Test Note One",
+	}
 
 	note2 := Note{}
 	note2.File.Relative = "notes/test2.md"
 	note2.File.Filepath = "/path/to/notes/test2.md"
+	note2.Metadata = map[string]any{}
 
 	ctx := map[string]any{
 		"Notes": []Note{note1, note2},
@@ -24,18 +80,27 @@ func TestTuiRender_NoteList_WithNotes(t *testing.T) {
 		t.Fatalf("TuiRender() failed: %v", err)
 	}
 
-	// Check for note count
-	if !strings.Contains(result, "2") {
-		t.Errorf("TuiRender() result = %q, want to contain note count '2'", result)
+	// Check for note count in header
+	if !strings.Contains(result, "(2)") {
+		t.Errorf("TuiRender() result = %q, want to contain '(2)' in header", result)
 	}
 
-	// Check for note files
-	if !strings.Contains(result, "test1.md") {
-		t.Errorf("TuiRender() result = %q, want to contain 'test1.md'", result)
+	// Check for note 1 with title
+	if !strings.Contains(result, "Test Note One") {
+		t.Errorf("TuiRender() result = %q, want to contain 'Test Note One'", result)
 	}
 
-	if !strings.Contains(result, "test2.md") {
-		t.Errorf("TuiRender() result = %q, want to contain 'test2.md'", result)
+	if !strings.Contains(result, "notes/test1.md") {
+		t.Errorf("TuiRender() result = %q, want to contain 'notes/test1.md'", result)
+	}
+
+	// Check for note 2 with slugified name
+	if !strings.Contains(result, "test2") {
+		t.Errorf("TuiRender() result = %q, want to contain 'test2'", result)
+	}
+
+	if !strings.Contains(result, "notes/test2.md") {
+		t.Errorf("TuiRender() result = %q, want to contain 'notes/test2.md'", result)
 	}
 }
 

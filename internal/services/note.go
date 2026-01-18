@@ -3,11 +3,14 @@ package services
 import (
 	"context"
 	"fmt"
+	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/zenobi-us/opennotes/internal/core"
 )
 
 // Note represents a markdown note.
@@ -18,6 +21,25 @@ type Note struct {
 	} `json:"file"`
 	Content  string         `json:"content"`
 	Metadata map[string]any `json:"metadata"`
+}
+
+// DisplayName returns the display name for the note.
+// Priority:
+// 1. metadata["title"] if available
+// 2. Slugified filename (without extension)
+func (n *Note) DisplayName() string {
+	// Check for title in metadata
+	if title, ok := n.Metadata["title"]; ok {
+		if titleStr, ok := title.(string); ok && titleStr != "" {
+			return titleStr
+		}
+	}
+
+	// Fallback to slugified filename
+	filename := path.Base(n.File.Relative)
+	// Remove .md extension
+	filename = strings.TrimSuffix(filename, ".md")
+	return core.Slugify(filename)
 }
 
 // NoteService provides note query operations.
@@ -100,6 +122,27 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, er
 				if v, ok := val.(string); ok {
 					note.Content = v
 				}
+			case "metadata":
+				// metadata column contains a DuckDB MAP with frontmatter data
+				// The type might be duckdb.Map or map[any]any
+				// Try to handle it as a map type by using reflection if needed
+				rv := reflect.ValueOf(val)
+				if rv.Kind() == reflect.Map {
+					// It's some kind of map - iterate over it
+					for _, key := range rv.MapKeys() {
+						if keyStr, ok := key.Interface().(string); ok {
+							note.Metadata[keyStr] = rv.MapIndex(key).Interface()
+						}
+					}
+				} else if v, ok := val.(map[any]any); ok {
+					for k, val := range v {
+						if keyStr, ok := k.(string); ok {
+							note.Metadata[keyStr] = val
+						}
+					}
+				} else if v, ok := val.(map[string]any); ok {
+					note.Metadata = v
+				}
 			default:
 				note.Metadata[col] = val
 			}
@@ -171,17 +214,17 @@ func ValidateSQL(query string) error {
 	})
 
 	dangerous := map[string]bool{
-		"DROP":    true,
-		"DELETE":  true,
-		"UPDATE":  true,
-		"INSERT":  true,
-		"ALTER":   true,
-		"CREATE":  true,
+		"DROP":     true,
+		"DELETE":   true,
+		"UPDATE":   true,
+		"INSERT":   true,
+		"ALTER":    true,
+		"CREATE":   true,
 		"TRUNCATE": true,
-		"REPLACE": true,
-		"ATTACH":  true,
-		"DETACH":  true,
-		"PRAGMA":  true,
+		"REPLACE":  true,
+		"ATTACH":   true,
+		"DETACH":   true,
+		"PRAGMA":   true,
 	}
 
 	for _, token := range tokens {

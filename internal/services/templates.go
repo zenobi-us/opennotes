@@ -17,10 +17,10 @@ var Templates = struct {
 {{- if eq (len .Notes) 0 -}}
 No notes found.
 {{- else -}}
-## Notes ({{ len .Notes }})
+### Notes ({{ len .Notes }})
 
 {{ range .Notes -}}
-- [{{ .File.Relative }}](file://{{ .File.Filepath }})
+- [{{ .DisplayName }}] {{ .File.Relative }}
 {{ end -}}
 {{- end -}}
 `),
