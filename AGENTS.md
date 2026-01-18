@@ -75,46 +75,6 @@ Commands in `cmd/` are **thin orchestration layers only**. All business logic be
 - Complex control flow or conditional logic
 - Type conversions or data manipulation
 
-**Pattern Example**:
-
-```go
-// ❌ BAD: Business logic directly in command
-var searchCmd = &cobra.Command{
-  RunE: func(cmd *cobra.Command, args []string) error {
-    query := args[0]
-    results := []string{}
-    // Direct business logic - belongs in service!
-    for _, note := range allNotes {
-      if strings.Contains(note.Content, query) {
-        results = append(results, note.Title)
-      }
-    }
-    fmt.Printf("Found %d results\n", len(results))
-    return nil
-  },
-}
-
-// ✅ GOOD: Delegated to service, command stays thin
-var searchCmd = &cobra.Command{
-  RunE: func(cmd *cobra.Command, args []string) error {
-    // Step 1: Parse
-    nb, err := requireNotebook(cmd)
-    if err != nil {
-      return err
-    }
-    
-    // Step 2: Call service (all logic there)
-    results, err := nb.Notes.SearchNotes(context.Background(), args[0])
-    if err != nil {
-      return fmt.Errorf("search failed: %w", err)
-    }
-    
-    // Step 3: Display via template
-    return displayNoteList(results)
-  },
-}
-```
-
 **Guideline**: If your command's `RunE` function exceeds 50 lines, extract logic to a service method.
 
 **Current Command Size** (All OK):
@@ -154,14 +114,7 @@ We follow **AHA Principles** (Avoid Hasty Abstractions) over strict DRY enforcem
 
 **Example: Template Display Pattern**
 
-Current code has `displayNoteList()` and `displayNotebookList()` (~60% similar):
-
-```go
-// Both follow same pattern:
-// 1. Call TuiRender with template
-// 2. If error, fallback to manual fmt.Printf
-// 3. Print result
-```
+Current code has `displayNoteList()` and `displayNotebookList()` (~60% similar). Both follow same pattern: Call TuiRender with template → If error, fallback to manual fmt.Printf → Print result
 
 **Why NOT extracted yet:**
 - Only 2 occurrences (waiting for 3rd per AHA)
@@ -180,65 +133,9 @@ Systematically scan for and refactor duplicated code. This prevents maintenance 
 
 **Detection Tools & Techniques**:
 
-1. **CodeMapper (cm) - AST-based analysis**
-   ```bash
-   # Get project overview
-   cm stats .
-   
-   # Find all usages of a pattern
-   cm query "TuiRender" --format ai
-   cm callers "displayNoteList" --format ai
-   ```
-
-2. **Manual Pattern Scan**
-   ```bash
-   # Find all template renders
-   grep -n "TuiRender" cmd/*.go
-   
-   # Find all SQL displays
-   grep -n "RenderSQLResults" cmd/*.go
-   ```
-
-3. **Code Review Process**
-   - During PR review, flag code that "feels familiar"
-   - Ask: "Have I written similar code elsewhere?"
-   - Document potential duplication for monthly audit
-
-**Patterns Currently Being Watched**:
-
-1. **`requireNotebook()` pattern** (8+ occurrences)
-   ```go
-   nb, err := requireNotebook(cmd)
-   if err != nil {
-     return err
-   }
-   ```
-   Status: ✅ Already extracted helper function
-   Future: Consider centralizing to `cmd/root.go`
-
-2. **Display template pattern** (3-4 occurrences)
-   ```go
-   output, err := services.TuiRender(template, data)
-   if err != nil {
-     // fallback to fmt.Printf
-   }
-   fmt.Print(output)
-   ```
-   Status: ⚠️ At extraction threshold - watch for 3rd function
-
-3. **Flag parsing pattern** (3-4 occurrences)
-   ```go
-   notebook, _ := cmd.Flags().GetString("notebook")
-   ```
-   Status: 🔴 Extract to helper: `getNotebookFlag(cmd)`
-
-**Extraction Workflow** (Test-Driven):
-
-1. Write tests for the duplicated behavior
-2. Create shared function with clear, descriptive name
-3. Update all callers to use shared function
-4. Run full test suite (`mise run test`)
-5. Commit with message: `refactor: extract <pattern> to shared function`
+1. **CodeMapper (cm) - AST-based analysis**: `cm stats .`, `cm query "TuiRender" --format ai`, `cm callers "displayNoteList" --format ai`
+2. **Manual Pattern Scan**: `grep -n "TuiRender" cmd/*.go`, `grep -n "RenderSQLResults" cmd/*.go`
+3. **Code Review Process**: During PR review, flag code that "feels familiar" and document potential duplication
 
 **Monthly Audit Checklist**:
 
@@ -249,6 +146,14 @@ Systematically scan for and refactor duplicated code. This prevents maintenance 
 - [ ] Create GitHub issue if 3rd occurrence found
 - [ ] Prioritize extraction in next refactoring sprint
 - [ ] Update this section if new patterns emerge
+
+**Extraction Workflow** (Test-Driven):
+
+1. Write tests for the duplicated behavior
+2. Create shared function with clear, descriptive name
+3. Update all callers to use shared function
+4. Run full test suite: `mise run test`
+5. Commit with message: `refactor: extract <pattern> to shared function`
 
 **Integration with External Skills**:
 
@@ -279,22 +184,7 @@ Core services are singletons initialized in `cmd/root.go`:
 
 ### Command Structure
 
-Commands are defined in `cmd/` directory and follow standard Cobra CLI pattern:
-
-```go
-var listCmd = &cobra.Command{
-  Use:   "list",
-  Short: "List notes in notebook",
-  RunE: func(cmd *cobra.Command, args []string) error {
-    // Access services via global variables
-    notes, err := noteService.SearchNotes(query)
-    // Render output
-    output, err := TuiRender("note-list", data)
-    fmt.Println(output)
-    return nil
-  },
-}
-```
+Commands are defined in `cmd/` directory and follow standard Cobra CLI pattern with thin orchestration.
 
 ### Data Flow
 
@@ -319,14 +209,11 @@ var listCmd = &cobra.Command{
 
 ### Templates
 
-Templates are stored as `.gotmpl` files in `internal/services/templates/` and embedded using `go:embed`:
-
-- `note-list.gotmpl` - Display list of notes
-- `note-detail.gotmpl` - Display individual note
-- `notebook-info.gotmpl` - Display notebook configuration
-- `notebook-list.gotmpl` - Display all notebooks
-
-Loaded via `TuiRender(name string, ctx any)` function.
+Templates are stored as `.gotmpl` files in `internal/services/templates/` and embedded using `go:embed`. Loaded via `TuiRender()` function. Current templates:
+- `note-list.gotmpl` — Display list of notes
+- `note-detail.gotmpl` — Display individual note
+- `notebook-info.gotmpl` — Display notebook configuration
+- `notebook-list.gotmpl` — Display all notebooks
 
 ## Recommended Skill Usage
 
@@ -347,19 +234,12 @@ When working on OpenNotes, use AI skills strategically to enhance code quality a
 ### Skill Usage Guidelines
 
 **When Exploring Code**:
-```bash
-# Use CodeMapper for pattern analysis
-cm stats .                    # Project overview
-cm query "SearchNotes"        # Find symbol definition
-cm callers "TuiRender"        # Find all usages
-cm trace "cmd" "services"     # Trace dependency path
-```
+- Use CodeMapper for pattern analysis: `cm stats .`, `cm query "SearchNotes"`, `cm callers "TuiRender"`, `cm trace "cmd" "services"`
 
 **When Making Commits**:
 - Use `writing-git-commits` skill to create semantic commit messages
 - Follow Conventional Commits specification
 - Include scope, type, description, and body
-- Example: `feat(notes): add display name to list output`
 
 **When Updating Artifacts**:
 - Use `miniproject` skill for `.memory/` files
@@ -373,26 +253,14 @@ cm trace "cmd" "services"     # Trace dependency path
 - Load skill and follow its specific guidance
 - Document skill usage in commit messages when relevant
 
-### Example: Multi-Skill Workflow
+### Multi-Skill Workflow Example
 
-```
-1. Explore codebase → use codemapper skill
-   $ cm query "displayNoteList"
-   
-2. Identify duplication → use refactoring-specialist skill
-   → Analyze patterns for extraction
-   
-3. Write extraction tests → use test-driven-development skill
-   → Tests first, then implementation
-   
-4. Implement extraction → follow refactoring guidance
-   
-5. Update task artifact → use miniproject skill
-   → Document in .memory/task-*.md
-   
-6. Commit changes → use writing-git-commits skill
-   → Semantic commit message
-```
+1. **Explore codebase** → use codemapper skill: `cm query "displayNoteList"`
+2. **Identify duplication** → use refactoring-specialist skill (analyze patterns for extraction)
+3. **Write extraction tests** → use test-driven-development skill (tests first, then implementation)
+4. **Implement extraction** → follow refactoring guidance
+5. **Update task artifact** → use miniproject skill (document in .memory/task-*.md)
+6. **Commit changes** → use writing-git-commits skill (semantic commit message)
 
 ### When NOT to Use Skills
 
@@ -432,111 +300,3 @@ cm trace "cmd" "services"     # Trace dependency path
 - **Why**: Embed templates at compile time, no runtime file access needed
 - **Benefits**: Binary-portable, simpler deployment, no files to distribute
 - **Trade-off**: Templates must be files in `templates/` directory
-
-## File Structure
-
-```
-.
-├── cmd/                          # CLI commands
-│   ├── root.go                   # Service initialization
-│   ├── init.go                   # Init command
-│   ├── notebook_*.go             # Notebook commands
-│   └── notes_*.go                # Notes commands
-├── internal/
-│   ├── core/                     # Utilities (validation, strings, etc.)
-│   ├── services/                 # Core business logic
-│   │   ├── config.go
-│   │   ├── db.go
-│   │   ├── notebook.go
-│   │   ├── note.go
-│   │   ├── display.go
-│   │   ├── logger.go
-│   │   ├── templates.go
-│   │   ├── templates/            # .gotmpl template files
-│   │   └── *_test.go
-│   └── testutil/                 # Test helpers
-├── tests/
-│   └── e2e/                      # End-to-end tests
-├── main.go                       # Entry point
-├── go.mod                        # Go module definition
-└── .misrc.yaml                   # Mise task configuration
-```
-
-## Code Examples
-
-### Logging
-
-```go
-import "github.com/zenobi-us/opennotes/internal/services"
-
-log := services.Log("MyService")
-log.Debug("debug message")
-log.Info("info message")
-log.Warn("warning message")
-log.Error("error message", err)
-```
-
-### Service Usage
-
-```go
-// Services are initialized globally in cmd/root.go
-// Access them in command handlers:
-notes, err := services.NoteService.SearchNotes(query)
-if err != nil {
-  return err
-}
-
-output, err := services.TuiRender("note-list", map[string]any{
-  "Notes": notes,
-})
-if err != nil {
-  return err
-}
-fmt.Println(output)
-```
-
-### Testing
-
-```go
-func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
-  // Setup
-  nb := testutil.CreateTestNotebook(t)
-  ns := services.NewNoteService(nb)
-  
-  // Execute
-  notes, err := ns.SearchNotes("")
-  
-  // Assert
-  require.NoError(t, err)
-  require.Len(t, notes, 2)
-}
-```
-
-## Commands Overview
-
-- **`opennotes init`** - Initialize configuration
-- **`opennotes notebook create`** - Create new notebook
-- **`opennotes notebook register`** - Register existing notebook
-- **`opennotes notebook list`** - List all notebooks
-- **`opennotes notes list`** - List notes in notebook (formatted with titles/slugified names)
-- **`opennotes notes search <query>`** - Search notes by content
-- **`opennotes notes add <name>`** - Add new note
-- **`opennotes notes remove <name>`** - Remove note
-- **`opennotes notes search --sql <query>`** - Execute SQL query on notes
-
-## Test Coverage
-
-- **161+ tests** across all packages
-- **95%+ coverage** in core logic
-- **28+ end-to-end tests** for CLI commands
-- Test duration: ~4 seconds
-
-Run with: `mise run test`
-
-## Recent Changes
-
-- ✅ **2026-01-18**: Refactored templates to separate `.gotmpl` files
-- ✅ **2026-01-18**: Removed TypeScript/Node implementation (27 files, 1,797 lines)
-- ✅ **2026-01-17**: Implemented notes list format feature (frontmatter titles)
-- ✅ **2026-01-17**: Completed SQL flag support (--sql flag for search)
-- ✅ **2026-01-09**: Full Go rewrite complete (TypeScript → Go migration)
