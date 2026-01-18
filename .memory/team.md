@@ -4,7 +4,7 @@
 
 | Session | Epic | Phase | Task | Status |
 |---------|------|-------|------|--------|
-| current | None | Clean State | Miniproject Cleanup Complete | ✅ Complete |
+| current | SQL Flag Feature | Awaiting Human Review | Framework Compliance Correction | ⚠️ In Progress |
 
 ## Epic Completion Status
 
@@ -55,10 +55,11 @@
 - Quality assurance processes refined
 
 **Next Available Work**: SQL Flag Feature
-- **Status**: ⏳ READY FOR IMPLEMENTATION
-- **Location**: `archive/02-sql-flag-feature/`  
-- **Preparation**: Complete (research and specification finished)
-- **Estimated Duration**: 3-4 hours for MVP
+- **Status**: ⚠️ AWAITING HUMAN REVIEW
+- **Location**: `.memory/epic-2f3c4d5e-sql-flag-feature.md` (moved from archive for review)
+- **Issue**: Epic was previously archived without required human review per miniproject guidelines
+- **Required**: Human review and approval before implementation can begin
+- **Estimated Duration**: 3-4 hours for MVP (once approved)
 
 ## Team Learnings Captured
 
@@ -89,7 +90,8 @@
 
 ## Next Epic Readiness
 
-**Ready for SQL Flag Feature**:
+**Ready for SQL Flag Feature** (Pending Human Review):
+- [ ] ⚠️ **FRAMEWORK COMPLIANCE CORRECTION**: Epic moved from archive back to `.memory/` for required human review
 - [ ] Epic specification reviewed and approved
 - [ ] Development workspace prepared in `.memory/`
 - [ ] Implementation approach confirmed

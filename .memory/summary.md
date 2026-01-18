@@ -8,7 +8,7 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 - **Active Epic**: None - Ready for new work
 - **Previous Epic**: [Test Coverage Improvement](archive/test-improvement-epic/epic-7a2b3c4d-test-improvement.md) ✅ COMPLETED SUCCESSFULLY
-- **Next Epic**: [SQL Flag Feature](archive/02-sql-flag-feature/epic-2f3c4d5e-sql-flag-feature.md) ⏳ READY FOR IMPLEMENTATION
+- **Next Epic**: [SQL Flag Feature](epic-2f3c4d5e-sql-flag-feature.md) ⏳ AWAITING HUMAN REVIEW
 - **Last Updated**: 2026-01-18 22:00 GMT+10:30
 - **Status**: 🎉 EPIC COMPLETED - Enterprise readiness achieved
 
@@ -93,31 +93,15 @@ Implemented formatted output for `opennotes notes list` command:
 
 ## Available Work
 
-### SQL Flag Feature (Ready for Implementation)
+### SQL Flag Feature (Awaiting Human Review)
 
-**Status**: ⏳ READY FOR IMPLEMENTATION  
-**Location**: `archive/02-sql-flag-feature/`  
+**Status**: ⚠️ AWAITING HUMAN REVIEW  
+**Location**: `.memory/epic-2f3c4d5e-sql-flag-feature.md` (moved from archive for review)  
 **Estimated Duration**: 3-4 hours (MVP)
 
-Ready-to-implement epic with complete research and specification:
+**Framework Compliance Issue**: This epic was previously archived without required human review as per miniproject guidelines. It has been moved back to `.memory/` for proper review process.
 
-- **Research**: Comprehensive DuckDB Go client and markdown extension analysis
-- **Specification**: Detailed implementation plan aligned with current codebase
-- **Architecture**: Leverages existing `DbService.Query()` infrastructure
-- **Security**: Read-only access with query validation
-
-**Key Features**:
-- Custom SQL query support in search command
-- 30-second timeout with table-formatted output
-- Full markdown extension function access
-- Query validation (SELECT/WITH only)
-
-**Implementation Phases**:
-1. Core Functionality (MVP) - 3-4 hours
-2. Enhanced Display - 2-3 hours
-3. Documentation - 2-3 hours
-
-**Next Steps**: Review specification and approve implementation approach
+**Required Action**: Human review and approval before implementation can begin or epic can be properly archived.
 
 ## Recent Completed Work
 
