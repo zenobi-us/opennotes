@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.0.0](https://github.com/zenobi-us/opennotes/compare/v0.0.2...v1.0.0) (2026-01-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **memory:** Epic completion following miniproject framework
+
+### Features
+
+* **notes:** format notes list output with titles and file paths ([f856b4b](https://github.com/zenobi-us/opennotes/commit/f856b4bc03b2beca42636cec516e2c6668ead652))
+* **sql:** implement secure SQL query support in search command ([5f1ec0e](https://github.com/zenobi-us/opennotes/commit/5f1ec0e01b2d353561ed82bec3e9b42c7bc46d75))
+
+
+### Bug Fixes
+
+* **memory:** move all SQL Flag feature artifacts to .memory/ for human review ([13011ee](https://github.com/zenobi-us/opennotes/commit/13011eeb495794c8576922b59eac9842aff01f32))
+* **memory:** restore SQL Flag epic for required human review ([804b9ec](https://github.com/zenobi-us/opennotes/commit/804b9ec8b314cbc867154b9972863ffce9a030da))
+
+
+### Documentation
+
+* **memory:** complete test improvement epic archival and cleanup ([a44b4fd](https://github.com/zenobi-us/opennotes/commit/a44b4fd842ce8d1da0a92bf604167191b9dc2f90))
+
 ## [0.0.2](https://github.com/zenobi-us/opennotes/compare/v0.0.1...v0.0.2) (2026-01-17)
 
 
