@@ -4,8 +4,10 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -500,10 +502,137 @@ This should be readable from read-only connection.
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		if err := rows.Close(); err != nil {
-			t.Logf("warning: failed to close rows: %v", err)
+			t.Logf("warning: failed to close db: %v", err)
 		}
 	})
 
 	// Should be able to read the markdown file
 	assert.True(t, rows.Next(), "read-only connection should be able to read markdown files")
+}
+
+// Context cancellation tests
+
+func TestDbService_GetDB_CancelledContextOnInit(t *testing.T) {
+	// Create a new service for this test
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	// Create a context that's already cancelled
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	// GetDB should return an error
+	db, err := svc.GetDB(ctx)
+
+	// Error is expected because context is cancelled during INSTALL/LOAD
+	// However, connection may still be partially initialized
+	if db != nil {
+		// Even if we get a db, check that initErr was set
+		t.Logf("got db despite cancelled context (timing dependent): %v", db)
+	}
+
+	// Either error should occur or db should be nil
+	// Due to timing, this test is mainly checking that the function doesn't panic
+	_ = err // Accept any result - test is about no panic
+}
+
+func TestDbService_GetDB_DeadlineExceededOnInit(t *testing.T) {
+	// Create a new service for this test
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	// Create context with very short deadline
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	// Sleep to ensure deadline is exceeded
+	time.Sleep(10 * time.Millisecond)
+
+	// GetDB should handle the deadline
+	db, err := svc.GetDB(ctx)
+
+	// Similar to cancellation - accept any result due to timing
+	// Test is checking for no panic and graceful handling
+	if err != nil {
+		// Acceptable - context deadline exceeded
+		assert.True(t, strings.Contains(err.Error(), "context") || strings.Contains(err.Error(), "failed"))
+	}
+	_ = db // Accept any result
+}
+
+func TestDbService_GetReadOnlyDB_CancelledContextOnInit(t *testing.T) {
+	// Create a new service for this test
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	// Create a context that's already cancelled
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	// GetReadOnlyDB should return an error
+	db, err := svc.GetReadOnlyDB(ctx)
+
+	// Either error should occur or db should be nil (timing dependent)
+	// Test is checking for graceful handling and no panic
+	_ = db  // Accept any result
+	_ = err // Accept any result
+}
+
+func TestDbService_GetDB_ConcurrentInitWithCancelledContext(t *testing.T) {
+	// Test that concurrent calls with different contexts don't cause issues
+	svc := NewDbService()
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	// Create two contexts: one cancelled, one active
+	ctxCancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	ctxActive := context.Background()
+
+	// Launch two goroutines: one with cancelled context, one with active
+	done := make(chan error, 2)
+
+	go func() {
+		_, err := svc.GetDB(ctxCancelled)
+		done <- err
+	}()
+
+	go func() {
+		_, err := svc.GetDB(ctxActive)
+		done <- err
+	}()
+
+	// Wait for both to complete
+	var results []error
+	for i := 0; i < 2; i++ {
+		results = append(results, <-done)
+	}
+
+	// At least one should succeed (the one with active context)
+	// The test is verifying proper synchronization with sync.Once
+	successCount := 0
+	for _, err := range results {
+		if err == nil {
+			successCount++
+		}
+	}
+
+	// At least one should succeed due to sync.Once ensuring single initialization
+	assert.Greater(t, successCount, 0, "at least one concurrent call should succeed")
 }

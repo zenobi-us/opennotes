@@ -309,3 +309,41 @@ func TestTuiRender_NilContext(t *testing.T) {
 		t.Errorf("TuiRender() result = %q, want to contain 'No notes found'", result)
 	}
 }
+
+func TestTuiRender_TemplateNotFound(t *testing.T) {
+	ctx := map[string]string{"Name": "World"}
+	output, err := TuiRender("nonexistent-template", ctx)
+
+	if err == nil {
+		t.Error("expected error for nonexistent template")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error message should contain 'not found', got: %v", err)
+	}
+	if output != "" {
+		t.Errorf("expected empty output on error, got: %s", output)
+	}
+}
+
+func TestTuiRender_ValidTemplate_ValidContext(t *testing.T) {
+	// Test successful case with valid template and context
+	// Uses the existing note-list template
+	note := Note{}
+	note.File.Relative = "notes/test.md"
+	note.File.Filepath = "/path/to/notes/test.md"
+	note.Metadata = map[string]any{"title": "Test Note"}
+
+	ctx := map[string]any{"Notes": []Note{note}}
+
+	output, err := TuiRender("note-list", ctx)
+
+	if err != nil {
+		t.Errorf("TuiRender() unexpected error: %v", err)
+	}
+	if output == "" {
+		t.Error("expected non-empty output")
+	}
+	if !strings.Contains(output, "Test Note") && !strings.Contains(output, "test") {
+		t.Errorf("output should contain note reference, got: %s", output)
+	}
+}

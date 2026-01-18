@@ -1,6 +1,7 @@
 package core
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -126,4 +127,53 @@ func TestValidator(t *testing.T) {
 
 	errors := v.Errors()
 	assert.Len(t, errors, 2)
+}
+
+func TestValidatePath(t *testing.T) {
+	tests := []struct {
+		name    string
+		path    string
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "empty path allowed",
+			path:    "",
+			wantErr: false,
+		},
+		{
+			name:    "valid absolute path",
+			path:    "/home/user/notes",
+			wantErr: false,
+		},
+		{
+			name:    "valid relative path",
+			path:    "./notes",
+			wantErr: false,
+		},
+		{
+			name:    "path with null byte",
+			path:    "path\x00name",
+			wantErr: true,
+			errMsg:  "invalid characters",
+		},
+		{
+			name:    "path with control character",
+			path:    "path\x1fname",
+			wantErr: true,
+			errMsg:  "invalid characters",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePath(tt.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidatePath(%q) error = %v, wantErr %v", tt.path, err, tt.wantErr)
+			}
+			if err != nil && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+				t.Errorf("ValidatePath(%q) error = %q, want to contain %q", tt.path, err.Error(), tt.errMsg)
+			}
+		})
+	}
 }

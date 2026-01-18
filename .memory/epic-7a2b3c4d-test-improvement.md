@@ -44,7 +44,7 @@ Improve test coverage from 73.3% to 80%+ by adding strategic tests for error han
 ### Phase 1: Critical Fixes (Immediate) ⏳
 **Duration:** 30 minutes  
 **Status:** Not Started  
-[Phase Details](phase-3f5a6b7c-critical-fixes.md)
+[Phase Details](./phase-3f5a6b7c-critical-fixes.md)
 
 Quick wins to fix the most important gaps:
 - Fix ValidatePath() (0% coverage)
