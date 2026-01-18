@@ -6,10 +6,11 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 ## Current Status
 
-- **Epic**: [SQL Flag Feature](epic-2f3c4d5e-sql-flag-feature.md)
-- **Phase**: ✅ COMPLETE - Phase 1 (Core Functionality MVP) delivered
-- **Last Updated**: 2026-01-18 11:05 GMT+10:30
-- **Status**: 🚀 PRODUCTION READY - Go-only implementation, simplified deployment
+- **Active Epic**: [Test Coverage Improvement](epic-7a2b3c4d-test-improvement.md) 🟡 LAUNCHED
+- **Previous Epic**: [SQL Flag Feature](epic-2f3c4d5e-sql-flag-feature.md) ⏳ PENDING (ready for review)
+- **Phase**: Phase 1 (Critical Fixes) - 30 minutes
+- **Last Updated**: 2026-01-18 20:32 GMT+10:30
+- **Status**: 📊 TEST ANALYSIS COMPLETE - Ready for improvement implementation
 
 ## Recent Completions
 
@@ -72,6 +73,56 @@ Implemented formatted output for `opennotes notes list` command:
 **Test Results**: ✅ 7/7 new tests pass, no regressions
 
 ## Active Work
+
+### Test Coverage Improvement (2026-01-18) 🆕
+
+**Status:** ✅ Analysis Complete - Ready for Implementation
+
+Comprehensive test coverage review identified critical gaps and created 3-phase improvement plan:
+
+**Analysis Results:**
+- Current coverage: 73.3% (internal packages)
+- Critical gaps: 1 untested function, 6 functions <70% coverage
+- Error path coverage: 30-40% (weak)
+- Test count: 144 tests (116 unit + 28 E2E)
+
+**Improvement Phases:**
+1. **Phase 1: Critical Fixes** (30 min) → Coverage 73% → 75%
+   - Fix ValidatePath() (0% → 100%)
+   - Test template errors (60% → 85%)
+   - Test DB context (65% → 80%)
+
+2. **Phase 2: Core Improvements** (2 hours) → Coverage 75% → 80%
+   - Command error tests (10-15 tests)
+   - SearchNotes edge cases
+   - Frontmatter edge cases
+
+3. **Phase 3: Future-Proofing** (2-3 hours, optional) → Coverage 80% → 85%
+   - Concurrency tests
+   - Stress tests
+   - Permission/filesystem errors
+
+**Key Findings:**
+- Tests are lean and focused (not over-testing) ✅
+- Error handling barely tested (biggest gap) ❌
+- Core business logic well tested ✅
+- No test flakes or brittleness ✅
+- Path to 80% coverage is clear and achievable
+
+**Files Created:**
+- Epic: `.memory/epic-7a2b3c4d-test-improvement.md`
+- Phase 1: `.memory/phase-3f5a6b7c-critical-fixes.md`
+- Phase 2: `.memory/phase-4e5f6a7b-core-improvements.md`
+- Phase 3: `.memory/phase-5g6h7i8j-future-proofing.md`
+- Tasks: 3 task files for Phase 1, more for Phase 2
+
+**Next Steps:**
+1. Review analysis findings
+2. Approve implementation plan
+3. Start Phase 1 (30-minute quick wins)
+4. Move to Phase 2 when time permits
+
+---
 
 ### SQL Flag Feature (2026-01-09)
 
@@ -225,25 +276,42 @@ Comprehensive codebase analysis using CodeMapper skill:
 ## Memory Structure
 
 ```
-.memory/
-  summary.md                              # Project overview
-  team.md                                 # Current work tracking
-  todo.md                                 # Active tasks & implementation status
-  epic-2f3c4d5e-sql-flag-feature.md      # SQL flag feature epic with all phases
-  research-b8f3d2a1-duckdb-go-markdown.md # DuckDB research
-  spec-a1b2c3d4-sql-flag.md              # SQL flag specification with stories
-  learning-8f6a2e3c-*.md                  # Learning: Architecture review
-  learning-7d9c4e1b-*.md                  # Learning: Implementation planning
-  learning-5e4c3f2a-*.md                  # Learning: Codebase architecture
-  review-cleanup-report.md                # Cleanup review report
-  task-*.md (12 files)                    # Individual story tasks
-  archive/
-    ├── audits/2026-01-17/
-    │   └── audit-20260117-naming-review.md   # Archived naming audit
-    ├── reviews/2026-01-17/
-    │   ├── review-architect-sql-flag-summary.md    # Architecture summary
-    │   ├── review-planning-summary.md              # Planning summary
-    │   ├── REVIEW-INDEX.md                         # Review navigation index
-    │   └── README.md                               # Archive index
-    └── 01-migrate-to-golang/                       # Completed Go migration epic
+.memory/ (Main - Active Epic Only)
+├── epic-7a2b3c4d-test-improvement.md   # ACTIVE: Test improvement epic
+├── phase-3f5a6b7c-critical-fixes.md    # Phase 1 (30 min)
+├── phase-4e5f6a7b-core-improvements.md # Phase 2 (2 hours)
+├── phase-5g6h7i8j-future-proofing.md   # Phase 3 (optional)
+├── task-8h9i0j1k-validate-path-tests.md        # Phase 1 tasks
+├── task-9i0j1k2l-template-error-tests.md       # Phase 1 tasks
+├── task-0j1k2l3m-db-context-tests.md          # Phase 1 tasks
+├── learning-8h9i0j1k-test-improvement-index.md # Navigation guide
+├── learning-5e4c3f2a-codebase-architecture.md  # PERMANENT: Codebase knowledge
+├── learning-7d9c4e1b-implementation-planning-guidance.md  # PERMANENT
+├── learning-8f6a2e3c-architecture-review-sql-flag.md     # PERMANENT
+├── summary.md                          # Project overview
+├── todo.md                             # Active tasks
+└── team.md                             # Team tracking
+
+archive/ (Inactive/Historical)
+├── 01-migrate-to-golang/               # Completed Go migration epic
+├── 02-sql-flag-feature/                # SQL Flag epic (PENDING)
+│   ├── epic-2f3c4d5e-sql-flag-feature.md
+│   ├── spec-a1b2c3d4-sql-flag.md
+│   ├── research-b8f3d2a1-duckdb-go-markdown.md
+│   └── task-*.md (11 SQL Flag tasks)
+├── completed/                          # Completed task features
+│   ├── task-b5c8a9f2-notes-list-format.md
+│   ├── task-c03646d9-clipboard-filename-slugify.md
+│   └── task-90e473c7-table-formatting.md
+├── historical/                         # Non-standard & historical files
+│   ├── completion-notes-list-format.md
+│   ├── completion-summary-story1.md
+│   ├── milestone-typescript-removal.md
+│   ├── PROJECT_CLOSURE.md
+│   ├── refactor-templates-to-gotmpl.md
+│   ├── review-cleanup-report.md
+│   ├── verification-codebase-correlation.md
+│   └── verification-pre-start-checklist.md
+├── audits/2026-01-17/                  # Audit records
+└── reviews/2026-01-17/                 # Review artifacts
 ```
