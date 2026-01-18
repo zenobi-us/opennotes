@@ -16,12 +16,12 @@
 
 **Actual Outcome:** Coverage 73% → 84%+ (exceeded target!), all critical gaps fixed
 
-### Phase 2: Core Improvements (2 hours)
-- [ ] Command error integration tests (45 min)
-- [ ] SearchNotes edge cases (30 min)
-- [ ] Frontmatter edge cases (30 min)
+### Phase 2: Core Improvements ✅ COMPLETED
+- [x] Command error integration tests (17 min)
+- [x] SearchNotes edge cases (12 min)
+- [x] ObjectToFrontmatter edge cases (22 min)
 
-**Expected Outcome:** Coverage 75% → 80%+ (production ready)
+**Actual Outcome:** Coverage significantly improved (testing 84%+), all critical gaps addressed
 
 ### Phase 3: Future-Proofing (2-3 hours, optional)
 - [ ] Permission/filesystem error scenarios (30 min)

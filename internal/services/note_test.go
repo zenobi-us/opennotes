@@ -3,6 +3,8 @@ package services_test
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1011,4 +1013,331 @@ func TestNoteService_SearchNotes_DisplayNameMultipleNotes(t *testing.T) {
 	assert.Contains(t, displayNames, "First Note")
 	assert.Contains(t, displayNames, "note2")
 	assert.Contains(t, displayNames, "Third Note")
+}
+
+// === SearchNotes Edge Case Tests ===
+
+func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	// Create test notebook with diverse content
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "complex-search-test")
+	
+	// Create notes with varied content for complex searching
+	testutil.CreateTestNote(t, notebookDir, "golang-tips.md", "# Golang Tips\n\nUseful golang programming patterns.")
+	testutil.CreateTestNote(t, notebookDir, "javascript-tricks.md", "# JavaScript Tricks\n\nSome javascript and golang comparisons.")
+	testutil.CreateTestNote(t, notebookDir, "python-guide.md", "# Python Guide\n\nPython programming fundamentals.")
+	testutil.CreateTestNote(t, notebookDir, "mixed-content.md", "# Mixed Content\n\nThis mentions golang, python, and javascript.")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	tests := []struct {
+		name          string
+		query         string
+		expectedCount int
+		description   string
+	}{
+		{
+			"case_insensitive_search",
+			"GOLANG",
+			3, // golang-tips.md, javascript-tricks.md, mixed-content.md
+			"Search should be case-insensitive",
+		},
+		{
+			"partial_word_match",
+			"java",
+			2, // javascript-tricks.md, mixed-content.md  
+			"Should find partial word matches",
+		},
+		{
+			"filename_search",
+			"tips",
+			1, // golang-tips.md
+			"Should search in filename as well",
+		},
+		{
+			"common_word_search",
+			"programming",
+			2, // golang-tips.md, python-guide.md
+			"Should find notes with common programming terms",
+		},
+		{
+			"no_matches",
+			"nonexistent",
+			0,
+			"Should return no results for non-matching query",
+		},
+		{
+			"empty_query",
+			"",
+			4,
+			"Empty query should return all notes",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			notes, err := svc.SearchNotes(ctx, tt.query)
+			require.NoError(t, err, tt.description)
+			assert.Len(t, notes, tt.expectedCount, 
+				"Expected %d notes for query '%s', got %d", 
+				tt.expectedCount, tt.query, len(notes))
+		})
+	}
+}
+
+func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "special-chars-test")
+	
+	// Create notes with special characters
+	testutil.CreateTestNote(t, notebookDir, "unicode-test.md", "# Unicode Test\n\nCafé, naïve, résumé")
+	testutil.CreateTestNote(t, notebookDir, "symbols.md", "# Symbols\n\nC++ programming, @mentions, #hashtags")
+	testutil.CreateTestNote(t, notebookDir, "quotes.md", "# Quotes\n\n\"Double quotes\" and 'single quotes'")
+	testutil.CreateTestNote(t, notebookDir, "math.md", "# Math\n\n2 + 2 = 4, x² + y² = z²")
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	tests := []struct {
+		name  string
+		query string
+		expectedCount int
+	}{
+		{
+			"unicode_search",
+			"café",
+			1,
+		},
+		{
+			"plus_signs",
+			"C++",
+			1,
+		},
+		{
+			"at_symbol",
+			"@mentions",
+			1,
+		},
+		{
+			"hashtag",
+			"#hashtags",
+			1,
+		},
+		{
+			"quotes_double",
+			"\"Double quotes\"",
+			1,
+		},
+		{
+			"quotes_single",
+			"'single quotes'",
+			1,
+		},
+		{
+			"math_equation",
+			"2 + 2",
+			1,
+		},
+		{
+			"superscript_unicode",
+			"x²",
+			1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			notes, err := svc.SearchNotes(ctx, tt.query)
+			require.NoError(t, err)
+			assert.Len(t, notes, tt.expectedCount,
+				"Expected %d notes for query '%s'", tt.expectedCount, tt.query)
+		})
+	}
+}
+
+func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "large-test")
+
+	// Create many notes with shared content
+	commonWord := "shared"
+	for i := 1; i <= 25; i++ {
+		content := fmt.Sprintf("# Note %d\n\nThis note contains the %s keyword and unique content %d.", 
+			i, commonWord, i)
+		testutil.CreateTestNote(t, notebookDir, fmt.Sprintf("note%03d.md", i), content)
+	}
+
+	// Create some notes without the shared word
+	for i := 1; i <= 5; i++ {
+		content := fmt.Sprintf("# Different %d\n\nThis note has different content without the keyword.", i)
+		testutil.CreateTestNote(t, notebookDir, fmt.Sprintf("different%03d.md", i), content)
+	}
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Test large result set
+	notes, err := svc.SearchNotes(ctx, commonWord)
+	require.NoError(t, err)
+	assert.Len(t, notes, 25, "Should find all notes with shared keyword")
+
+	// Test all notes (empty query)
+	allNotes, err := svc.SearchNotes(ctx, "")
+	require.NoError(t, err)
+	assert.Len(t, allNotes, 30, "Should find all 30 notes")
+
+	// Verify note structure is correct for all notes
+	for _, note := range notes {
+		assert.NotEmpty(t, note.Content, "Note should have content")
+		assert.NotEmpty(t, note.File.Filepath, "Note should have filepath")
+		assert.NotEmpty(t, note.File.Relative, "Note should have relative path")
+		assert.Contains(t, note.Content, commonWord, "Note should contain search term")
+	}
+}
+
+func TestNoteService_SearchNotes_FrontmatterEdgeCases(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	notebookDir := testutil.CreateTestNotebook(t, tmpDir, "frontmatter-test")
+
+	// Note with no frontmatter
+	testutil.CreateTestNote(t, notebookDir, "no-frontmatter.md", "# No Frontmatter\n\nJust content here.")
+
+	// Note with complex frontmatter
+	complexFrontmatter := `---
+title: "Complex Note"
+tags: ["test", "complex", "frontmatter"]
+metadata:
+  author: "Test Author"
+  date: 2024-01-15
+  nested:
+    value: 42
+    enabled: true
+categories: null
+---
+
+# Complex Note
+
+Content with complex frontmatter.`
+	testutil.CreateTestNote(t, notebookDir, "complex-frontmatter.md", complexFrontmatter)
+
+	// Note with empty frontmatter
+	emptyFrontmatter := `---
+---
+
+# Empty Frontmatter
+
+Content with empty frontmatter.`
+	testutil.CreateTestNote(t, notebookDir, "empty-frontmatter.md", emptyFrontmatter)
+
+	// Note with malformed frontmatter (should still work)
+	malformedFrontmatter := `---
+title: Malformed
+missing_colon_value
+tags: [unclosed list
+---
+
+# Malformed
+
+Content despite frontmatter issues.`
+	testutil.CreateTestNote(t, notebookDir, "malformed-frontmatter.md", malformedFrontmatter)
+
+	svc := services.NewNoteService(cfg, db, notebookDir)
+
+	// Test that all notes are found regardless of frontmatter quality
+	allNotes, err := svc.SearchNotes(ctx, "")
+	require.NoError(t, err)
+	assert.Len(t, allNotes, 4, "Should find all notes regardless of frontmatter")
+
+	// Test searching content works even with frontmatter issues
+	contentSearch, err := svc.SearchNotes(ctx, "Content")
+	require.NoError(t, err)
+	assert.Len(t, contentSearch, 4, "Content search should work despite frontmatter variations")
+
+	// Verify metadata is populated where possible
+	for _, note := range allNotes {
+		assert.NotNil(t, note.Metadata, "Metadata map should exist even if empty")
+		
+		// Check specific notes
+		switch {
+		case strings.Contains(note.File.Relative, "complex-frontmatter"):
+			// Complex frontmatter should have some metadata
+			assert.NotEmpty(t, note.Metadata, "Complex frontmatter should have metadata")
+		case strings.Contains(note.File.Relative, "no-frontmatter"):
+			// No frontmatter note might have empty or minimal metadata
+			assert.NotNil(t, note.Metadata, "Even no-frontmatter notes should have metadata map")
+		}
+	}
+}
+
+func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
+	ctx := context.Background()
+	db := services.NewDbService()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Logf("warning: failed to close db: %v", err)
+		}
+	})
+
+	tmpDir := t.TempDir()
+	cfg, _ := services.NewConfigServiceWithPath(tmpDir + "/config.json")
+
+	// Test with empty/non-existent notebook
+	svc := services.NewNoteService(cfg, db, "")
+
+	notes, err := svc.SearchNotes(ctx, "test")
+	assert.Error(t, err, "Should error when no notebook selected")
+	assert.Nil(t, notes, "Notes should be nil on error")
+	assert.Contains(t, err.Error(), "no notebook selected", "Error should mention no notebook")
+
+	// Test with non-existent notebook path
+	nonExistentPath := filepath.Join(tmpDir, "nonexistent-notebook")
+	svc2 := services.NewNoteService(cfg, db, nonExistentPath)
+
+	// This might not error immediately since DuckDB might handle empty globs gracefully
+	notes2, err := svc2.SearchNotes(ctx, "test")
+	if err != nil {
+		// If it errors, that's fine - means validation exists
+		assert.Nil(t, notes2)
+	} else {
+		// If no error, should return empty result set
+		assert.Empty(t, notes2, "Non-existent notebook should return empty results")
+	}
 }

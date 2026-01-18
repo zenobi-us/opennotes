@@ -4,20 +4,20 @@
 
 | Session | Epic | Phase | Task | Status |
 |---------|------|-------|------|--------|
-| current | Test Improvement | Phase 1 | Critical Fixes (3 tasks) | 🔄 In Progress |
+| current | Test Improvement | Phase 2 | Core Improvements (3 tasks) | 🔄 In Progress |
 
 ## Active Session Details
 
 **Session ID**: current  
 **Epic**: [Test Coverage Improvement](epic-7a2b3c4d-test-improvement.md)  
-**Phase**: [Phase 1: Critical Fixes](phase-3f5a6b7c-critical-fixes.md)  
-**Expected Duration**: 30 minutes  
-**Goal**: Coverage 73% → 75%+ by fixing 3 critical gaps
+**Phase**: [Phase 2: Core Improvements](phase-4e5f6a7b-core-improvements.md)  
+**Expected Duration**: 2 hours  
+**Goal**: Coverage 84% → 80%+ by adding error handling and edge case tests
 
-### Phase 1 Tasks:
-1. ValidatePath() tests (0% coverage → 100%) - 5 min
-2. Template error tests (60% → 85%) - 10 min
-3. DB context tests (65% → 80%) - 15 min
+### Phase 2 Tasks:
+1. Command error integration tests (45 min)
+2. SearchNotes edge cases (30 min) 
+3. Frontmatter edge cases (30 min)
 
 ## Completed Previous Sessions
 
