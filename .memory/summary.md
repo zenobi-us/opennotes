@@ -8,10 +8,32 @@ OpenNotes is a CLI tool for managing markdown-based notes organized in notebooks
 
 - **Epic**: [SQL Flag Feature](epic-2f3c4d5e-sql-flag-feature.md)
 - **Phase**: ✅ COMPLETE - Phase 1 (Core Functionality MVP) delivered
-- **Last Updated**: 2026-01-17 20:25 GMT+10:30
-- **Status**: 🚀 PRODUCTION READY - Ready for immediate deployment
+- **Last Updated**: 2026-01-18 11:05 GMT+10:30
+- **Status**: 🚀 PRODUCTION READY - Go-only implementation, simplified deployment
 
 ## Recent Completions
+
+### TypeScript/Node Implementation Removed ✅
+
+**Status**: COMPLETE - Consolidation achieved  
+**Commit**: 95522f3  
+**Date**: 2026-01-18 11:05 GMT+10:30
+
+Removed entire TypeScript/Bun implementation (27 files, 1,797 lines):
+- All CLI commands and services migrated to Go
+- 100% feature parity maintained
+- Simpler deployment (native binary)
+- Zero runtime dependencies
+- Tests: 131/131 passing ✅
+
+Benefits:
+- Better performance (no runtime overhead)
+- Simplified deployment and distribution
+- Single-language stack (Go)
+- Reduced maintenance burden
+- Easier to onboard developers
+
+See: [milestone-typescript-removal.md](.memory/milestone-typescript-removal.md)
 
 ### `opennotes notes list` Format Enhancement ✅
 
