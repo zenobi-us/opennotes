@@ -1,6 +1,7 @@
 ---
 id: aee7f336
 title: Pi Extension Patterns Research
+type: "research"
 created_at: 2026-01-28T23:25:00+10:30
 updated_at: 2026-01-28T23:25:00+10:30
 status: completed

@@ -1,6 +1,7 @@
 ---
 id: 684a9a73
 title: Implement named view parameter substitution
+type: "task"
 created_at: 2026-02-20T19:13:00+10:30
 updated_at: 2026-02-22T21:21:00+10:30
 status: done

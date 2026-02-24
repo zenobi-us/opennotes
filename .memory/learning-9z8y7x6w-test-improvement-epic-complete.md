@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # Learning: Test Improvement Epic - Complete Implementation Guide
 
 **Learning ID**: `9z8y7x6w`  

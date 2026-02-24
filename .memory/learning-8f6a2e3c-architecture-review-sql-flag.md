@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # Architecture Review: SQL Flag Feature Specification
 **Review ID**: architect-a1b2c3d4  
 **Specification**: spec-a1b2c3d4-sql-flag.md  

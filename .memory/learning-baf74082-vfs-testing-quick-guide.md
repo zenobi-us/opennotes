@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # Virtual File System Testing - Quick Reference Guide
 
 ## TL;DR: What Should I Use Right Now?

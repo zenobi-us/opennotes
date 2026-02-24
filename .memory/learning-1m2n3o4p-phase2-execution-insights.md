@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # Learning: Phase 2 Test Improvement Execution
 
 **Type:** Learning  

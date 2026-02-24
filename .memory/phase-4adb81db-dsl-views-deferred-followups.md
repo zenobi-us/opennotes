@@ -1,6 +1,7 @@
 ---
 id: 4adb81db
 title: DSL Views Deferred Follow-up Phase
+type: "phase"
 created_at: 2026-02-20T19:20:00+10:30
 updated_at: 2026-02-20T19:20:00+10:30
 status: planning

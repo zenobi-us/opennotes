@@ -1,3 +1,7 @@
+---
+type: "research"
+---
+
 # Virtual File System Testing Solutions for OpenNotes
 
 **Research Date**: 2025-01-23  

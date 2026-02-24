@@ -1,3 +1,7 @@
+---
+type: "research"
+---
+
 # VFS Testing Research Summary
 
 **Research Completed**: 2025-01-23  

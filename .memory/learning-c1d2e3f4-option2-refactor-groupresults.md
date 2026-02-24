@@ -1,6 +1,7 @@
 ---
 id: c1d2e3f4
 title: Option 2 Refactor - GroupResults Return Structure
+type: "learning"
 created_at: 2026-01-28T22:43:00+10:30
 updated_at: 2026-01-28T22:50:00+10:30
 status: completed

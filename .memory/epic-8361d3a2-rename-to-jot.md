@@ -1,6 +1,7 @@
 ---
 id: 8361d3a2
 title: Rename Project from OpenNotes to Jot
+type: "epic"
 created_at: 2026-02-18T19:41:00+10:30
 updated_at: 2026-02-19T09:55:00+10:30
 status: in-progress

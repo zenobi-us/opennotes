@@ -1,6 +1,7 @@
 ---
 id: b2c3d4e5
 title: OpenNotes Data Flow Diagram
+type: "knowledge"
 created_at: 2026-01-18T19:31:53+10:30
 updated_at: 2026-02-14T18:33:00+10:30
 status: active

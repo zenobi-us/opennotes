@@ -1,6 +1,7 @@
 ---
 id: c5d6e7f8
 title: Pure Go Architecture - CGO Elimination Benefits
+type: "learning"
 created_at: 2026-02-19T08:11:00+10:30
 updated_at: 2026-02-19T08:11:00+10:30
 status: active

@@ -1,6 +1,7 @@
 ---
 id: f6b2d1a9
 title: Semantic Latency Benchmark Harness Plan
+type: "research"
 created_at: 2026-02-14T23:27:00+10:30
 updated_at: 2026-02-14T23:27:00+10:30
 status: completed

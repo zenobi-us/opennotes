@@ -1,6 +1,7 @@
 ---
 id: f9a8b7c6
 title: Phase 1 Design Insights - pi-opennotes Extension
+type: "learning"
 created_at: 2026-01-29T10:00:00+10:30
 updated_at: 2026-01-29T10:00:00+10:30
 status: completed

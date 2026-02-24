@@ -1,6 +1,7 @@
 ---
 id: c6cf829a
 title: DuckDB Extension CI Failure Fix - Implementation Notes
+type: "research"
 created_at: 2026-01-21T23:10:00+10:30
 updated_at: 2026-01-21T23:10:00+10:30
 status: completed

@@ -1,6 +1,7 @@
 ---
 id: f1c2d3e4
 title: DSL views cleanup archive pattern
+type: "learning"
 created_at: 2026-02-22T19:28:46+10:30
 updated_at: 2026-02-22T19:28:46+10:30
 status: completed

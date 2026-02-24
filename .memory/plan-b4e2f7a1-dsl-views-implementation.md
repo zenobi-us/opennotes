@@ -1,6 +1,7 @@
 ---
 id: b4e2f7a1-plan
 title: "DSL-Based Views Implementation Plan"
+type: "plan"
 created_at: 2026-02-18T20:58:00+10:30
 updated_at: 2026-02-18T20:58:00+10:30
 status: ready

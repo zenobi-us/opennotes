@@ -1,6 +1,7 @@
 ---
 id: a1b2c3d4
 title: Kanban GROUP BY Return Structure Comparison
+type: "research"
 created_at: 2026-01-28T11:37:00+10:30
 updated_at: 2026-01-28T11:37:00+10:30
 status: draft

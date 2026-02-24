@@ -1,6 +1,7 @@
 ---
 id: 8a9b0c1d
 title: DuckDB Go Bindings - Filesystem Research Findings
+type: "research"
 created_at: 2026-01-23T22:00:00+10:30
 updated_at: 2026-01-23T22:00:00+10:30
 status: completed

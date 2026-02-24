@@ -1,6 +1,7 @@
 ---
 id: e1c3a5d7
 title: Retrieval Mode Controls and Validation Contract
+type: "research"
 created_at: 2026-02-14T23:20:00+10:30
 updated_at: 2026-02-14T23:20:00+10:30
 status: completed

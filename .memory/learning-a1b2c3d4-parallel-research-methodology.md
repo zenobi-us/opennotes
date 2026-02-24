@@ -1,6 +1,7 @@
 ---
 id: a1b2c3d4
 title: Parallel Research Methodology for Technology Decisions
+type: "learning"
 created_at: 2026-02-19T08:11:00+10:30
 updated_at: 2026-02-19T08:11:00+10:30
 status: active

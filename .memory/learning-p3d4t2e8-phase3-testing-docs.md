@@ -1,6 +1,7 @@
 ---
 id: p3d4t2e8
 title: Phase 3 - Testing & Documentation Learnings
+type: "learning"
 created_at: 2026-01-29T15:40:00+10:30
 updated_at: 2026-01-29T15:40:00+10:30
 phase_id: 16d937de

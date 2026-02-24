@@ -1,6 +1,7 @@
 ---
 id: 3e01c563
 title: Advanced Note Operations Epic - Complete Implementation Insights
+type: "learning"
 created_at: 2026-01-25T15:56:00+10:30
 updated_at: 2026-01-25T15:56:00+10:30
 status: completed

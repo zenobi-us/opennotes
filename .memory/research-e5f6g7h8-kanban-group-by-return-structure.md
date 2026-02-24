@@ -1,6 +1,7 @@
 ---
 id: e5f6g7h8
 title: GROUP BY Return Structure Analysis for Kanban View
+type: "research"
 created_at: 2026-01-27T23:44:00+10:30
 updated_at: 2026-01-28T11:40:00+10:30
 status: draft

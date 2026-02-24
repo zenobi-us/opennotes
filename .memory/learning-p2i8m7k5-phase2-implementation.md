@@ -1,6 +1,7 @@
 ---
 id: p2i8m7k5
 title: Phase 2 Implementation Insights - pi-opennotes
+type: "learning"
 created_at: 2026-01-29T12:00:00+10:30
 updated_at: 2026-01-29T12:00:00+10:30
 status: complete

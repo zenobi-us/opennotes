@@ -1,6 +1,7 @@
 ---
 id: 45af3ec0
 title: Go-based Vector RAG Search Implementation
+type: "research"
 created_at: 2026-02-01T15:07:00+10:30
 updated_at: 2026-02-01T15:07:00+10:30
 status: todo

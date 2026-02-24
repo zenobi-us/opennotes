@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # Learning: Phase 3 Test Improvement - Enterprise Robustness
 
 **Epic**: [Test Coverage Improvement](epic-7a2b3c4d-test-improvement.md)  

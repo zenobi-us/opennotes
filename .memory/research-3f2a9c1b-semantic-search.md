@@ -1,3 +1,7 @@
+---
+type: "research"
+---
+
 # Semantic Search Epic Research (Casual-User Focus)
 
 Date: 2026-02-03

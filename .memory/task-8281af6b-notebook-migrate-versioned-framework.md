@@ -1,6 +1,7 @@
 ---
 id: 8281af6b
 title: Plan Versioned `jot notebook migrate` Framework
+type: "task"
 created_at: 2026-02-19T21:03:59+10:30
 updated_at: 2026-02-19T21:03:59+10:30
 status: planning

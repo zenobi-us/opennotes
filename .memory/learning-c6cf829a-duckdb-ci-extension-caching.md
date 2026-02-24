@@ -1,6 +1,7 @@
 ---
 id: c6cf829a
 title: DuckDB Extension Pre-Download & Caching Strategy for CI/CD
+type: "learning"
 created_at: 2026-01-21T23:15:00+10:30
 updated_at: 2026-01-21T23:15:00+10:30
 status: completed

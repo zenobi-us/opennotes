@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # Learning: Basic Getting Started Guide Epic
 
 **Epic**: epic-7b2f4a8c - Create Basic Getting Started Guide for Non-Power Users

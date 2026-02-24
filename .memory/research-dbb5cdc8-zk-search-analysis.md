@@ -1,6 +1,7 @@
 ---
 id: dbb5cdc8
 title: ZK Search Implementation Analysis
+type: "research"
 created_at: 2026-02-01T14:39:00+10:30
 updated_at: 2026-02-01T14:39:00+10:30
 status: todo

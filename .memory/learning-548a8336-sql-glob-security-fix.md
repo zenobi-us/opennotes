@@ -1,6 +1,7 @@
 ---
 id: 548a8336
 title: SQL Glob Security Fix - Complete Implementation
+type: "learning"
 created_at: 2026-01-18 22:17:00 GMT+10:30
 updated_at: 2026-01-18 22:17:00 GMT+10:30
 status: completed

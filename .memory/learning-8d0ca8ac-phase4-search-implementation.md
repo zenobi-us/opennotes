@@ -1,6 +1,7 @@
 ---
 id: 8d0ca8ac
 title: Phase 4 - Note Search Enhancement Implementation Insights
+type: "learning"
 created_at: 2026-01-23T10:37:00+10:30
 updated_at: 2026-01-23T10:37:00+10:30
 status: completed

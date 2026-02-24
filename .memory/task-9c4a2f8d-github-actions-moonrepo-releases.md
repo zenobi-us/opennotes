@@ -1,6 +1,7 @@
 ---
 id: 9c4a2f8d
 title: GitHub Actions CI/CD with moonrepo, release-please, and GoReleaser
+type: "task"
 created_at: 2026-01-29T17:33:00+10:30
 updated_at: 2026-01-29T18:54:00+10:30
 status: todo

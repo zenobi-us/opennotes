@@ -1,6 +1,7 @@
 ---
 id: c9e4b1a2
 title: Semantic Search Phase 2 Architecture Contract Learnings
+type: "learning"
 created_at: 2026-02-14T23:33:00+10:30
 updated_at: 2026-02-14T23:33:00+10:30
 status: completed

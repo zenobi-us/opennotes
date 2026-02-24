@@ -2,9 +2,9 @@
 
 ## Current Session
 - **Session ID**: 3e30a6e5-e7ec-404d-b31b-82946451beb0
-- **Status**: Completed `task-e19963c7` (global views precedence in list output + malformed global config fallback + docs + full verification).
-- **Epic**: f661c068
-- **Phase**: 4adb81db (dsl-views-deferred-followups)
+- **Status**: Completed `task-1f2e3d4c` (unified DSL search behavior for `notes search`, including `type:epic` support and verification).
+- **Epic**: 9b7c2a4d
+- **Phase**: task-execution (no dedicated phase file yet)
 - **Branch**: feat/remove-duckdb-migrate-to-afero-chromedb-with-bleve-search
 
 ## Current Work Ownership

@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # Implementation Planning Validation Review
 ## SQL Flag Feature Task Specification Review
 

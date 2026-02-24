@@ -1,6 +1,7 @@
 ---
 id: d2f5a7c9
 title: Explainability Output Contract for Semantic Search
+type: "research"
 created_at: 2026-02-14T23:15:00+10:30
 updated_at: 2026-02-14T23:15:00+10:30
 status: completed

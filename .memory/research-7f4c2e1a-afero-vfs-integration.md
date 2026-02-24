@@ -1,6 +1,7 @@
 ---
 id: 7f4c2e1a
 title: Afero Virtual File System Integration Research
+type: "research"
 created_at: 2026-01-23T21:15:00+10:30
 updated_at: 2026-01-23T21:15:00+10:30
 status: completed

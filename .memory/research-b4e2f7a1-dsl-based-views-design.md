@@ -1,6 +1,7 @@
 ---
 id: b4e2f7a1
 title: "Research: DSL-based views design for opennotes"
+type: "research"
 created_at: 2026-02-17T18:47:00+10:30
 updated_at: 2026-02-18T20:58:00+10:30
 status: completed

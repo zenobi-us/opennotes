@@ -1,3 +1,7 @@
+---
+type: "research"
+---
+
 # Virtual File System Solutions - Technical Deep Dive
 
 **Target Audience**: Developers deciding on testing approach  

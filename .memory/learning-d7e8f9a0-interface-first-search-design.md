@@ -1,6 +1,7 @@
 ---
 id: d7e8f9a0
 title: Interface-First Design for Search Engine Replacement
+type: "learning"
 created_at: 2026-02-19T08:11:00+10:30
 updated_at: 2026-02-19T08:11:00+10:30
 status: active

@@ -1,6 +1,7 @@
 ---
 id: 548a8336
 title: SQL Glob Rooting Issue Research and Analysis
+type: "learning"
 created_at: 2026-01-18 21:30:40 GMT+10:30
 updated_at: 2026-01-18 21:30:40 GMT+10:30
 status: completed

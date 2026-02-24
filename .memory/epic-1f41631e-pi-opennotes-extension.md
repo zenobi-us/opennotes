@@ -1,6 +1,7 @@
 ---
 id: 1f41631e
 title: Pi-OpenNotes Extension for pi-mono
+type: "epic"
 created_at: 2026-01-28T23:25:00+10:30
 updated_at: 2026-01-29T10:00:00+10:30
 status: in-progress

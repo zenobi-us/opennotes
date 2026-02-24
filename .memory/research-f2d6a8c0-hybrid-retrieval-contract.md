@@ -1,6 +1,7 @@
 ---
 id: f2d6a8c0
 title: Hybrid Retrieval Orchestration Contract
+type: "research"
 created_at: 2026-02-14T23:05:00+10:30
 updated_at: 2026-02-14T23:05:00+10:30
 status: completed

@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # Test Improvement Initiative - Complete Index
 
 **Created:** 2026-01-18 20:32 GMT+10:30  

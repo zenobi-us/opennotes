@@ -1,9 +1,9 @@
 # Jot Project Summary
 
 ## Current Focus
-- Active execution remains under phase `4adb81db` (DSL views deferred follow-ups).
-- Completed Task 3 (`task-684a9a73`): named view parameter substitution execution order and validation.
-- Full verification passed with `mise run test`.
+- Active execution includes epic `9b7c2a4d` (Unified Search DSL Deprecation).
+- Completed `task-1f2e3d4c`: `notes search` now routes colon-based queries (e.g., `type:epic`) through DSL execution.
+- Verification passed with `mise run test` and `go run . notes search "type:epic"`.
 
 ## Archived (Cleanup)
 - [epic-8361d3a2](archive/rename-to-jot-8361d3a2/epic-8361d3a2-rename-to-jot.md) — Rename Project from OpenNotes to Jot

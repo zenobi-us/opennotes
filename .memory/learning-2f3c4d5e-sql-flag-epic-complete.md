@@ -1,6 +1,7 @@
 ---
 id: 2f3c4d5e
 title: SQL Flag Feature Epic - Complete Implementation Learning
+type: "learning"
 created_at: 2026-01-18T20:57:00+10:30
 updated_at: 2026-01-18T20:57:00+10:30
 status: completed

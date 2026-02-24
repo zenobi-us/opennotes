@@ -1,6 +1,7 @@
 ---
 id: 8bf639d3
 title: Semantic Search Enhancement Epic - Complete Learnings
+type: "learning"
 created_at: 2026-02-17T18:40:00+10:30
 updated_at: 2026-02-17T18:40:00+10:30
 status: completed

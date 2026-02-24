@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # OpenNotes Codebase Exploration & Analysis
 
 **Generated:** 2026-01-17 10:38:43  

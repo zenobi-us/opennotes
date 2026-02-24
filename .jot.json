@@ -5,9 +5,29 @@
   "contexts": ["/mnt/Store/Projects/Mine/Github/opennotes"],
   "groups": [
     {
+      "name": "Archived",
+      "globs": ["**/archived/**/*.md"]
+    },
+    {
       "name": "Default",
       "globs": ["**/*.md"],
       "metadata": {}
+    },
+    {
+      "name": "Epics",
+      "globs": ["**/epic-*.md"]
+    },
+    {
+      "name": "Research",
+      "globs": ["**/researh-*.md"]
+    },
+    {
+      "name": "Stories",
+      "globs": ["**/story-*.md"]
+    },
+    {
+      "name": "Tasks",
+      "globs": ["**/task-*.md"]
     }
   ]
 }

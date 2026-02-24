@@ -1,6 +1,7 @@
 ---
 id: c7f2a9d1
 title: OpenNotes User Journeys Map
+type: "knowledge"
 created_at: 2026-02-14T18:33:00+10:30
 updated_at: 2026-02-14T18:33:00+10:30
 status: active

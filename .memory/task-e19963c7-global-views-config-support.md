@@ -1,6 +1,7 @@
 ---
 id: e19963c7
 title: Add global views support in user config hierarchy
+type: "task"
 created_at: 2026-02-20T19:14:00+10:30
 updated_at: 2026-02-22T22:53:00+10:30
 status: done

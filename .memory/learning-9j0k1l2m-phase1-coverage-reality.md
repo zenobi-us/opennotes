@@ -1,3 +1,7 @@
+---
+type: "learning"
+---
+
 # Learning: Phase 1 Test Coverage - Reality vs Analysis
 
 **Learning ID**: `9j0k1l2m`  
