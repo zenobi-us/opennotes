@@ -277,6 +277,8 @@ func normalizeField(field string) string {
 		return FieldModified
 	case "status":
 		return FieldMetadata + ".status"
+	case "priority", "assignee", "author", "type", "category", "project", "sprint":
+		return FieldMetadata + "." + strings.ToLower(field)
 	default:
 		// Check if it's a metadata field
 		if strings.HasPrefix(field, "meta.") || strings.HasPrefix(field, "metadata.") {

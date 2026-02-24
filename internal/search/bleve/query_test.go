@@ -248,6 +248,8 @@ func TestNormalizeField(t *testing.T) {
 		{"date", FieldCreated},
 		{"modified", FieldModified},
 		{"updated", FieldModified},
+		{"status", FieldMetadata + ".status"},
+		{"type", FieldMetadata + ".type"},
 		{"custom", "custom"},
 	}
 

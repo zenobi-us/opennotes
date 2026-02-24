@@ -98,8 +98,9 @@ DOCUMENTATION:
 			return err
 		}
 
-		// Check if query contains pipe syntax (and not fuzzy mode)
-		if !fuzzyFlag && strings.Contains(searchTerm, "|") {
+		// DSL-first: route explicit DSL-style queries through parser/index path.
+		// Keep plain text and fuzzy behaviors compatible.
+		if !fuzzyFlag && isDSLStyleQuery(searchTerm) {
 			return runSearchWithPipeSyntax(cmd.Context(), nb, searchTerm)
 		}
 
@@ -140,6 +141,16 @@ func init() {
 		false,
 		"Enable fuzzy matching for ranked results. Matches notes by similarity instead of exact text. Title matches weighted higher than body matches.",
 	)
+}
+
+// isDSLStyleQuery detects when a search query is intended for DSL parsing.
+// Current heuristic: field/directive style tokens (:) or explicit pipe directives (|).
+func isDSLStyleQuery(query string) bool {
+	q := strings.TrimSpace(query)
+	if q == "" {
+		return false
+	}
+	return strings.Contains(q, ":") || strings.Contains(q, "|")
 }
 
 // runSearchWithPipeSyntax executes a search using pipe syntax (filter | directives).

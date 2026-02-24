@@ -49,7 +49,7 @@ type notExprAST struct {
 type fieldExprAST struct {
 	Field    string `parser:"@Field ':'"`
 	Operator string `parser:"@( '>''=' | '<''=' | '>' | '<' )?"`
-	Value    string `parser:"( @String | @Date | @Word )"`
+	Value    string `parser:"( @String | @Date | @Field | @Word )"`
 }
 
 // termAST represents a simple search term.
@@ -62,7 +62,7 @@ var queryLexer = lexer.MustSimple([]lexer.SimpleRule{
 	// Existence keywords must come before Field to be matched first
 	{Name: "ExistenceKeyword", Pattern: `(has|missing)`},
 	{Name: "OrKeyword", Pattern: `(?i)OR`},
-	{Name: "Field", Pattern: `(tag|title|path|created|modified|body|status)`},
+	{Name: "Field", Pattern: `(tag|tags|title|path|created|modified|body|status|type)`},
 	{Name: "String", Pattern: `"[^"]*"`},
 	// Date patterns must come before Word to capture dates properly
 	{Name: "Date", Pattern: `\d{4}-\d{2}-\d{2}`},

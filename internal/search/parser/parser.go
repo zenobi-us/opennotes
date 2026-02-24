@@ -75,6 +75,8 @@ Supported Fields:
   created   - Filter by creation date
   modified  - Filter by modification date
   status    - Filter by status field
+  type      - Filter by type field
+  project   - Filter by project field
 
 Examples:
   tag:work                      All work-tagged notes

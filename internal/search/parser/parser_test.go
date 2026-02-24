@@ -108,6 +108,13 @@ func TestParser_Parse_FieldExpr(t *testing.T) {
 			wantOp:    search.OpEquals,
 			wantValue: "important",
 		},
+		{
+			name:      "metadata type field",
+			input:     "type:epic",
+			wantField: "type",
+			wantOp:    search.OpEquals,
+			wantValue: "epic",
+		},
 	}
 
 	for _, tt := range tests {

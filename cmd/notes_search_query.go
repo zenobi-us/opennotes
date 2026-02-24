@@ -8,6 +8,16 @@ import (
 	"github.com/zenobi-us/jot/internal/services"
 )
 
+const (
+	legacyQueryDeprecationSince         = "TODO(vX.Y.Z)"
+	legacyQueryDeprecationRemovalTarget = "TODO(vX.(Y+1).0)"
+	legacyQueryDeprecationTrackingEpic  = ".memory/epic-9b7c2a4d-unified-search-dsl-deprecation.md"
+)
+
+// @deprecated Legacy boolean flag query path (--and/--or/--not).
+// Since: TODO(vX.Y.Z).
+// Removal target: TODO(vX.(Y+1).0).
+// Tracking: .memory/epic-9b7c2a4d-unified-search-dsl-deprecation.md
 var notesSearchQueryCmd = &cobra.Command{
 	Use:   "query",
 	Short: "Search notes with boolean AND/OR/NOT operators",
@@ -96,6 +106,10 @@ func init() {
 	notesSearchQueryCmd.Flags().StringArray("not", []string{}, "NOT condition (field=value) - excludes matches")
 }
 
+// @deprecated Legacy execution path for `jot notes search query --and/--or/--not`.
+// Since: TODO(vX.Y.Z).
+// Removal target: TODO(vX.(Y+1).0).
+// Tracking: .memory/epic-9b7c2a4d-unified-search-dsl-deprecation.md
 func notesSearchQueryRunE(cmd *cobra.Command, args []string) error {
 	// Parse flags
 	andFlags, err := cmd.Flags().GetStringArray("and")
