@@ -45,7 +45,7 @@ echo ""
 echo "## Notes by Folder"
 echo ""
 jot notes search --sql "
-SELECT 
+SELECT
   SUBSTRING(file_path FROM 1 FOR GREATEST(POSITION('/' IN REVERSE(file_path)) - 1, 1)) as folder,
   COUNT(*) as count
 FROM read_markdown()
@@ -60,7 +60,7 @@ echo ""
 echo "## Writing Metrics"
 echo ""
 jot notes search --sql "
-SELECT 
+SELECT
   ROUND(AVG(md_stats(content).words), 0) as avg_words,
   ROUND(AVG(md_stats(content).lines), 0) as avg_lines,
   MAX(md_stats(content).words) as max_words
@@ -70,6 +70,7 @@ WHERE content IS NOT NULL
 ```
 
 **Usage**:
+
 ```bash
 chmod +x daily-note-stats.sh
 ./daily-note-stats.sh >> stats-log.md
@@ -99,7 +100,7 @@ EOF
 # Notes created this week (requires date tracking in metadata)
 echo "## New Notes This Week" >> "$OUTPUT"
 jot notes search --sql "
-SELECT 
+SELECT
   title,
   file_path,
   created_date
@@ -113,7 +114,7 @@ LIMIT 5
 echo "" >> "$OUTPUT"
 echo "## Top Topics" >> "$OUTPUT"
 jot notes search --sql "
-SELECT 
+SELECT
   SUBSTRING(content FROM 1 FOR 50) as snippet,
   COUNT(*) as frequency
 FROM read_markdown()
@@ -127,6 +128,7 @@ echo "✅ Weekly summary generated: $OUTPUT"
 ```
 
 **Usage**:
+
 ```bash
 chmod +x weekly-note-summary.sh
 ./weekly-note-summary.sh > weekly-report.md
@@ -185,6 +187,7 @@ fi
 ```
 
 **Usage**:
+
 ```bash
 chmod +x note-backup.sh
 
@@ -227,7 +230,7 @@ EOF
 echo "## By Folder" >> "$OUTPUT"
 echo "" >> "$OUTPUT"
 jot notes search --sql "
-SELECT 
+SELECT
   SUBSTRING(file_path FROM 1 FOR POSITION('/' IN file_path) - 1) as folder,
   COUNT(*) as doc_count
 FROM read_markdown()
@@ -263,6 +266,7 @@ echo "✅ Documentation index generated: $OUTPUT"
 ```
 
 **Usage**:
+
 ```bash
 chmod +x doc-index-gen.sh
 ./doc-index-gen.sh ~/my-project/docs > docs/INDEX.md
@@ -302,13 +306,13 @@ ORDER BY todo_count DESC
 " 2>/dev/null | grep -v "^+" | tail -n +2 || echo "✅ No TODOs found!"
 
 # Find empty sections
-echo "" >> 
+echo "" >>
 echo "## Sections Without Content"
 echo ""
 jot notes search --sql "
 SELECT file_path
 FROM read_markdown()
-WHERE content LIKE '%^## %' 
+WHERE content LIKE '%^## %'
    AND NOT content LIKE '%## .*[a-zA-Z0-9]%'
 ORDER BY file_path
 " 2>/dev/null | grep -v "^+" | tail -n +2 || echo "✅ All sections have content!"
@@ -319,6 +323,7 @@ echo "Last checked: $(date '+%Y-%m-%d %H:%M')"
 ```
 
 **Usage**:
+
 ```bash
 chmod +x doc-completeness.sh
 ./doc-completeness.sh ~/my-project/docs
@@ -348,12 +353,12 @@ echo ""
 echo "## Duplicate URLs"
 echo ""
 jot notes search --sql "
-SELECT 
+SELECT
   url,
   COUNT(*) as occurrences,
   COUNT(DISTINCT file_path) as in_files
 FROM (
-  SELECT 
+  SELECT
     SUBSTRING(content FROM POSITION('http' IN content) FOR 100) as url,
     file_path
   FROM read_markdown()
@@ -370,7 +375,7 @@ echo ""
 echo "## Possible Duplicate Citations"
 echo ""
 jot notes search --sql "
-SELECT 
+SELECT
   SUBSTRING(content FROM 1 FOR 80) as citation_snippet,
   COUNT(*) as occurrences
 FROM read_markdown()
@@ -386,6 +391,7 @@ echo "✅ Report generated"
 ```
 
 **Usage**:
+
 ```bash
 chmod +x research-deduplicate.sh
 ./research-deduplicate.sh ~/research/papers
@@ -417,10 +423,10 @@ REPORT=$(mktemp)
   echo "# Note Statistics Report"
   echo "Generated: $(date '+%Y-%m-%d %H:%M:%S')"
   echo ""
-  
+
   echo "## Summary"
   jot notes search --sql "
-  SELECT 
+  SELECT
     COUNT(*) as total_notes,
     SUM(md_stats(content).lines) as total_lines,
     SUM(md_stats(content).words) as total_words,
@@ -428,7 +434,7 @@ REPORT=$(mktemp)
   FROM read_markdown()
   WHERE content IS NOT NULL
   " 2>/dev/null | tail -1
-  
+
 } > "$REPORT"
 
 if [ "$SAVE_RESULTS" = "--save" ]; then
@@ -495,7 +501,7 @@ case "$FORMAT" in
   json)
     echo "📤 Exporting to JSON..."
     jot notes search --sql "
-    SELECT 
+    SELECT
       file_path,
       md_stats(content).words as words,
       md_stats(content).lines as lines,
@@ -509,7 +515,7 @@ case "$FORMAT" in
     jot notes search --sql "
     SELECT file_path, words, lines
     FROM (
-      SELECT 
+      SELECT
         file_path,
         md_stats(content).words as words,
         md_stats(content).lines as lines
@@ -545,7 +551,7 @@ generate_daily_report() {
 
 ## Overview
 EOF
-  
+
   jot notes search --sql "
   SELECT 'Total Notes: ' || COUNT(*) as stat
   FROM read_markdown()
@@ -703,7 +709,7 @@ echo ""
 # Count notes with specific tags
 echo "## Notes by Tag"
 jot notes search --sql "
-SELECT 
+SELECT
   SUBSTRING(content FROM POSITION('#' IN content) FOR 20) as tag,
   COUNT(*) as count
 FROM read_markdown()
@@ -717,7 +723,7 @@ LIMIT 20
 echo ""
 echo "## Potential Broken Links"
 jot notes search --sql "
-SELECT file_path, 
+SELECT file_path,
   SUBSTRING(content FROM POSITION('[[' IN content) FOR 50) as potential_link
 FROM read_markdown()
 WHERE content LIKE '%[[%'
@@ -746,7 +752,7 @@ jot notes list
 
 # Export statistics
 jot notes search --sql "
-SELECT 
+SELECT
   COUNT(*) as total,
   SUM(md_stats(content).words) as total_words,
   AVG(md_stats(content).words) as avg_words
@@ -889,4 +895,3 @@ Once you've mastered these recipes:
 4. **Build dashboards** - Combine multiple reports into living documentation
 
 See [SQL Quick Reference](sql-quick-reference.md) for query examples and [JSON-SQL Guide](json-sql-guide.md) for advanced data transformation patterns.
-

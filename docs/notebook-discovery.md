@@ -26,6 +26,7 @@ jot notes list  # Uses the notebook from envvar
 ```
 
 If the envvar is set:
+
 1. Check if `.jot.json` exists in that path
 2. If yes: Load and open the notebook → **SUCCESS**
 3. If no: Continue to Tier 2
@@ -39,6 +40,7 @@ jot notes list --notebook /path/to/notebook
 ```
 
 If a flag path exists:
+
 1. Check if `.jot.json` exists in that path
 2. If yes: Load and open the notebook → **SUCCESS**
 3. If no: Continue to Tier 3
@@ -53,6 +55,7 @@ jot notes list   # Auto-discovers notebook in cwd
 ```
 
 If `.jot.json` exists in current directory:
+
 1. Load and open the notebook → **SUCCESS**
 2. If no: Continue to Tier 4
 
@@ -80,6 +83,7 @@ for _, context := range notebook.Contexts {
 ```
 
 **Example:**
+
 ```
 Notebook contexts: ["/home/user/project", "/tmp/work"]
 Current directory: "/home/user/project/src"
@@ -102,6 +106,7 @@ If no environment variable, flag, current directory, or registered notebooks mat
 ## File Locations & Formats
 
 ### Global Configuration
+
 **Location:** `~/.config/jot/config.json`
 
 ```json
@@ -115,16 +120,14 @@ If no environment variable, flag, current directory, or registered notebooks mat
 ```
 
 ### Notebook Configuration
+
 **Location:** `<notebook_directory>/.jot.json`
 
 ```json
 {
   "root": "./notes",
   "name": "Project Notebook",
-  "contexts": [
-    "/home/user/project",
-    "/home/user/project-related"
-  ],
+  "contexts": ["/home/user/project", "/home/user/project-related"],
   "templates": {
     "default": "# {{.Title}}\n\nDate: {{.Date}}\n\n"
   },
@@ -141,21 +144,25 @@ If no environment variable, flag, current directory, or registered notebooks mat
 ## Key Features
 
 ### Deterministic Behavior
+
 - **Clear Priority**: Declared > Registered > Ancestor
 - **First Match Wins**: Stops at first successful discovery
 - **No Ambiguity**: Priority order prevents conflicts
 
 ### Graceful Fallback
+
 - If higher priority method fails, try next tier
 - Comprehensive search ensures maximum discovery success
 - Returns `nil` only when all methods exhausted
 
 ### Context-Aware
+
 - Registered notebooks define active contexts
 - Automatically selects appropriate notebook for current work environment
 - Supports multiple context paths per notebook
 
 ### Efficient Discovery
+
 - Stops immediately upon successful match
 - Minimal filesystem operations
 - Fast context matching using string prefix comparison
@@ -172,4 +179,3 @@ If no environment variable, flag, current directory, or registered notebooks mat
 7. **NOT FOUND** → Return nil
 
 This discovery system ensures Jot works seamlessly across different project environments while maintaining predictable, efficient behavior. The priority order follows the principle of least surprise: environment variable (global) → flag (explicit) → auto-detection (implicit).
-
