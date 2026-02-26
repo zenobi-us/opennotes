@@ -30,8 +30,8 @@ If running from multiple contexts, review:
 ## 3) Validate searchability
 
 ```bash
-jot notes search "todo"
-jot notes search --fuzzy "tod"
+jot notes search "todo"          # fieldless => title search
+jot notes search "body:todo"     # explicit body/content search
 jot notes search query --and path=projects/**/*.md
 ```
 
@@ -70,7 +70,7 @@ jot notes view kanban
 
 - verify files are markdown
 - verify notebook path correctness
-- try text search first, then query filters
+- try title search first (`jot notes search "..."`), then `body:` or query filters
 
 ### Semantic search behavior differs from keyword search
 

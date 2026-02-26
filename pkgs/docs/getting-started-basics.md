@@ -229,17 +229,21 @@ jot notes add "Projects/My Project" --path projects/my-project.md
 
 ## Part 4: Simple Searches (5 minutes)
 
-Now let's find notes without needing to know SQL. We'll use simple text searches.
+Now let's find notes without needing to know SQL.
 
-### Search by Text
+### Search by Title Text
 
-Find notes containing specific words:
+Fieldless search is title-only (`jot notes search "..."` normalizes to `title:...`):
 
 ```bash
 jot notes search "shopping"
 ```
 
-This searches through all your notes and shows you which files contain "shopping". Perfect for finding that old note!
+To search note body/content, use explicit `body:`:
+
+```bash
+jot notes search "body:shopping"
+```
 
 ### Search by Filename
 
@@ -267,7 +271,7 @@ Or search for content within your notes using the search functionality (see belo
 ### Search Tips
 
 - **Case-insensitive**: Searching for "SHOPPING" finds "shopping"
-- **Partial matches**: Searching for "milk" finds "Buy milk tomorrow"
+- **Partial matches**: Searching for "meet" can match titles like "Team Meeting Notes"
 - **Multiple words**: Searching for "project alpha" finds both words
 
 For more powerful searches (once you're comfortable), see **Part 5: Next Steps**.

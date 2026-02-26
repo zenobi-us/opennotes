@@ -96,8 +96,8 @@ module github.com/zenobi-us/jot
 
 Current search surfaces are:
 
-- `jot notes search "..."` (text)
-- `jot notes search --fuzzy "..."` (fuzzy)
+- `jot notes search "..."` (fieldless title-only; normalized to `title:...`)
+- `jot notes search "body:..."` (explicit body/content search)
 - `jot notes search query --and ...` (boolean)
 - `jot notes search semantic "..."` (semantic/hybrid)
 

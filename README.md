@@ -88,10 +88,12 @@ jot notes list
 
 ### Searching Notes
 
-Find notes instantly by keyword.
+Fieldless search is title-only (`jot notes search "..."` normalizes to `title:...`).
+Use explicit `body:` when you want body/content matching.
 
 ```bash
 jot notes search "important"
+jot notes search "body:important"
 ```
 
 ### Views 

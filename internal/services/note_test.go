@@ -21,7 +21,7 @@ func TestNoteService_SearchNotes_NoNotebookSelected(t *testing.T) {
 	cfg, _ := services.NewConfigServiceWithPath(t.TempDir() + "/config.json")
 	svc := services.NewNoteService(cfg, nil, "")
 
-	notes, err := svc.SearchNotes(ctx, "", false)
+	notes, err := svc.SearchNotes(ctx, "")
 	assert.Error(t, err)
 	assert.Nil(t, notes)
 	assert.Contains(t, err.Error(), "no notebook selected")
@@ -45,7 +45,7 @@ func TestNoteService_SearchNotes_FindsAllNotes(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "", false)
+	notes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 3)
@@ -70,7 +70,7 @@ func TestNoteService_SearchNotes_FiltersByQuery(t *testing.T) {
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Search for "apple"
-	notes, err := svc.SearchNotes(ctx, "apple", false)
+	notes, err := svc.SearchNotes(ctx, "apple")
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 1)
@@ -93,7 +93,7 @@ func TestNoteService_SearchNotes_FiltersByQueryCaseInsensitive(t *testing.T) {
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Search with lowercase should match uppercase content
-	notes, err := svc.SearchNotes(ctx, "uppercase", false)
+	notes, err := svc.SearchNotes(ctx, "uppercase")
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 1)
@@ -116,7 +116,7 @@ func TestNoteService_SearchNotes_FiltersByFilepath(t *testing.T) {
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Search by filename pattern
-	notes, err := svc.SearchNotes(ctx, "project", false)
+	notes, err := svc.SearchNotes(ctx, "project")
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 1)
@@ -139,7 +139,7 @@ func TestNoteService_SearchNotes_EmptyNotebook(t *testing.T) {
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Empty notebook should return empty list without error
-	notes, err := svc.SearchNotes(ctx, "", false)
+	notes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 	assert.Empty(t, notes)
 }
@@ -166,7 +166,7 @@ func TestNoteService_SearchNotes_ExtractsMetadata(t *testing.T) {
 	idx := testutil.CreateTestIndex(t, notebookDir)
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "", false)
+	notes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -189,7 +189,7 @@ func TestNoteService_SearchNotes_SetsRelativePath(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "", false)
+	notes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -269,7 +269,7 @@ func TestNoteService_SearchNotes_MultipleQueryMatches(t *testing.T) {
 
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "golang", false)
+	notes, err := svc.SearchNotes(ctx, "golang")
 	require.NoError(t, err)
 
 	assert.Len(t, notes, 2)
@@ -290,7 +290,7 @@ func TestNoteService_SearchNotes_ContentHasText(t *testing.T) {
 	idx := testutil.CreateTestIndex(t, notebookDir)
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "", false)
+	notes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -330,7 +330,7 @@ func TestNoteService_SearchNotes_DisplayNameWithTitle(t *testing.T) {
 	idx := testutil.CreateTestIndex(t, notebookDir)
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "", false)
+	notes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -353,7 +353,7 @@ func TestNoteService_SearchNotes_DisplayNameSlugifyFilename(t *testing.T) {
 	idx := testutil.CreateTestIndex(t, notebookDir)
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "", false)
+	notes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 
 	require.Len(t, notes, 1)
@@ -384,7 +384,7 @@ func TestNoteService_SearchNotes_DisplayNameMultipleNotes(t *testing.T) {
 	idx := testutil.CreateTestIndex(t, notebookDir)
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
-	notes, err := svc.SearchNotes(ctx, "", false)
+	notes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 
 	require.Len(t, notes, 3)
@@ -469,7 +469,7 @@ func TestNoteService_SearchNotes_ComplexQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			notes, err := svc.SearchNotes(ctx, tt.query, false)
+			notes, err := svc.SearchNotes(ctx, tt.query)
 			require.NoError(t, err, tt.description)
 			assert.Len(t, notes, tt.expectedCount,
 				"Expected %d notes for query '%s', got %d",
@@ -546,7 +546,7 @@ func TestNoteService_SearchNotes_SpecialCharacters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			notes, err := svc.SearchNotes(ctx, tt.query, false)
+			notes, err := svc.SearchNotes(ctx, tt.query)
 			require.NoError(t, err)
 			assert.Len(t, notes, tt.expectedCount,
 				"Expected %d notes for query '%s'", tt.expectedCount, tt.query)
@@ -582,12 +582,12 @@ func TestNoteService_SearchNotes_LargeResultSets(t *testing.T) {
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Test large result set
-	notes, err := svc.SearchNotes(ctx, commonWord, false)
+	notes, err := svc.SearchNotes(ctx, commonWord)
 	require.NoError(t, err)
 	assert.Len(t, notes, 25, "Should find all notes with shared keyword")
 
 	// Test all notes (empty query)
-	allNotes, err := svc.SearchNotes(ctx, "", false)
+	allNotes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 	assert.Len(t, allNotes, 30, "Should find all 30 notes")
 
@@ -656,12 +656,12 @@ Content despite frontmatter issues.`
 	svc := services.NewNoteService(cfg, idx, notebookDir)
 
 	// Test that all notes are found regardless of frontmatter quality
-	allNotes, err := svc.SearchNotes(ctx, "", false)
+	allNotes, err := svc.SearchNotes(ctx, "")
 	require.NoError(t, err)
 	assert.Len(t, allNotes, 4, "Should find all notes regardless of frontmatter")
 
 	// Test searching content works even with frontmatter issues
-	contentSearch, err := svc.SearchNotes(ctx, "Content", false)
+	contentSearch, err := svc.SearchNotes(ctx, "Content")
 	require.NoError(t, err)
 	assert.Len(t, contentSearch, 4, "Content search should work despite frontmatter variations")
 
@@ -692,7 +692,7 @@ func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 	// Test with empty/non-existent notebook
 	svc := services.NewNoteService(cfg, nil, "")
 
-	notes, err := svc.SearchNotes(ctx, "test", false)
+	notes, err := svc.SearchNotes(ctx, "test")
 	assert.Error(t, err, "Should error when no notebook selected")
 	assert.Nil(t, notes, "Notes should be nil on error")
 	assert.Contains(t, err.Error(), "no notebook selected", "Error should mention no notebook")
@@ -702,7 +702,7 @@ func TestNoteService_SearchNotes_ErrorConditions(t *testing.T) {
 	svc2 := services.NewNoteService(cfg, nil, nonExistentPath)
 
 	// This might not error immediately since DuckDB might handle empty globs gracefully
-	notes2, err := svc2.SearchNotes(ctx, "test", false)
+	notes2, err := svc2.SearchNotes(ctx, "test")
 	if err != nil {
 		// If it errors, that's fine - means validation exists
 		assert.Nil(t, notes2)

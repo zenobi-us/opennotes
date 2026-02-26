@@ -1,20 +1,19 @@
 # Notes Search Command
 
-Search notes with text matching, fuzzy ranking, boolean filters, DSL pipe syntax, or semantic retrieval.
+Search notes with title-focused fieldless matching, boolean filters, DSL pipe syntax, or semantic retrieval.
 
 ## Overview
 
 Jot supports these search workflows:
 
-1. **Text Search** (`jot notes search "..."`)  
-   Exact substring matching in content and file paths.
-2. **Fuzzy Search** (`--fuzzy`)  
-   Typo-tolerant ranking based on character similarity.
-3. **Boolean Query Search** (`jot notes search query`)  
+1. **Fieldless Search (title-only)** (`jot notes search "..."`)  
+   Fieldless input is normalized to `title:<query>` (or `title:"multi word"`).
+   Use explicit DSL (for example `body:query`) to search outside title.
+2. **Boolean Query Search** (`jot notes search query`)  
    Structured `--and/--or/--not` filtering on metadata, path, title, and links.
-4. **DSL Pipe Syntax** (`jot notes search "filter | directives"`)  
+3. **DSL Pipe Syntax** (`jot notes search "filter | directives"`)  
    Filter expression + sort/limit/offset directives.
-5. **Semantic Search** (`jot notes search semantic`)  
+4. **Semantic Search** (`jot notes search semantic`)  
    Keyword / semantic / hybrid retrieval with optional explain output.
 
 ---
@@ -22,11 +21,8 @@ Jot supports these search workflows:
 ## Quick Start
 
 ```bash
-# Text search
+# Fieldless title search
 jot notes search "meeting"
-
-# Fuzzy search
-jot notes search --fuzzy "mtng"
 
 # Boolean query
 jot notes search query --and data.tag=workflow --not data.status=archived
@@ -40,7 +36,7 @@ jot notes search semantic "project planning discussions"
 
 ---
 
-## Text Search
+## Fieldless Search (Title-Only)
 
 ### Syntax
 
@@ -51,7 +47,9 @@ jot notes search [query]
 ### Examples
 
 ```bash
-jot notes search "meeting"
+jot notes search "meeting"                 # normalized to title:meeting
+jot notes search "fieldless text"          # normalized to title:"fieldless text"
+jot notes search "body:meeting"            # explicit body search
 jot notes search "todo" --notebook ~/notes
 jot notes search
 ```
@@ -59,33 +57,9 @@ jot notes search
 ### Behavior
 
 - Case-insensitive matching
-- Searches note content and file path
+- Fieldless queries search title only
+- To search body/content, use explicit DSL field `body:<text>`
 - No query returns all notes
-
----
-
-## Fuzzy Search
-
-### Syntax
-
-```bash
-jot notes search [query] --fuzzy
-```
-
-### Examples
-
-```bash
-jot notes search --fuzzy "mtng"
-jot notes search "project" --fuzzy
-jot notes search --fuzzy
-```
-
-### How It Ranks
-
-- Character-sequence fuzzy matching (VS Code-like feel)
-- Title matches weighted higher than body matches
-- Results sorted by best score first
-- Body scan optimized (first part of note content)
 
 ---
 
@@ -166,7 +140,9 @@ jot notes search "| sort:title:asc"
 
 - `tag:<value>`
 - `status:<value>`
+- `type:<value>`
 - `title:<text>`
+- `body:<text>`
 - `path:<glob-or-prefix>`
 - `created:>date`, `created:<date`
 - `modified:>date`, `modified:<date`

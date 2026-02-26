@@ -56,49 +56,6 @@ func createBenchmarkNotes(count int) []services.Note {
 }
 
 // ============================================================================
-// Fuzzy Search Benchmarks - Performance Targets
-// ============================================================================
-
-// BenchmarkFuzzySearch_100Notes benchmarks fuzzy search on 100 notes.
-func BenchmarkFuzzySearch_100Notes(b *testing.B) {
-	svc := services.NewSearchService()
-	notes := createBenchmarkNotes(100)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		results := svc.FuzzySearch("meeting", notes)
-		_ = results
-	}
-}
-
-// BenchmarkFuzzySearch_1kNotes benchmarks fuzzy search on 1,000 notes.
-func BenchmarkFuzzySearch_1kNotes(b *testing.B) {
-	svc := services.NewSearchService()
-	notes := createBenchmarkNotes(1000)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		results := svc.FuzzySearch("meeting", notes)
-		_ = results
-	}
-}
-
-// BenchmarkFuzzySearch_10kNotes benchmarks fuzzy search on 10,000 notes.
-// TARGET: < 50ms
-func BenchmarkFuzzySearch_10kNotes(b *testing.B) {
-	svc := services.NewSearchService()
-	notes := createBenchmarkNotes(10000)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		results := svc.FuzzySearch("meeting", notes)
-		_ = results
-	}
-	// Target: < 50ms per operation
-	// Actual ~18ms based on testing
-}
-
-// ============================================================================
 // Text Search Benchmarks
 // ============================================================================
 
@@ -361,19 +318,6 @@ func BenchmarkParseConditions_Complex(b *testing.B) {
 // ============================================================================
 // Memory Benchmarks
 // ============================================================================
-
-// BenchmarkFuzzySearch_Memory benchmarks memory usage of fuzzy search.
-func BenchmarkFuzzySearch_Memory(b *testing.B) {
-	svc := services.NewSearchService()
-	notes := createBenchmarkNotes(10000)
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		results := svc.FuzzySearch("meeting", notes)
-		_ = results
-	}
-}
 
 // BenchmarkTextSearch_Memory benchmarks memory usage of text search.
 func BenchmarkTextSearch_Memory(b *testing.B) {

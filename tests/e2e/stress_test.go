@@ -156,7 +156,7 @@ func TestNoteService_LargeNotebook(t *testing.T) {
 
 	// Test search performance
 	searchStart := time.Now()
-	results, err := notebook.Notes.SearchNotes(context.Background(), "test", false)
+	results, err := notebook.Notes.SearchNotes(context.Background(), "test")
 	searchTime := time.Since(searchStart)
 	require.NoError(t, err)
 
@@ -236,7 +236,7 @@ This note is at directory depth %d for testing deep structure handling.
 	require.NoError(t, err)
 
 	searchStart := time.Now()
-	results, err := notebook.Notes.SearchNotes(context.Background(), "depth", false)
+	results, err := notebook.Notes.SearchNotes(context.Background(), "depth")
 	searchTime := time.Since(searchStart)
 	require.NoError(t, err)
 
@@ -309,7 +309,7 @@ This file contains a large amount of content to test handling of substantial mar
 
 	// Test search performance with large file
 	searchStart := time.Now()
-	results, err := notebook.Notes.SearchNotes(context.Background(), "Large", false)
+	results, err := notebook.Notes.SearchNotes(context.Background(), "Large")
 	searchTime := time.Since(searchStart)
 	require.NoError(t, err)
 
@@ -385,7 +385,7 @@ Search terms: unicode%d, test%d, %s
 	// Test Unicode search
 	for _, searchTerm := range []string{"测试", "🚀", "test", "unicode"} {
 		searchStart := time.Now()
-		results, err := notebook.Notes.SearchNotes(context.Background(), searchTerm, false)
+		results, err := notebook.Notes.SearchNotes(context.Background(), searchTerm)
 		searchTime := time.Since(searchStart)
 		require.NoError(t, err)
 
@@ -417,7 +417,7 @@ func TestNoteService_MemoryUsageScale(t *testing.T) {
 			_, notebook := generateStressNotebook(t, size, 1)
 
 			// Perform operations that load data into memory
-			_, err := notebook.Notes.SearchNotes(context.Background(), "test", false)
+			_, err := notebook.Notes.SearchNotes(context.Background(), "test")
 			require.NoError(t, err)
 
 			count, err := notebook.Notes.Count(context.Background())
@@ -484,7 +484,7 @@ func TestNoteService_SearchPerformanceScale(t *testing.T) {
 
 			for _, test := range searchTests {
 				start := time.Now()
-				results, err := notebook.Notes.SearchNotes(context.Background(), test.term, false)
+				results, err := notebook.Notes.SearchNotes(context.Background(), test.term)
 				searchTime := time.Since(start)
 				require.NoError(t, err)
 

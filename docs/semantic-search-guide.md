@@ -30,13 +30,13 @@ jot notes search semantic "architecture" --explain
 
 ### Regular Search (`notes search`)
 
-- Finding notes with **specific keywords**
-- Quick lookups when you know the exact terms
+- Fieldless lookups when you know title terms (`jot notes search "..."` => `title:...`)
+- Explicit body/content lookups with `body:`
 - **Performance-critical** scenarios (fastest)
 
 ```bash
 jot notes search "TODO"
-jot notes search "2024-01-15"
+jot notes search "body:2024-01-15"
 ```
 
 ### Semantic Search (`notes search semantic`)

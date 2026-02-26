@@ -13,11 +13,11 @@ If you already have notebooks registered, `jot` will resolve context automatical
 
 ## 2) Master search surfaces
 
-### Text + fuzzy
+### Text search
 
 ```bash
-jot notes search "incident"
-jot notes search --fuzzy "incdnt"
+jot notes search "incident"          # fieldless => title:incident
+jot notes search "body:incident"     # explicit body/content search
 ```
 
 ### Structured boolean filters

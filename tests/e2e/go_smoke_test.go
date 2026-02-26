@@ -398,8 +398,8 @@ func TestCLI_NotesSearch_FiltersNotes(t *testing.T) {
 	env.createNote(notebookDir, "banana.md", "# Banana\n\nThis is about bananas")
 	env.createNote(notebookDir, "cherry.md", "# Cherry\n\nThis is about cherries")
 
-	// Search for "apple"
-	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "search", "apple")
+	// Search for body content explicitly (fieldless search is title-only)
+	stdout, stderr, exitCode := env.runInDir(notebookDir, "notes", "search", "body:apple")
 
 	if exitCode != 0 {
 		t.Errorf("notes search failed with exit code %d, stderr: %s", exitCode, stderr)

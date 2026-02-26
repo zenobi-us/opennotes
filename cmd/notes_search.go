@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -13,38 +14,25 @@ import (
 
 var notesSearchCmd = &cobra.Command{
 	Use:   "search [query]",
-	Short: "Search notes with text, fuzzy matching, boolean queries, or DSL pipe syntax",
-	Long: `Search notes using multiple methods: text search, fuzzy matching, boolean queries, or DSL with pipe syntax.
+	Short: "Search notes with text, boolean queries, or DSL pipe syntax",
+	Long: `Search notes using multiple methods: text search, boolean queries, or DSL with pipe syntax.
 
 SEARCH METHODS:
 
-  1. Text Search (default): Exact substring matching
-     jot notes search "meeting"
+  1. Default Fieldless Search: title-only DSL normalization
+     jot notes search "meeting"        # normalized to title:meeting
 
-  2. Fuzzy Search: Similarity-based, typo-tolerant, ranked results
-     jot notes search --fuzzy "mtng"
-
-  3. Boolean Queries: Structured AND/OR/NOT filtering (see 'query' subcommand)
+  2. Boolean Queries: Structured AND/OR/NOT filtering (see 'query' subcommand)
      jot notes search query --and data.tag=workflow
 
-  4. DSL Pipe Syntax: Filter with directives for sorting and limits
+  3. DSL Pipe Syntax: Filter with directives for sorting and limits
      jot notes search "tag:work | sort:modified:desc limit:10"
 
-TEXT SEARCH EXAMPLES:
-  jot notes search "meeting"              # Search for "meeting"
-  jot notes search "todo" --notebook ~/n  # Search in specific notebook
+FIELDLESS SEARCH EXAMPLES (title-only):
+  jot notes search "meeting"              # Search title for "meeting"
+  jot notes search "todo" --notebook ~/n  # Search title in specific notebook
   jot notes search                        # List all notes
-
-FUZZY SEARCH EXAMPLES:
-  jot notes search --fuzzy "mtng"         # Matches "meeting", "meetings"
-  jot notes search "project" --fuzzy      # Ranked by similarity
-  jot notes search --fuzzy                # All notes, ranked
-
-  Fuzzy matching:
-  - Uses character sequence matching (like VS Code's Ctrl+P)
-  - Title matches weighted 2x higher than body matches
-  - Results sorted by match score (best first)
-  - Searches first 500 chars of body for performance
+  jot notes search "body:meeting"         # Explicit body search
 
 DSL PIPE SYNTAX EXAMPLES:
   jot notes search "tag:work | sort:modified:desc"
@@ -84,10 +72,6 @@ DOCUMENTATION:
   📖 Command Reference: docs/commands/notes-search.md`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Get --fuzzy flag
-		fuzzyFlag, _ := cmd.Flags().GetBool("fuzzy")
-
-		// Get search term (optional for fuzzy mode)
 		var searchTerm string
 		if len(args) > 0 {
 			searchTerm = args[0]
@@ -98,13 +82,16 @@ DOCUMENTATION:
 			return err
 		}
 
-		// DSL-first: route explicit DSL-style queries through parser/index path.
-		// Keep plain text and fuzzy behaviors compatible.
-		if !fuzzyFlag && isDSLStyleQuery(searchTerm) {
+		if isDSLStyleQuery(searchTerm) {
 			return runSearchWithPipeSyntax(cmd.Context(), nb, searchTerm)
 		}
 
-		notes, err := nb.Notes.SearchNotes(context.Background(), searchTerm, fuzzyFlag)
+		normalized := normalizeFieldlessToTitleQuery(searchTerm)
+		if normalized != "" {
+			return runSearchWithPipeSyntax(cmd.Context(), nb, normalized)
+		}
+
+		notes, err := nb.Notes.SearchNotes(context.Background(), searchTerm)
 		if err != nil {
 			return fmt.Errorf("failed to search notes: %w", err)
 		}
@@ -119,11 +106,7 @@ DOCUMENTATION:
 		}
 
 		if searchTerm != "" {
-			searchMode := "matching"
-			if fuzzyFlag {
-				searchMode = "fuzzy matching"
-			}
-			fmt.Printf("Found %d note(s) %s '%s':\n\n", len(notes), searchMode, searchTerm)
+			fmt.Printf("Found %d note(s) matching '%s':\n\n", len(notes), searchTerm)
 		} else {
 			fmt.Printf("Found %d note(s):\n\n", len(notes))
 		}
@@ -134,13 +117,6 @@ DOCUMENTATION:
 
 func init() {
 	notesCmd.AddCommand(notesSearchCmd)
-
-	// Add --fuzzy flag for fuzzy matching
-	notesSearchCmd.Flags().Bool(
-		"fuzzy",
-		false,
-		"Enable fuzzy matching for ranked results. Matches notes by similarity instead of exact text. Title matches weighted higher than body matches.",
-	)
 }
 
 // isDSLStyleQuery detects when a search query is intended for DSL parsing.
@@ -151,6 +127,21 @@ func isDSLStyleQuery(query string) bool {
 		return false
 	}
 	return strings.Contains(q, ":") || strings.Contains(q, "|")
+}
+
+// normalizeFieldlessToTitleQuery converts non-DSL user input into a title-only DSL query.
+// Single-token input becomes title:token, and multi-word input becomes title:"phrase".
+func normalizeFieldlessToTitleQuery(query string) string {
+	q := strings.TrimSpace(query)
+	if q == "" {
+		return ""
+	}
+
+	if strings.ContainsAny(q, " \t\n\"") {
+		return "title:" + strconv.Quote(q)
+	}
+
+	return "title:" + q
 }
 
 // runSearchWithPipeSyntax executes a search using pipe syntax (filter | directives).

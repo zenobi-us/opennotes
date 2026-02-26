@@ -699,14 +699,14 @@ Get list of all notes matching criteria
 
 ### Use Regular Search When You Need:
 
-✅ **Quick keyword search**
+✅ **Quick title keyword search (fieldless)**
 ```bash
 jot notes search "project alpha"
 ```
 
-✅ **Simple content lookup**
+✅ **Simple body/content lookup (explicit)**
 ```bash
-jot notes search "deadline"
+jot notes search "body:deadline"
 ```
 
 ✅ **Browse recent notes**

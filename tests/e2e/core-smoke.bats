@@ -54,8 +54,8 @@ teardown() {
     [[ "$output" =~ "project-alpha.md" ]]
     [[ "$output" =~ "meeting-notes.md" ]]
     
-    # Search for specific content
-    run jot --notebook "$notebook_dir" notes search "priority"
+    # Search for specific body content (fieldless search is title-only)
+    run jot --notebook "$notebook_dir" notes search "body:priority"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "project-alpha.md" ]]
     [[ ! "$output" =~ "meeting-notes.md" ]]
@@ -101,10 +101,9 @@ teardown() {
     [[ "$output" =~ "search" ]]
     [[ "$output" =~ "remove" ]]
     
-    # Search help includes fuzzy + boolean query info
+    # Search help includes boolean query info
     run jot notes search --help
     [[ "$status" -eq 0 ]]
-    [[ "$output" =~ "Fuzzy" ]]
     [[ "$output" =~ "BOOLEAN" ]]
     [[ "$output" =~ "query" ]]
 }

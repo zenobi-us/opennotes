@@ -109,7 +109,7 @@ create_test_note() {
     create_test_note "$notebook_dir" "note3.md" "# Third Note\n\nAnother example here."
     
     # Search for notes
-    run jot --notebook "$notebook_dir" notes search "example"
+    run jot --notebook "$notebook_dir" notes search "body:example"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "note1.md" ]]
     [[ "$output" =~ "note3.md" ]]
@@ -139,16 +139,16 @@ create_test_note() {
     [[ "$output" =~ "task2.md" ]]
 }
 
-# Test 7: Fuzzy search basics
-@test "Fuzzy search finds close matches" {
+# Test 7: Removed fuzzy flag behavior
+@test "Removed fuzzy flag returns an error" {
     # Setup
     jot init
-    notebook_dir=$(create_test_notebook "fuzzy-test")
+    notebook_dir=$(create_test_notebook "search-test")
     create_test_note "$notebook_dir" "meeting-notes.md" "# Meeting Notes\n\nDiscussed roadmap"
-    
+
     run jot --notebook "$notebook_dir" notes search --fuzzy "metng"
-    [[ "$status" -eq 0 ]]
-    [[ "$output" =~ "meeting-notes.md" ]]
+    [[ "$status" -ne 0 ]]
+    [[ "$output" =~ "unknown flag: --fuzzy" ]]
 }
 
 # Test 8: Note removal
@@ -254,7 +254,7 @@ create_test_note() {
     # Add content to one note first  
     echo -e "# Meeting Notes\nDiscussed project timeline." > "$notebook_dir/.notes/meeting-notes.md"
     
-    run jot --notebook "$notebook_dir" notes search "timeline"
+    run jot --notebook "$notebook_dir" notes search "body:timeline"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "meeting-notes.md" ]]
     

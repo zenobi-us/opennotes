@@ -29,7 +29,7 @@ Examples:
 			return err
 		}
 
-		notes, err := nb.Notes.SearchNotes(context.Background(), "", false)
+		notes, err := nb.Notes.SearchNotes(context.Background(), "")
 		if err != nil {
 			// DuckDB returns an error when the glob pattern matches no files
 			// Treat this as an empty notebook

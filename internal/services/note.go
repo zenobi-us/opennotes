@@ -147,8 +147,7 @@ func (s *NoteService) FindSemanticCandidates(ctx context.Context, query string, 
 }
 
 // SearchNotes returns all notes in the notebook matching the query.
-// If fuzzy is true, uses fuzzy matching; otherwise uses exact text search.
-func (s *NoteService) SearchNotes(ctx context.Context, query string, fuzzy bool) ([]Note, error) {
+func (s *NoteService) SearchNotes(ctx context.Context, query string) ([]Note, error) {
 	if s.notebookPath == "" {
 		return nil, fmt.Errorf("no notebook selected")
 	}
@@ -160,10 +159,6 @@ func (s *NoteService) SearchNotes(ctx context.Context, query string, fuzzy bool)
 	}
 
 	// Apply search filtering
-	if fuzzy {
-		return s.searchService.FuzzySearch(query, notes), nil
-	}
-
 	return s.searchService.TextSearch(query, notes), nil
 }
 

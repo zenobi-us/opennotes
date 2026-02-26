@@ -16,7 +16,6 @@ or can be specified with the --notebook flag.
 POWER USER FEATURES:
   🔍 Advanced Query Filters: jot notes search query --and path=projects/*.md
   🤖 JSON Output for Automation: Results automatically JSON-formatted for jq and tool integration
-  ✨ Fuzzy Search: jot notes search --fuzzy "mtng"
   💾 Large Notebook Support: Efficiently search thousands of notes in seconds
 
 DOCUMENTATION:

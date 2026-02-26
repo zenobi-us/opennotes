@@ -61,42 +61,17 @@ func TestE2E_TextSearch_ListAllNotes(t *testing.T) {
 }
 
 // ============================================================================
-// Fuzzy Search E2E Tests
+// Removed Fuzzy Flag E2E Tests
 // ============================================================================
 
-func TestE2E_FuzzySearch_TypoTolerant(t *testing.T) {
+func TestE2E_Search_RejectsRemovedFuzzyFlag(t *testing.T) {
 	env := newTestEnv(t)
 	nbDir := setupSearchNotebook(t, env)
 
-	// Fuzzy search with typo
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "--fuzzy", "mtng")
+	_, stderr, code := env.runInDir(nbDir, "notes", "search", "--fuzzy", "mtng")
 
-	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
-	// Fuzzy matching should find "meeting"
-	assert.Contains(t, stdout, "meeting", "fuzzy search should match meeting")
-}
-
-func TestE2E_FuzzySearch_RankedResults(t *testing.T) {
-	env := newTestEnv(t)
-	nbDir := setupSearchNotebook(t, env)
-
-	// Fuzzy search
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "--fuzzy", "project")
-
-	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
-	assert.Contains(t, stdout, "project-plan.md", "should find project-plan.md")
-}
-
-func TestE2E_FuzzySearch_AllNotes(t *testing.T) {
-	env := newTestEnv(t)
-	nbDir := setupSearchNotebook(t, env)
-
-	// Fuzzy search without query returns all notes
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "--fuzzy")
-
-	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
-	// Should list multiple notes
-	assert.Contains(t, stdout, ".md", "should return markdown files")
+	assert.NotEqual(t, 0, code, "removed --fuzzy flag should fail")
+	assert.Contains(t, stderr, "unknown flag: --fuzzy", "should clearly report removed flag")
 }
 
 // ============================================================================
@@ -344,8 +319,8 @@ func TestE2E_HelpText_SearchCommand(t *testing.T) {
 	stdout, _, code := env.run("notes", "search", "--help")
 
 	assert.Equal(t, 0, code, "help should succeed")
-	// Verify help text includes key sections
-	assert.Contains(t, stdout, "fuzzy", "should mention fuzzy search")
+	// Verify help text reflects fuzzy flag removal
+	assert.NotContains(t, stdout, "--fuzzy", "should not mention removed fuzzy flag")
 	assert.Contains(t, stdout, "query", "should mention query subcommand")
 	assert.Contains(t, stdout, "Search notes", "should have search description")
 }

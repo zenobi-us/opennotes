@@ -16,7 +16,7 @@ When run without a subcommand, displays info about the current notebook.
 QUICK START WITH EXISTING MARKDOWN:
   1. Import: jot notebook create "My Notes" --path ~/my-notes
   2. Verify: jot notes list
-  3. Search: jot notes search "meeting" --fuzzy
+  3. Search: jot notes search "meeting"
 
 AUTO-DISCOVERY:
   - Notebooks are discovered by looking for .jot.json in current directory or ancestors

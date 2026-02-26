@@ -68,8 +68,8 @@ Typical fixes:
 
 ```bash
 jot notes list
-jot notes search "keyword"
-jot notes search --fuzzy "keywrd"
+jot notes search "keyword"        # fieldless => title search
+jot notes search "body:keyword"   # explicit body/content search
 ```
 
 Try structured filters to verify metadata assumptions:
