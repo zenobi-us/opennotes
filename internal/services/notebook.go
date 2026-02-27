@@ -56,16 +56,23 @@ type Notebook struct {
 }
 
 // NotebookService manages notebook operations.
+type cachedNotebook struct {
+	state    notebookIndexState
+	notebook *Notebook
+}
+
 type NotebookService struct {
-	configService *ConfigService
-	log           zerolog.Logger
+	configService   *ConfigService
+	log             zerolog.Logger
+	cachedNotebooks map[string]cachedNotebook
 }
 
 // NewNotebookService creates a notebook service.
 func NewNotebookService(cfg *ConfigService) *NotebookService {
 	return &NotebookService{
-		configService: cfg,
-		log:           Log("NotebookService"),
+		configService:   cfg,
+		log:             Log("NotebookService"),
+		cachedNotebooks: make(map[string]cachedNotebook),
 	}
 }
 
@@ -134,8 +141,17 @@ func (s *NotebookService) Open(notebookPath string) (*Notebook, error) {
 		return nil, err
 	}
 
+	state, err := buildNotebookIndexState(config.Root)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan notebook state: %w", err)
+	}
+
+	if cached, ok := s.cachedNotebooks[config.Root]; ok && notebookIndexStateEqual(cached.state, state) {
+		return cached.notebook, nil
+	}
+
 	// Create Bleve index for this notebook
-	idx, err := s.createIndex(config.Root)
+	idx, err := s.createIndex(config.Root, state.Files)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create search index: %w", err)
 	}
@@ -149,83 +165,116 @@ func (s *NotebookService) Open(notebookPath string) (*Notebook, error) {
 	}
 	noteService.SetSemanticIndex(semanticIdx)
 
-	return &Notebook{
+	notebook := &Notebook{
 		Config: *config,
 		Notes:  noteService,
-	}, nil
+	}
+	s.cachedNotebooks[config.Root] = cachedNotebook{state: state, notebook: notebook}
+	return notebook, nil
 }
 
-// createIndex creates and populates a Bleve index for the notebook
-func (s *NotebookService) createIndex(notebookRoot string) (search.Index, error) {
-	// For now, use in-memory index
-	// TODO: Consider persistent index for large notebooks
+type notebookIndexedFile struct {
+	Path        string
+	Size        int64
+	ModUnixNano int64
+}
+
+type notebookIndexState struct {
+	Files []notebookIndexedFile
+}
+
+func notebookIndexStateEqual(a, b notebookIndexState) bool {
+	if len(a.Files) != len(b.Files) {
+		return false
+	}
+	for i := range a.Files {
+		if a.Files[i] != b.Files[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// createIndex creates and populates a Bleve index for the notebook.
+func (s *NotebookService) createIndex(notebookRoot string, files []notebookIndexedFile) (search.Index, error) {
 	storage := bleve.MemStorage()
 	idx, err := bleve.NewIndex(storage, bleve.Options{InMemory: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create index: %w", err)
 	}
 
-	// Index all markdown files in the notebook
 	fs := afero.NewOsFs()
-	err = afero.Walk(fs, notebookRoot, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+	ctx := context.Background()
+	for _, file := range files {
+		fullPath := filepath.Join(notebookRoot, file.Path)
+		content, readErr := afero.ReadFile(fs, fullPath)
+		if readErr != nil {
+			s.log.Warn().Err(readErr).Str("path", file.Path).Msg("failed to read file")
+			continue
 		}
 
-		// Skip directories
-		if info.IsDir() {
-			return nil
-		}
-
-		// Only process markdown files
-		if filepath.Ext(path) != ".md" {
-			return nil
-		}
-
-		// Get relative path from notebook root
-		relPath, err := filepath.Rel(notebookRoot, path)
-		if err != nil {
-			s.log.Warn().Err(err).Str("path", path).Msg("failed to get relative path")
-			return nil
-		}
-
-		// Read file content
-		content, err := afero.ReadFile(fs, path)
-		if err != nil {
-			s.log.Warn().Err(err).Str("path", path).Msg("failed to read file")
-			return nil
-		}
-
-		// Parse frontmatter and extract metadata
 		metadata, body := parseFrontmatter(content)
-
-		// Create document
+		modTime := time.Unix(0, file.ModUnixNano)
 		doc := search.Document{
-			Path:     relPath,
+			Path:     file.Path,
 			Title:    extractTitle(metadata),
 			Body:     body,
 			Lead:     extractLead(body),
 			Tags:     extractTags(metadata),
 			Metadata: metadata,
-			Created:  extractTime(metadata, "created", info.ModTime()),
-			Modified: extractTime(metadata, "modified", info.ModTime()),
+			Created:  extractTime(metadata, "created", modTime),
+			Modified: extractTime(metadata, "modified", modTime),
 		}
 
-		// Add to index
-		ctx := context.Background()
-		if err := idx.Add(ctx, doc); err != nil {
-			s.log.Warn().Err(err).Str("path", relPath).Msg("failed to index document")
+		if addErr := idx.Add(ctx, doc); addErr != nil {
+			s.log.Warn().Err(addErr).Str("path", file.Path).Msg("failed to index document")
 		}
-
-		return nil
-	})
-
-	if err != nil {
-		_ = idx.Close()
-		return nil, fmt.Errorf("failed to index notebook: %w", err)
 	}
 
 	return idx, nil
+}
+
+func buildNotebookIndexState(notebookRoot string) (notebookIndexState, error) {
+	fs := afero.NewOsFs()
+	files := make([]notebookIndexedFile, 0, 64)
+
+	err := afero.Walk(fs, notebookRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			if info.Name() == ".jot" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if filepath.Ext(path) != ".md" {
+			return nil
+		}
+
+		relPath, relErr := filepath.Rel(notebookRoot, path)
+		if relErr != nil {
+			return relErr
+		}
+
+		files = append(files, notebookIndexedFile{
+			Path:        relPath,
+			Size:        info.Size(),
+			ModUnixNano: info.ModTime().UnixNano(),
+		})
+		return nil
+	})
+	if err != nil {
+		return notebookIndexState{}, err
+	}
+
+	slices.SortFunc(files, func(a, b notebookIndexedFile) int {
+		return strings.Compare(a.Path, b.Path)
+	})
+
+	return notebookIndexState{Files: files}, nil
 }
 
 // createSemanticIndex initializes semantic retrieval backend for a notebook.
@@ -388,8 +437,13 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 		return nil, err
 	}
 
+	state, err := buildNotebookIndexState(notesDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan notebook state: %w", err)
+	}
+
 	// Create Bleve index for this notebook
-	idx, err := s.createIndex(notesDir)
+	idx, err := s.createIndex(notesDir, state.Files)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create search index: %w", err)
 	}
@@ -407,6 +461,7 @@ func (s *NotebookService) Create(name, path string, register bool) (*Notebook, e
 		Config: config,
 		Notes:  noteService,
 	}
+	s.cachedNotebooks[notesDir] = cachedNotebook{state: state, notebook: notebook}
 
 	// Save config
 	if err := notebook.SaveConfig(register, s.configService); err != nil {

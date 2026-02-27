@@ -3,8 +3,8 @@ id: 5e6f7a8b
 title: Improve indexing for agent loops
 epic_id: a7c3d9e1
 created_at: 2026-02-27T08:01:43+10:30
-updated_at: 2026-02-27T08:01:43+10:30
-status: todo
+updated_at: 2026-02-28T01:42:00+10:30
+status: completed
 priority: medium
 story_points: 3
 ---
@@ -15,9 +15,9 @@ story_points: 3
 As an agent, I want low-latency notebook open/search cycles so that repeated automation steps remain fast.
 
 ## Acceptance Criteria
-- [ ] Baseline current indexing/open cost is measured.
-- [ ] Proposal for incremental/persistent strategy is documented.
-- [ ] At least one measurable optimization path is validated.
+- [x] Baseline current indexing/open cost is measured.
+- [x] Proposal for incremental/persistent strategy is documented.
+- [x] At least one measurable optimization path is validated.
 
 ## Context
 Current index build on open may become bottleneck for high-frequency loops.
@@ -26,7 +26,7 @@ Current index build on open may become bottleneck for high-frequency loops.
 Immediate full redesign of search backend.
 
 ## Tasks
-- [task-c5e6f7a8](task-c5e6f7a8-benchmark-optimize-indexing-agent-loops.md) — Benchmark and optimize indexing for agent loops
+- [task-c5e6f7a8](task-c5e6f7a8-benchmark-optimize-indexing-agent-loops.md) — Benchmark and optimize indexing for agent loops (completed)
 
 ## Notes
-Prioritize low-risk changes with clear benchmarks.
+Low-risk optimization implemented: in-process notebook/index cache with file-state invalidation.

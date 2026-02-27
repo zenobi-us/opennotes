@@ -1,10 +1,12 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -206,6 +208,56 @@ func TestNotebookService_Open_LoadsNoteService(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.NotNil(t, notebook.Notes)
+}
+
+func TestNotebookService_Open_PersistsIndexStateAndReusesWhenUnchanged(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := createTestNotebook(t, tmpDir, "test-notebook")
+	notesDir := filepath.Join(notebookDir, ".notes")
+	notePath := filepath.Join(notesDir, "first.md")
+	require.NoError(t, os.WriteFile(notePath, []byte("# First\n\nhello indexing"), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	notebook, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	notebook2, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+	assert.Same(t, notebook, notebook2, "open should reuse cached notebook when files are unchanged")
+
+	results, err := notebook2.Notes.SearchNotes(context.Background(), "hello")
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, "first.md", results[0].File.Filepath)
+}
+
+func TestNotebookService_Open_RebuildsIndexStateWhenNotesChange(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := createTestNotebook(t, tmpDir, "test-notebook")
+	notesDir := filepath.Join(notebookDir, ".notes")
+	notePath := filepath.Join(notesDir, "first.md")
+	require.NoError(t, os.WriteFile(notePath, []byte("# First\n\nhello indexing"), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	notebookBefore, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	time.Sleep(10 * time.Millisecond)
+	require.NoError(t, os.WriteFile(notePath, []byte("# First\n\nhello updated token"), 0644))
+	now := time.Now().Add(20 * time.Millisecond)
+	require.NoError(t, os.Chtimes(notePath, now, now))
+
+	notebookAfterChange, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+	assert.NotSame(t, notebookBefore, notebookAfterChange, "open should rebuild when notes change")
+
+	results, err := notebookAfterChange.Notes.SearchNotes(context.Background(), "updated")
+	require.NoError(t, err)
+	require.Len(t, results, 1)
 }
 
 // Create tests
