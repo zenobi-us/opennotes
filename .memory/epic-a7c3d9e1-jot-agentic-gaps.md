@@ -2,8 +2,8 @@
 id: a7c3d9e1
 title: Jot Agentic Gaps
 created_at: 2026-02-27T08:01:43+10:30
-updated_at: 2026-02-27T23:02:53+10:30
-status: in-progress
+updated_at: 2026-02-28T01:45:00+10:30
+status: completed
 ---
 
 # Jot Agentic Gaps
