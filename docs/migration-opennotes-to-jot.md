@@ -98,7 +98,7 @@ Current search surfaces are:
 
 - `jot notes search "..."` (fieldless title-only; normalized to `title:...`)
 - `jot notes search "body:..."` (explicit body/content search)
-- `jot notes search query --and ...` (boolean)
+- `jot notes search "..."` (DSL filters/boolean operators)
 - `jot notes search semantic "..."` (semantic/hybrid)
 
 If you are migrating old workflows, verify command docs:

@@ -20,7 +20,7 @@ teardown() {
     export HOME="$HOME_BACKUP"
 }
 
-@test "Core workflow: init → create notebook → add note → list → search → query" {
+@test "Core workflow: init → create notebook → add note → list → search" {
     # Initialize Jot
     run jot init
     [[ "$status" -eq 0 ]]
@@ -60,8 +60,8 @@ teardown() {
     [[ "$output" =~ "project-alpha.md" ]]
     [[ ! "$output" =~ "meeting-notes.md" ]]
     
-    # Boolean query to find a specific note by path
-    run jot --notebook "$notebook_dir" notes search query --and path=project-alpha.md
+    # DSL filter to find a specific note by path
+    run jot --notebook "$notebook_dir" notes search "path:project-alpha.md"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "project-alpha.md" ]]
     [[ ! "$output" =~ "meeting-notes.md" ]]
@@ -101,11 +101,11 @@ teardown() {
     [[ "$output" =~ "search" ]]
     [[ "$output" =~ "remove" ]]
     
-    # Search help includes boolean query info
+    # Search help includes DSL info
     run jot notes search --help
     [[ "$status" -eq 0 ]]
-    [[ "$output" =~ "BOOLEAN" ]]
-    [[ "$output" =~ "query" ]]
+    [[ "$output" =~ "DSL" ]]
+    [[ "$output" =~ "search" ]]
 }
 
 @test "Error handling works correctly" {
@@ -124,12 +124,12 @@ teardown() {
     notebook_dir="$TEST_DIR/error-test"
     jot notebook create "$notebook_dir" --name "Error Test"
     
-    run jot --notebook "$notebook_dir" notes search query --and data.unknown=foo
+    run jot --notebook "$notebook_dir" notes search "invalid.field:value"
     [[ "$status" -ne 0 ]]
     [[ "$output" =~ "invalid field" || "$output" =~ "allowed" ]]
 }
 
-@test "Path filtering works with boolean queries" {
+@test "Path filtering works with DSL filters" {
     jot init
     notebook_dir="$TEST_DIR/security-test"
     jot notebook create "$notebook_dir" --name "Security Test"
@@ -137,7 +137,7 @@ teardown() {
     echo "# Other Note" > "$notebook_dir/.notes/other.md"
     
     # Path query should return only matching note
-    run jot --notebook "$notebook_dir" notes search query --and path=safe.md
+    run jot --notebook "$notebook_dir" notes search "path:safe.md"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "safe.md" ]]
     [[ ! "$output" =~ "other.md" ]]

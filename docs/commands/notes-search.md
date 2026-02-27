@@ -9,12 +9,10 @@ Jot supports these search workflows:
 1. **Fieldless Search (title-only)** (`jot notes search "..."`)  
    Fieldless input is normalized to `title:<query>` (or `title:"multi word"`).
    Use explicit DSL (for example `body:query`) to search outside title.
-2. **Boolean Query Search** (`jot notes search query`)  
-   Structured `--and/--or/--not` filtering on metadata, path, title, and links.
-3. **DSL Pipe Syntax** (`jot notes search "filter | directives"`)  
-   Filter expression + sort/limit/offset directives.
-4. **Semantic Search** (`jot notes search semantic`)  
-   Keyword / semantic / hybrid retrieval with optional explain output.
+2. **DSL Filter + Directives** (`jot notes search "filter | directives"`)  
+   Filter expression with optional sort/limit/offset directives.
+3. **Semantic Search** (`jot notes search semantic`)  
+   Keyword / semantic / hybrid retrieval with optional explain output and `--and/--or/--not` filters.
 
 ---
 
@@ -24,8 +22,8 @@ Jot supports these search workflows:
 # Fieldless title search
 jot notes search "meeting"
 
-# Boolean query
-jot notes search query --and data.tag=workflow --not data.status=archived
+# DSL boolean operators
+jot notes search "tag:workflow NOT status:archived"
 
 # DSL + directives
 jot notes search "tag:work | sort:modified:desc limit:10"
@@ -60,84 +58,6 @@ jot notes search
 - Fieldless queries search title only
 - To search body/content, use explicit DSL field `body:<text>`
 - No query returns all notes
-
----
-
-## Boolean Query Search (`query` subcommand)
-
-> ⚠️ **Deprecated path**
->
-> `jot notes search query --and/--or/--not` is deprecated since `TODO(vX.Y.Z)` and scheduled for removal in `TODO(vX.(Y+1).0)`.
-> Track rollout in `.memory/epic-9b7c2a4d-unified-search-dsl-deprecation.md`.
->
-> **Migration target:** unified DSL via `jot notes search "<dsl>"`.
-
-### Syntax
-
-```bash
-jot notes search query [--and field=value] [--or field=value] [--not field=value]
-```
-
-### Operators
-
-| Operator | Meaning                   |
-| -------- | ------------------------- |
-| `--and`  | all conditions must match |
-| `--or`   | any condition can match   |
-| `--not`  | excludes matching notes   |
-
-### Supported Fields
-
-#### Metadata (`data.*`)
-
-- `data.tag`, `data.tags`
-- `data.status`, `data.priority`
-- `data.assignee`, `data.author`
-- `data.type`, `data.category`
-- `data.project`, `data.sprint`
-
-#### File/Title
-
-- `path` (glob-enabled)
-- `title`
-
-#### Link Graph
-
-- `links-to`
-- `linked-by`
-
-### Examples
-
-```bash
-# Basic metadata filtering
-jot notes search query --and data.tag=workflow --and data.status=active
-
-# OR logic
-jot notes search query --or data.priority=high --or data.priority=critical
-
-# Path filtering
-jot notes search query --and path=projects/**/*.md --not path=archive/*
-
-# Link graph filtering
-jot notes search query --and links-to=docs/architecture.md
-jot notes search query --and linked-by=planning/q1.md
-```
-
-### Migration to Unified DSL (recommended)
-
-```bash
-# AND conditions
-jot notes search query --and data.tag=workflow --and data.status=active
-jot notes search "tag:workflow status:active"
-
-# OR conditions
-jot notes search query --or data.priority=high --or data.priority=critical
-jot notes search "priority:high OR priority:critical"
-
-# Path + exclusion
-jot notes search query --and path=projects/**/*.md --not path=archive/*
-jot notes search "path:projects/** NOT path:archive/*"
-```
 
 ---
 
@@ -235,10 +155,9 @@ For full semantic behavior and troubleshooting, see:
 
 | Error                                | Cause                             | Fix                               |
 | ------------------------------------ | --------------------------------- | --------------------------------- |
-| `invalid field: X`                   | Unsupported field name            | Use supported fields listed above |
-| `expected field=value`               | Missing `=`                       | Use `field=value` format          |
-| `value too long`                     | Condition value exceeds limit     | Shorten value                     |
-| `at least one condition is required` | `query` called with no conditions | Add `--and`, `--or`, or `--not`   |
+| `invalid field: X`        | Unsupported field name                | Use supported fields listed above |
+| `failed to parse filter`  | Invalid DSL filter syntax             | Fix DSL expression (`field:value`) |
+| `value too long`          | Semantic condition value exceeds limit | Shorten value                      |
 
 ---
 

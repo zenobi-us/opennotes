@@ -522,9 +522,9 @@ func (s *SearchService) buildLinkQueryError(field string) error {
 	return fmt.Errorf(
 		"link queries are not yet supported\n\n"+
 			"Field '%s' requires a dedicated link graph index, which is planned for Phase 5.3.\n\n"+
-			"Temporary workaround: Use text search or path/title filters:\n"+
+			"Temporary workaround: Use text search or DSL path/title filters:\n"+
 			"  jot notes search \"project\"\n"+
-			"  jot notes search query --and path=docs/*.md\n\n"+
+			"  jot notes search \"path:docs/*.md\"\n\n"+
 			"Track implementation progress:\n"+
 			"  https://github.com/zenobi-us/jot/issues/XXX\n\n"+
 			"Supported fields:\n"+

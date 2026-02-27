@@ -14,7 +14,7 @@ import (
 
 var notesSearchCmd = &cobra.Command{
 	Use:   "search [query]",
-	Short: "Search notes with text, boolean queries, or DSL pipe syntax",
+	Short: "Search notes with text and DSL filter/directive syntax",
 	Long: `Search notes using multiple methods: text search, boolean queries, or DSL with pipe syntax.
 
 SEARCH METHODS:
@@ -22,10 +22,7 @@ SEARCH METHODS:
   1. Default Fieldless Search: title-only DSL normalization
      jot notes search "meeting"        # normalized to title:meeting
 
-  2. Boolean Queries: Structured AND/OR/NOT filtering (see 'query' subcommand)
-     jot notes search query --and data.tag=workflow
-
-  3. DSL Pipe Syntax: Filter with directives for sorting and limits
+  2. DSL Filter + Directives Syntax
      jot notes search "tag:work | sort:modified:desc limit:10"
 
 FIELDLESS SEARCH EXAMPLES (title-only):
@@ -53,20 +50,10 @@ DSL PIPE SYNTAX EXAMPLES:
   - limit:<n>           Return at most n results
   - offset:<n>          Skip first n results (for pagination)
 
-BOOLEAN QUERY SUBCOMMAND:
-  Use 'jot notes search query' for structured filtering:
-  
-  jot notes search query --and data.tag=workflow
-  jot notes search query --and data.tag=epic --not data.status=archived
-  jot notes search query --or data.priority=high --or data.priority=critical
-  jot notes search query --and links-to=tasks/**/*.md
-
-  Supported fields:
-  - data.tag, data.status, data.priority, data.assignee, data.author
-  - data.type, data.category, data.project, data.sprint
-  - path, title
-  - links-to (find notes linking TO target)
-  - linked-by (find notes linked FROM source)
+DSL FILTER EXAMPLES:
+  jot notes search "tag:workflow status:active"
+  jot notes search "tag:epic NOT status:archived"
+  jot notes search "priority:high OR priority:critical"
 
 DOCUMENTATION:
   📖 Command Reference: docs/commands/notes-search.md`,

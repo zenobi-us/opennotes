@@ -33,7 +33,7 @@ searched using fast full-text queries.
 QUICK START:
   1. Import existing markdown: jot notebook create "My Notes" --path ~/my-notes
   2. List notes: jot notes list
-  3. Filter with queries: jot notes search query --and path=projects/*.md
+  3. Filter with DSL: jot notes search "path:projects/*.md"
   4. JSON output ready for jq and automation
 
 DOCUMENTATION:
@@ -56,8 +56,8 @@ Examples:
   # List all notes
   jot notes list
 
-  # Search with query filters and automation
-  jot notes search query --and path=projects/*.md | jq`,
+  # Search with DSL filters and automation
+  jot notes search "path:projects/*.md" | jq`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Initialize logger first
 		services.InitLogger()

@@ -75,73 +75,59 @@ func TestE2E_Search_RejectsRemovedFuzzyFlag(t *testing.T) {
 }
 
 // ============================================================================
-// Boolean Query E2E Tests
+// DSL Filter E2E Tests
 // ============================================================================
 
-func TestE2E_BooleanQuery_SingleAnd(t *testing.T) {
+func TestE2E_DSLFilter_SingleAnd(t *testing.T) {
 	env := newTestEnv(t)
 	nbDir := setupSearchNotebook(t, env)
 
-	// Single AND condition
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "query", "--and", "data.tag=workflow")
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "tag:workflow")
 
 	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
 	assert.Contains(t, stdout, "active-task.md", "should find note with workflow tag")
 }
 
-func TestE2E_BooleanQuery_MultipleAnd(t *testing.T) {
+func TestE2E_DSLFilter_MultipleAnd(t *testing.T) {
 	env := newTestEnv(t)
 	nbDir := setupSearchNotebook(t, env)
 
-	// Multiple AND conditions
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
-		"--and", "data.tag=workflow",
-		"--and", "data.status=active")
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "tag:workflow status:active")
 
 	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
 	assert.Contains(t, stdout, "active-task.md", "should find active workflow note")
 }
 
-func TestE2E_BooleanQuery_OrConditions(t *testing.T) {
+func TestE2E_DSLFilter_OrConditions(t *testing.T) {
 	env := newTestEnv(t)
 	nbDir := setupSearchNotebook(t, env)
 
-	// OR conditions
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
-		"--or", "data.priority=high",
-		"--or", "data.priority=critical")
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "tag:workflow OR tag:meeting")
 
 	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
-	// Should find notes with high or critical priority
-	assert.NotContains(t, stdout, "No notes found", "should find at least one note")
+	assert.Contains(t, stdout, "active-task.md", "should include workflow note")
+	assert.Contains(t, stdout, "meeting-notes.md", "should include meeting note")
 }
 
-func TestE2E_BooleanQuery_NotCondition(t *testing.T) {
+func TestE2E_DSLFilter_CombinedConditions(t *testing.T) {
 	env := newTestEnv(t)
 	nbDir := setupSearchNotebook(t, env)
 
-	// NOT condition - exclude archived
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
-		"--and", "data.tag=epic",
-		"--not", "data.status=archived")
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "tag:epic status:active")
 
 	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
-	// Should find epic1.md but not epic2.md (which is archived)
-	assert.Contains(t, stdout, "epic1.md", "should find non-archived epic")
-	assert.NotContains(t, stdout, "epic2.md", "should not find archived epic")
+	assert.Contains(t, stdout, "epic1.md", "should find active epic")
+	assert.NotContains(t, stdout, "epic2.md", "should exclude archived epic")
 }
 
-func TestE2E_BooleanQuery_PathGlob(t *testing.T) {
+func TestE2E_DSLFilter_TitleMatch(t *testing.T) {
 	env := newTestEnv(t)
 	nbDir := setupSearchNotebook(t, env)
 
-	// Path with glob pattern
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
-		"--and", "path=epics/*")
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "title:Epic")
 
 	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
-	// Should find notes in epics folder
-	assert.Contains(t, stdout, "epic", "should find epic notes")
+	assert.Contains(t, stdout, "epic1.md", "should find epic notes by title")
 }
 
 // ============================================================================
@@ -162,8 +148,7 @@ func TestE2E_LinkQuery_LinksTo(t *testing.T) {
 	nbDir := setupSearchNotebook(t, env)
 
 	// Find notes that link to tasks/task1.md
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
-		"--and", "links-to=tasks/task1.md")
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "links-to:tasks/task1.md")
 
 	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
 	// epic1.md has links to tasks/task1.md
@@ -177,8 +162,7 @@ func TestE2E_LinkQuery_LinksToGlob(t *testing.T) {
 	nbDir := setupSearchNotebook(t, env)
 
 	// Find notes that link to any task
-	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
-		"--and", "links-to=tasks/*.md")
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "links-to:tasks/*.md")
 
 	assert.Equal(t, 0, code, "exit code should be 0, stderr: %s", stderr)
 	// Should find epics that link to tasks
@@ -245,8 +229,8 @@ func TestE2E_ErrorHandling_InvalidField(t *testing.T) {
 	env := newTestEnv(t)
 	nbDir := setupSearchNotebook(t, env)
 
-	// Invalid field name
-	_, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
+	// Invalid field name via condition flags on semantic command
+	_, stderr, code := env.runInDir(nbDir, "notes", "search", "semantic", "meeting",
 		"--and", "invalid.field=value")
 
 	assert.NotEqual(t, 0, code, "should fail with invalid field")
@@ -258,7 +242,7 @@ func TestE2E_ErrorHandling_InvalidFormat(t *testing.T) {
 	nbDir := setupSearchNotebook(t, env)
 
 	// Missing equals sign
-	_, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
+	_, stderr, code := env.runInDir(nbDir, "notes", "search", "semantic", "meeting",
 		"--and", "data.tag-workflow")
 
 	assert.NotEqual(t, 0, code, "should fail with invalid format")
@@ -271,7 +255,7 @@ func TestE2E_ErrorHandling_ValueTooLong(t *testing.T) {
 
 	// Value exceeds max length (1000 chars)
 	longValue := strings.Repeat("a", 2000)
-	_, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
+	_, stderr, code := env.runInDir(nbDir, "notes", "search", "semantic", "meeting",
 		"--and", "data.tag="+longValue)
 
 	assert.NotEqual(t, 0, code, "should fail with long value")
@@ -283,22 +267,22 @@ func TestE2E_ErrorHandling_EmptyValue(t *testing.T) {
 	nbDir := setupSearchNotebook(t, env)
 
 	// Empty value
-	_, stderr, code := env.runInDir(nbDir, "notes", "search", "query",
+	_, stderr, code := env.runInDir(nbDir, "notes", "search", "semantic", "meeting",
 		"--and", "data.tag=")
 
 	assert.NotEqual(t, 0, code, "should fail with empty value")
 	assert.Contains(t, stderr, "cannot be empty", "should report empty value error")
 }
 
-func TestE2E_ErrorHandling_NoConditions(t *testing.T) {
+func TestE2E_ErrorHandling_QueryTreatedAsSearchTerm(t *testing.T) {
 	env := newTestEnv(t)
 	nbDir := setupSearchNotebook(t, env)
 
-	// No conditions provided
-	_, stderr, code := env.runInDir(nbDir, "notes", "search", "query")
+	stdout, stderr, code := env.runInDir(nbDir, "notes", "search", "query")
 
-	assert.NotEqual(t, 0, code, "should fail with no conditions")
-	assert.Contains(t, stderr, "at least one condition is required", "should report missing conditions")
+	assert.Equal(t, 0, code, "query token should be treated as regular search term, stderr: %s", stderr)
+	assert.NotContains(t, stderr, "unknown command", "query token is not a subcommand")
+	assert.Contains(t, stdout, "No notes found", "should run normal fieldless search flow")
 }
 
 // ============================================================================
@@ -319,25 +303,20 @@ func TestE2E_HelpText_SearchCommand(t *testing.T) {
 	stdout, _, code := env.run("notes", "search", "--help")
 
 	assert.Equal(t, 0, code, "help should succeed")
-	// Verify help text reflects fuzzy flag removal
+	// Verify help text reflects fuzzy and legacy query command removal
 	assert.NotContains(t, stdout, "--fuzzy", "should not mention removed fuzzy flag")
-	assert.Contains(t, stdout, "query", "should mention query subcommand")
+	assert.NotContains(t, stdout, "search query", "should not mention removed query subcommand")
 	assert.Contains(t, stdout, "Search notes", "should have search description")
 }
 
-func TestE2E_HelpText_QuerySubcommand(t *testing.T) {
+func TestE2E_HelpText_QueryTokenWithHelp(t *testing.T) {
 	env := newTestEnv(t)
 
-	stdout, _, code := env.run("notes", "search", "query", "--help")
+	stdout, stderr, code := env.run("notes", "search", "query", "--help")
 
-	assert.Equal(t, 0, code, "help should succeed")
-	// Verify help text includes key sections
-	assert.Contains(t, stdout, "--and", "should document --and flag")
-	assert.Contains(t, stdout, "--or", "should document --or flag")
-	assert.Contains(t, stdout, "--not", "should document --not flag")
-	assert.Contains(t, stdout, "links-to", "should document links-to field")
-	assert.Contains(t, stdout, "linked-by", "should document linked-by field")
-	assert.Contains(t, stdout, "data.tag", "should document data fields")
+	assert.Equal(t, 0, code, "--help should show search help")
+	assert.NotContains(t, stderr, "unknown command", "query token is not a subcommand")
+	assert.Contains(t, stdout, "Search notes", "should show search command help")
 }
 
 // ============================================================================

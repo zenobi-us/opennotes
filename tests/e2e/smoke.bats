@@ -116,8 +116,8 @@ create_test_note() {
     [[ ! "$output" =~ "note2.md" ]]
 }
 
-# Test 6: Boolean query functionality
-@test "Boolean query filtering" {
+# Test 6: DSL filter functionality
+@test "DSL path filtering" {
     # Setup
     jot init
     notebook_dir=$(create_test_notebook "query-test")
@@ -127,13 +127,13 @@ create_test_note() {
     create_test_note "$notebook_dir" "task2.md" "# Task 2\n\nPriority: Low\nStatus: DONE"
     
     # Exact path match
-    run jot --notebook "$notebook_dir" notes search query --and path=task1.md
+    run jot --notebook "$notebook_dir" notes search "path:task1.md"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "task1.md" ]]
     [[ ! "$output" =~ "task2.md" ]]
     
     # Wildcard path match
-    run jot --notebook "$notebook_dir" notes search query --and path=task*.md
+    run jot --notebook "$notebook_dir" notes search "path:task*.md"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "task1.md" ]]
     [[ "$output" =~ "task2.md" ]]
@@ -203,15 +203,15 @@ create_test_note() {
     [[ "$status" -ne 0 ]]
     [[ "$output" =~ "notebook not found" || "$output" =~ "Error" || "$output" =~ "error" ]]
     
-    # Test invalid query field
+    # Test invalid DSL field
     notebook_dir=$(create_test_notebook "error-test")
-    run jot --notebook "$notebook_dir" notes search query --and data.unknown=oops
+    run jot --notebook "$notebook_dir" notes search "data.unknown:oops"
     [[ "$status" -ne 0 ]]
     [[ "$output" =~ "invalid field" || "$output" =~ "allowed" ]]
 }
 
-# Test 11: Advanced boolean queries
-@test "Advanced boolean queries work correctly" {
+# Test 11: Advanced DSL filters
+@test "Advanced DSL filters work correctly" {
     # Setup
     jot init
     notebook_dir=$(create_test_notebook "advanced-query-test")
@@ -220,8 +220,8 @@ create_test_note() {
     create_test_note "$notebook_dir" "project1.md" "# Project Alpha\n\nHigh priority project."
     create_test_note "$notebook_dir" "project2.md" "# Project Beta\n\nLow priority project."
     
-    # Use AND + NOT to filter
-    run jot --notebook "$notebook_dir" notes search query --and path=project*.md --not path=project2.md
+    # Use DSL NOT to filter
+    run jot --notebook "$notebook_dir" notes search "path:project*.md NOT path:project2.md"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "project1.md" ]]
     [[ ! "$output" =~ "project2.md" ]]

@@ -14,7 +14,7 @@ The notebook is automatically discovered from the current directory,
 or can be specified with the --notebook flag.
 
 POWER USER FEATURES:
-  🔍 Advanced Query Filters: jot notes search query --and path=projects/*.md
+  🔍 Advanced DSL Filters: jot notes search "path:projects/*.md"
   🤖 JSON Output for Automation: Results automatically JSON-formatted for jq and tool integration
   💾 Large Notebook Support: Efficiently search thousands of notes in seconds
 
@@ -31,8 +31,8 @@ Examples:
   # Search notes by content
   jot notes search "project deadline"
 
-  # Query with boolean filters
-  jot notes search query --and path=**/*.md --not path=archive/*
+  # Filter with DSL operators
+  jot notes search "path:**/*.md NOT path:archive/*"
 
   # Remove a note
   jot notes remove my-note.md`,

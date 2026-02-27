@@ -19,8 +19,8 @@ Modes:
   --mode keyword  Keyword-only retrieval (for diagnostics)
   --mode semantic Semantic-only retrieval
 
-Optional boolean filters are supported with the same DSL as:
-  jot notes search query --and/--or/--not
+Optional condition flags are supported:
+  --and/--or/--not field=value
 
 Examples:
   jot notes search semantic "meeting notes"

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -50,13 +51,17 @@ func newTestEnv(t *testing.T) *testEnv {
 
 // getRootDir returns the project root directory.
 func getRootDir() string {
-	// Navigate from tests/e2e to project root
+	// Primary path resolution: derive repository root from this source file location.
+	if _, file, _, ok := runtime.Caller(0); ok {
+		return filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
+	}
+
+	// Fallback: walk up from current working directory to find go.mod.
 	dir, err := os.Getwd()
 	if err != nil {
 		return "../.."
 	}
 
-	// Try to find project root by looking for go.mod
 	for i := 0; i < 5; i++ {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
 			return dir
@@ -739,8 +744,8 @@ func TestCLI_NotesRemoveAlias(t *testing.T) {
 // === SQL Flag Tests ===
 
 // NOTE: TestCLI_SQLFlag_* tests removed as part of Phase 5 SQL-to-Bleve migration.
-// The --sql flag has been replaced with structured query commands.
-// See cmd/notes_search_query.go for the new boolean query interface.
+// The --sql flag has been replaced with DSL search in `notes search`.
+// Example: jot notes search "data.tag:work NOT data.status:archived".
 
 // TestCLI_ViewDiscovery_EmptyCommandListsViews tests that running "notes view" without arguments lists views
 func TestCLI_ViewDiscovery_EmptyCommandListsViews(t *testing.T) {

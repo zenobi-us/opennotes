@@ -918,7 +918,7 @@ jot notebooks info
 jot notes list
 
 # Check if notes have expected metadata
-jot notes search query --and data.tag=project
+jot notes search "tag:project"
 
 # Verify view query is correct
 jot notes view --list --format json | jq '.[] | select(.name == "my-view") | .query'

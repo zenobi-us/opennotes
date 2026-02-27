@@ -118,8 +118,8 @@ jot notes search --sql "SELECT * FROM read_markdown('**/*.md') WHERE content LIK
 # Simple text search
 jot notes search "meeting"
 
-# Boolean query
-jot notes search query --and data.tag=work --not data.status=archived
+# DSL boolean query
+jot notes search "data.tag:work NOT data.status:archived"
 ```
 
 **Why?**
