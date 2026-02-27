@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/zenobi-us/jot/internal/services"
@@ -110,7 +111,22 @@ func init() {
 // Since: TODO(vX.Y.Z).
 // Removal target: TODO(vX.(Y+1).0).
 // Tracking: .memory/epic-9b7c2a4d-unified-search-dsl-deprecation.md
+func legacyQueryDeprecationWarningMessage() string {
+	return fmt.Sprintf(
+		"⚠️  Deprecated: `jot notes search query` (--and/--or/--not) is deprecated since %s and will be removed in %s.\n"+
+			"    Migrate to unified DSL `jot notes search \"...\"` now.\n"+
+			"    Example: `jot notes search query --and data.tag=workflow --and data.status=active`\n"+
+			"         -> `jot notes search \"tag:workflow status:active\"`\n"+
+			"    Tracking: %s\n",
+		legacyQueryDeprecationSince,
+		legacyQueryDeprecationRemovalTarget,
+		legacyQueryDeprecationTrackingEpic,
+	)
+}
+
 func notesSearchQueryRunE(cmd *cobra.Command, args []string) error {
+	fmt.Fprint(os.Stderr, legacyQueryDeprecationWarningMessage())
+
 	// Parse flags
 	andFlags, err := cmd.Flags().GetStringArray("and")
 	if err != nil {

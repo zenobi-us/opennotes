@@ -3,7 +3,9 @@
 ## Current Focus
 - Active execution includes epic `9b7c2a4d` (Unified Search DSL Deprecation).
 - Completed `task-1f2e3d4c`: `notes search` now routes colon-based queries (e.g., `type:epic`) through DSL execution.
-- Verification passed with `mise run test` and `go run . notes search "type:epic"`.
+- Completed `task-5a6b7c8d`: legacy `search query` now emits runtime deprecation warning and docs include unified DSL migration guidance.
+- Next milestone: `task-9c0d1e2f` (remove legacy `search query` command in next minor).
+- Verification passed with `mise run test`.
 
 ## Archived (Cleanup)
 - [epic-8361d3a2](archive/rename-to-jot-8361d3a2/epic-8361d3a2-rename-to-jot.md) — Rename Project from OpenNotes to Jot

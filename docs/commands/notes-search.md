@@ -65,6 +65,13 @@ jot notes search
 
 ## Boolean Query Search (`query` subcommand)
 
+> ⚠️ **Deprecated path**
+>
+> `jot notes search query --and/--or/--not` is deprecated since `TODO(vX.Y.Z)` and scheduled for removal in `TODO(vX.(Y+1).0)`.
+> Track rollout in `.memory/epic-9b7c2a4d-unified-search-dsl-deprecation.md`.
+>
+> **Migration target:** unified DSL via `jot notes search "<dsl>"`.
+
 ### Syntax
 
 ```bash
@@ -114,6 +121,22 @@ jot notes search query --and path=projects/**/*.md --not path=archive/*
 # Link graph filtering
 jot notes search query --and links-to=docs/architecture.md
 jot notes search query --and linked-by=planning/q1.md
+```
+
+### Migration to Unified DSL (recommended)
+
+```bash
+# AND conditions
+jot notes search query --and data.tag=workflow --and data.status=active
+jot notes search "tag:workflow status:active"
+
+# OR conditions
+jot notes search query --or data.priority=high --or data.priority=critical
+jot notes search "priority:high OR priority:critical"
+
+# Path + exclusion
+jot notes search query --and path=projects/**/*.md --not path=archive/*
+jot notes search "path:projects/** NOT path:archive/*"
 ```
 
 ---

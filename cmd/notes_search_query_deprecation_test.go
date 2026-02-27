@@ -23,3 +23,20 @@ func TestLegacyQueryDeprecationTracking(t *testing.T) {
 		t.Fatalf("deprecation tracking epic missing at %s: %v", epicPath, err)
 	}
 }
+
+func TestLegacyQueryDeprecationWarningMessage_IncludesMigrationGuidance(t *testing.T) {
+	msg := legacyQueryDeprecationWarningMessage()
+
+	if !strings.Contains(msg, "jot notes search query") {
+		t.Fatalf("warning must mention deprecated command path: %q", msg)
+	}
+	if !strings.Contains(msg, "jot notes search \"tag:workflow status:active\"") {
+		t.Fatalf("warning must include unified DSL migration example: %q", msg)
+	}
+	if !strings.Contains(msg, legacyQueryDeprecationTrackingEpic) {
+		t.Fatalf("warning must include tracking epic path: %q", msg)
+	}
+	if !strings.Contains(msg, legacyQueryDeprecationSince) || !strings.Contains(msg, legacyQueryDeprecationRemovalTarget) {
+		t.Fatalf("warning must include deprecation timeline placeholders: %q", msg)
+	}
+}

@@ -17,7 +17,7 @@
 
 ## Unified Search DSL Deprecation (epic-9b7c2a4d)
 - [x] [task-1f2e3d4c](task-1f2e3d4c-introduce-unified-search-dsl-behavior.md) - Introduce unified search DSL behavior
-- [ ] [task-5a6b7c8d](task-5a6b7c8d-deprecate-legacy-query-warnings-and-docs.md) - Add runtime warnings and docs migration guidance
+- [x] [task-5a6b7c8d](task-5a6b7c8d-deprecate-legacy-query-warnings-and-docs.md) - Add runtime warnings and docs migration guidance
 - [ ] [task-9c0d1e2f](task-9c0d1e2f-remove-legacy-query-command-next-minor.md) - Remove legacy query command in next minor
 
 ## Active Deferred Follow-up Tasks (phase-4adb81db)

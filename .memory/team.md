@@ -4,7 +4,7 @@
 - **Session ID**: 4133247916144172
 - **Status**: Running `status` action and tracking active work for Unified Search DSL deprecation.
 - **Epic**: 9b7c2a4d (Unified Search DSL Deprecation)
-- **Phase**: task-execution (`task-5a6b7c8d` next; warnings/docs migration)
+- **Phase**: task-execution (`task-9c0d1e2f` next; remove legacy query command)
 - **Branch**: feat/remove-duckdb-migrate-to-afero-chromedb-with-bleve-search
 
 ## Current Work Ownership
