@@ -153,11 +153,11 @@ For full semantic behavior and troubleshooting, see:
 
 ## Common Errors
 
-| Error                                | Cause                             | Fix                               |
-| ------------------------------------ | --------------------------------- | --------------------------------- |
-| `invalid field: X`        | Unsupported field name                | Use supported fields listed above |
-| `failed to parse filter`  | Invalid DSL filter syntax             | Fix DSL expression (`field:value`) |
-| `value too long`          | Semantic condition value exceeds limit | Shorten value                      |
+| Error                    | Cause                                  | Fix                                |
+| ------------------------ | -------------------------------------- | ---------------------------------- |
+| `invalid field: X`       | Unsupported field name                 | Use supported fields listed above  |
+| `failed to parse filter` | Invalid DSL filter syntax              | Fix DSL expression (`field:value`) |
+| `value too long`         | Semantic condition value exceeds limit | Shorten value                      |
 
 ---
 
