@@ -42,16 +42,22 @@ Examples:
   # Register existing notebook globally
   jot notebook register /path/to/notebook`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		format, _ := cmd.Flags().GetString("format")
+		if err := validateOutputFormat(format, "list", "json"); err != nil {
+			return err
+		}
+
 		// Default: show current notebook info
 		nb, err := requireNotebook(cmd)
 		if err != nil {
 			return err
 		}
 
-		return displayNotebookInfo(nb)
+		return renderNotebookInfoByFormat(nb, format)
 	},
 }
 
 func init() {
+	notebookCmd.Flags().String("format", "list", "Output format: list or json")
 	rootCmd.AddCommand(notebookCmd)
 }

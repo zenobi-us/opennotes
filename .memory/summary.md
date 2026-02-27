@@ -7,6 +7,7 @@
   - `task-a3c4d5e6` (`notes get --raw` with raw/json compatibility guard)
   - `task-b4d5e6f7` (`notes exists|ensure|append` utility operations)
 - `task-c5e6f7a8` (indexing benchmark/optimization for agent loops) is completed and re-verified with fresh benchmark evidence.
+- Backlog reconciliation completed for `epic-a7c3d9e1` stories (`story-1a2b3c4d` now marked completed with acceptance criteria checked).
 - Next milestone: move execution focus from `epic-a7c3d9e1` to `epic-b2f4e6a8` (`story-6f7a8b9c`, workflow discovery/requirements).
 - Existing `epic-9b7c2a4d` (Unified Search DSL Deprecation) remains completed and verified.
 

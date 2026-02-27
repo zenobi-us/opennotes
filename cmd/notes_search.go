@@ -64,23 +64,32 @@ DOCUMENTATION:
 			searchTerm = args[0]
 		}
 
+		format, _ := cmd.Flags().GetString("format")
+		if err := validateOutputFormat(format, "list", "json"); err != nil {
+			return err
+		}
+
 		nb, err := requireNotebook(cmd)
 		if err != nil {
 			return err
 		}
 
 		if isDSLStyleQuery(searchTerm) {
-			return runSearchWithPipeSyntax(cmd.Context(), nb, searchTerm)
+			return runSearchWithPipeSyntax(cmd.Context(), nb, searchTerm, format)
 		}
 
 		normalized := normalizeFieldlessToTitleQuery(searchTerm)
 		if normalized != "" {
-			return runSearchWithPipeSyntax(cmd.Context(), nb, normalized)
+			return runSearchWithPipeSyntax(cmd.Context(), nb, normalized, format)
 		}
 
 		notes, err := nb.Notes.SearchNotes(context.Background(), searchTerm)
 		if err != nil {
 			return fmt.Errorf("failed to search notes: %w", err)
+		}
+
+		if format == "json" {
+			return renderJSON(notes)
 		}
 
 		if len(notes) == 0 {
@@ -103,6 +112,7 @@ DOCUMENTATION:
 }
 
 func init() {
+	notesSearchCmd.Flags().String("format", "list", "Output format: list or json")
 	notesCmd.AddCommand(notesSearchCmd)
 }
 
@@ -134,7 +144,7 @@ func normalizeFieldlessToTitleQuery(query string) string {
 // runSearchWithPipeSyntax executes a search using pipe syntax (filter | directives).
 // This allows DSL-based search with sort, limit, and other options.
 // Example: "tag:work | sort:modified:desc limit:10"
-func runSearchWithPipeSyntax(ctx context.Context, nb *services.Notebook, query string) error {
+func runSearchWithPipeSyntax(ctx context.Context, nb *services.Notebook, query string, format string) error {
 	// Split query into filter and directives
 	filterPart, directivesPart := services.SplitViewQuery(query)
 
@@ -170,6 +180,10 @@ func runSearchWithPipeSyntax(ctx context.Context, nb *services.Notebook, query s
 	notes, err := nb.Notes.SearchWithFindOpts(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("search failed: %w", err)
+	}
+
+	if format == "json" {
+		return renderJSON(notes)
 	}
 
 	if len(notes) == 0 {

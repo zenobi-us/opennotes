@@ -6,8 +6,8 @@ import (
 
 var notesCmd = &cobra.Command{
 	Use:   "notes",
-	Short: "Manage notes - list, search, add, remove",
-	Long: `Commands for managing notes - list, search, add, and remove notes.
+	Short: "Manage notes - list, search, add, remove, move",
+	Long: `Commands for managing notes - list, search, add, remove, and move notes.
 
 Notes are markdown files stored in the notebook's notes directory.
 The notebook is automatically discovered from the current directory,

@@ -1,25 +1,29 @@
 # Jot TODO
 
-## Archived in this cleanup
-- [x] Rename epic archived: [epic-8361d3a2](archive/rename-to-jot-8361d3a2/epic-8361d3a2-rename-to-jot.md)
-- [x] Related rename tasks archived:
-  - [task-b66d2263](archive/rename-to-jot-8361d3a2/task-b66d2263-identify-rename-locations.md)
-  - [task-8281af6b](archive/rename-to-jot-8361d3a2/task-8281af6b-notebook-migrate-versioned-framework.md)
-- [x] DSL views completed tasks archived:
-  - [task-6c834006](archive/cleanup-2026-02-22/task-6c834006-view-save-delete-cli-flags.md)
-  - [task-ddbaa84b](archive/cleanup-2026-02-22/task-ddbaa84b-view-cli-override-flags.md)
-  - [task-a82526f2](archive/cleanup-2026-02-22/task-a82526f2-dsl-or-syntax-support.md)
-  - [task-b66d2263](archive/cleanup-2026-02-22/task-b66d2263-identify-rename-locations.md)
+## Epic: Jot Agentic Gaps (`a7c3d9e1`)
+- [x] [story-1a2b3c4d](story-1a2b3c4d-add-note-put-command.md) - Add note put command
+  - [x] [task-e1a2b3c4](task-e1a2b3c4-implement-notes-update-command.md) - Implement notes update command (completed)
+- [x] [story-2b3c4d5e](story-2b3c4d5e-add-note-move-and-archive-operations.md) - Add note move and archive operations
+  - [x] [task-f2b3c4d5](task-f2b3c4d5-implement-notes-mv-command.md) - Implement notes mv command (completed)
+- [x] [story-3c4d5e6f](story-3c4d5e6f-add-raw-roundtrip-read-write.md) - Add raw roundtrip read write
+  - [x] [task-a3c4d5e6](task-a3c4d5e6-implement-notes-get-raw-mode.md) - Implement notes get raw mode (completed)
+- [x] [story-4d5e6f7a](story-4d5e6f7a-add-exists-ensure-append-ops.md) - Add exists ensure append ops
+  - [x] [task-b4d5e6f7](task-b4d5e6f7-implement-exists-ensure-append-ops.md) - Implement exists ensure append ops (completed)
+- [x] [story-5e6f7a8b](story-5e6f7a8b-improve-indexing-for-agent-loops.md) - Improve indexing for agent loops
+  - [x] [task-c5e6f7a8](task-c5e6f7a8-benchmark-optimize-indexing-agent-loops.md) - Benchmark and optimize indexing for agent loops (completed)
 
-## Parked Tasks
+## Epic: Jot Workflows (`b2f4e6a8`)
+- [ ] [story-6f7a8b9c](story-6f7a8b9c-workflow-discovery-and-requirements.md) - Workflow discovery and requirements
+- [ ] [story-7a8b9c0d](story-7a8b9c0d-workflow-spec-metadata-dsl.md) - Workflow spec metadata DSL
+- [ ] [story-8b9c0d1e](story-8b9c0d1e-workflow-execution-and-validation-engine.md) - Workflow execution and validation engine
+
+## Epic: Jot Groups Verification Analysis (`c5d7e9b1`)
+- [ ] [story-9c0d1e2a](story-9c0d1e2a-group-driven-note-creation-verification.md) - Group driven note creation verification
+- [ ] [story-ad1e2f3b](story-ad1e2f3b-natural-language-create-task-intent-mapping.md) - Natural language create task intent mapping
+
+## Proposed / Parked Epics
+- [ ] [epic-6e1f2a9c](epic-6e1f2a9c-cli-config-normalization-layer.md) - CLI Config Normalization Layer (future)
+
+## Parked
 - [ ] [task-9c4a2f8d](task-9c4a2f8d-github-actions-moonrepo-releases.md) - GitHub Actions CI/CD
 - [ ] [plan-b4e2f7a1](plan-b4e2f7a1-dsl-views-implementation.md) - DSL views implementation (10 tasks)
-
-## Unified Search DSL Deprecation (epic-9b7c2a4d)
-- [x] [task-1f2e3d4c](task-1f2e3d4c-introduce-unified-search-dsl-behavior.md) - Introduce unified search DSL behavior
-- [x] [task-5a6b7c8d](task-5a6b7c8d-deprecate-legacy-query-warnings-and-docs.md) - Add runtime warnings and docs migration guidance
-- [x] [task-9c0d1e2f](task-9c0d1e2f-remove-legacy-query-command-next-minor.md) - Remove legacy query command in next minor
-
-## Active Deferred Follow-up Tasks (phase-4adb81db)
-- [x] [task-684a9a73](task-684a9a73-view-parameter-substitution.md) - Implement named view parameter substitution (completed)
-- [x] [task-e19963c7](task-e19963c7-global-views-config-support.md) - Add global views support in config hierarchy
