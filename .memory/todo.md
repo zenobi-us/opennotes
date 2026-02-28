@@ -16,6 +16,10 @@
   - [x] [task-8c0d1e2f](task-8c0d1e2f-story8-first-slice-acceptance-and-task-breakdown.md) - Tighten first-slice acceptance criteria and ordered task plan
   - [x] [task-9d1e2f3a](task-9d1e2f3a-workflow-evaluation-red-tests-and-contract.md) - Add TDD red tests and lock output contract
   - [x] [task-ae2f3a4b](task-ae2f3a4b-apply-mode-enforce-implementation-and-validation.md) - Implement apply-mode hard enforcement evaluation path
+- [ ] [story-d1e9f2a3](story-d1e9f2a3-workflow-assignment-and-lifecycle-hook-enforcement.md) - Workflow assignment and lifecycle hook enforcement
+  - [x] [task-e2f9a3b4](task-e2f9a3b4-update-config-schema-for-group-workflow-id-and-workflow-field.md) - Refactor config schema and migration path
+  - [x] [task-f3a4b5c7](task-f3a4b5c7-define-and-implement-workflow-assignment-resolution.md) - Implement deterministic group workflow resolution
+  - [ ] [task-a4b5c6d8](task-a4b5c6d8-wire-lifecycle-hooks-into-note-create-edit-with-diagnostics.md) - Enforce workflows during note create/edit
 
 ## Epic: Jot Groups Verification Analysis (`c5d7e9b1`)
 - [ ] [story-9c0d1e2a](story-9c0d1e2a-group-driven-note-creation-verification.md) - Group driven note creation verification

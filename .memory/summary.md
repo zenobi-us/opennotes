@@ -25,7 +25,7 @@
 - [epic-6e1f2a9c](epic-6e1f2a9c-cli-config-normalization-layer.md) — CLI Config Normalization Layer (proposed/parked)
 
 ## Immediate Milestone
-Plan and prioritize next workflow slice beyond story `8b9c0d1e` (e.g., command integration and/or future warn-mode semantics) on top of the completed evaluation engine baseline.
+Complete task `a4b5c6d8` by wiring lifecycle workflow enforcement into note create/edit mutation paths using the new assignment resolver.
 
 ## Parked Work
 - [task-9c4a2f8d](task-9c4a2f8d-github-actions-moonrepo-releases.md) — GitHub Actions CI/CD
