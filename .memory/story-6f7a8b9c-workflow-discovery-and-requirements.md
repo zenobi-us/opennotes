@@ -3,8 +3,8 @@ id: 6f7a8b9c
 title: Workflow discovery and requirements
 epic_id: b2f4e6a8
 created_at: 2026-02-27T08:01:43+10:30
-updated_at: 2026-02-28T17:44:00+10:30
-status: in-progress
+updated_at: 2026-02-28T18:00:00+10:30
+status: completed
 priority: critical
 story_points: 3
 ---
@@ -19,7 +19,7 @@ As a product team, we want a structured discovery discussion for Jot workflows s
 - [x] Primary workflow use cases are captured and prioritized. (see [research-a9b8c7d6](research-a9b8c7d6-workflow-discovery-brief.md))
 - [x] Non-goals and constraints are explicitly recorded. (see [research-a9b8c7d6](research-a9b8c7d6-workflow-discovery-brief.md))
 - [x] Codebase integration points for workflow implementation are documented at command/service boundaries. (see [research-5a6b7c8d](research-5a6b7c8d-workflow-integration-points.md))
-- [ ] Validation harness scope and red-test matrix are defined and linked from task artifacts. (target: [task-3f4a5b6c](task-3f4a5b6c-workflow-validation-harness-foundation.md))
+- [x] Validation harness scope and red-test matrix are defined and linked from task artifacts. (see [task-3f4a5b6c](task-3f4a5b6c-workflow-validation-harness-foundation.md))
 
 ## Context
 You requested first task to be discussion + design framing.
