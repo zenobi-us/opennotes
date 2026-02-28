@@ -12,7 +12,10 @@
   - [x] [task-a4b5c6d7](task-a4b5c6d7-define-workflow-object-schema-in-jot-json.md) - Define workflow object schema in .jot.json
   - [x] [task-b5c6d7e8](task-b5c6d7e8-specify-state-validation-and-transition-semantics.md) - Specify state validation and transition semantics
   - [x] [task-c6d7e8f9](task-c6d7e8f9-define-format-aware-diagnostics-contract.md) - Define format-aware diagnostics contract
-- [ ] [story-8b9c0d1e](story-8b9c0d1e-workflow-execution-and-validation-engine.md) - Workflow execution and validation engine
+- [x] [story-8b9c0d1e](story-8b9c0d1e-workflow-execution-and-validation-engine.md) - Workflow execution and validation engine
+  - [x] [task-8c0d1e2f](task-8c0d1e2f-story8-first-slice-acceptance-and-task-breakdown.md) - Tighten first-slice acceptance criteria and ordered task plan
+  - [x] [task-9d1e2f3a](task-9d1e2f3a-workflow-evaluation-red-tests-and-contract.md) - Add TDD red tests and lock output contract
+  - [x] [task-ae2f3a4b](task-ae2f3a4b-apply-mode-enforce-implementation-and-validation.md) - Implement apply-mode hard enforcement evaluation path
 
 ## Epic: Jot Groups Verification Analysis (`c5d7e9b1`)
 - [ ] [story-9c0d1e2a](story-9c0d1e2a-group-driven-note-creation-verification.md) - Group driven note creation verification

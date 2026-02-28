@@ -5,6 +5,7 @@
 - **Completed stories**:
   - [story-6f7a8b9c](story-6f7a8b9c-workflow-discovery-and-requirements.md)
   - [story-7a8b9c0d](story-7a8b9c0d-workflow-spec-metadata-dsl.md)
+  - [story-8b9c0d1e](story-8b9c0d1e-workflow-execution-and-validation-engine.md) (slice 1: apply hard-enforce engine)
 - **Completed planning tasks for story `7a8b9c0d`**:
   - [task-a4b5c6d7](task-a4b5c6d7-define-workflow-object-schema-in-jot-json.md)
   - [task-b5c6d7e8](task-b5c6d7e8-specify-state-validation-and-transition-semantics.md)
@@ -24,7 +25,7 @@
 - [epic-6e1f2a9c](epic-6e1f2a9c-cli-config-normalization-layer.md) — CLI Config Normalization Layer (proposed/parked)
 
 ## Immediate Milestone
-Begin implementation for [story-8b9c0d1e](story-8b9c0d1e-workflow-execution-and-validation-engine.md), starting from the new validation harness baseline.
+Plan and prioritize next workflow slice beyond story `8b9c0d1e` (e.g., command integration and/or future warn-mode semantics) on top of the completed evaluation engine baseline.
 
 ## Parked Work
 - [task-9c4a2f8d](task-9c4a2f8d-github-actions-moonrepo-releases.md) — GitHub Actions CI/CD
