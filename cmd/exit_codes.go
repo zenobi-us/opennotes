@@ -3,9 +3,10 @@ package cmd
 import "errors"
 
 const (
-	ExitCodeGeneral  = 1
-	ExitCodeNotFound = 2
-	ExitCodeConflict = 3
+	ExitCodeGeneral         = 1
+	ExitCodeNotFound        = 2
+	ExitCodeConflict        = 3
+	ExitCodeWorkflowBlocked = 4
 )
 
 type codedError struct {

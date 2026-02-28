@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/zenobi-us/jot/internal/services"
 )
 
 type noteUpdateResult struct {
@@ -57,7 +58,7 @@ Examples:
 			return err
 		}
 
-		result, err := updateNoteFile(nb.Config.Root, targetPath, content, create)
+		result, err := updateNoteFileWithWorkflow(nb.Config.Root, targetPath, content, create, nb)
 		if err != nil {
 			renderNoteUpdateFailure(format, targetPath, err.Error())
 			return err
@@ -126,12 +127,16 @@ func resolveUpdateTargetPath(root, inputPath string) (absolutePath, relativePath
 }
 
 func updateNoteFile(root, targetPath string, content []byte, create bool) (noteUpdateResult, error) {
+	return updateNoteFileWithWorkflow(root, targetPath, content, create, nil)
+}
+
+func updateNoteFileWithWorkflow(root, targetPath string, content []byte, create bool, nb *services.Notebook) (noteUpdateResult, error) {
 	absolutePath, relativePath, err := resolveUpdateTargetPath(root, targetPath)
 	if err != nil {
 		return noteUpdateResult{}, err
 	}
 
-	_, statErr := os.Stat(absolutePath)
+	existingContent, statErr := os.ReadFile(absolutePath)
 	created := false
 	if statErr != nil {
 		if !os.IsNotExist(statErr) {
@@ -141,8 +146,23 @@ func updateNoteFile(root, targetPath string, content []byte, create bool) (noteU
 			return noteUpdateResult{}, fmt.Errorf("target note does not exist (use --create): %s", relativePath)
 		}
 		created = true
+		existingContent = nil
 		if err := os.MkdirAll(filepath.Dir(absolutePath), 0o755); err != nil {
 			return noteUpdateResult{}, fmt.Errorf("failed to create target directory: %w", err)
+		}
+	}
+
+	// Enforce workflow rules if notebook config is available
+	if nb != nil {
+		newMetadata := extractFrontmatterMetadata(content)
+		if created {
+			if err := enforceWorkflowForCreate(nb, absolutePath, newMetadata); err != nil {
+				return noteUpdateResult{}, err
+			}
+		} else {
+			if err := enforceWorkflowForEdit(nb, absolutePath, existingContent, newMetadata); err != nil {
+				return noteUpdateResult{}, err
+			}
 		}
 	}
 

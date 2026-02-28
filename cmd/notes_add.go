@@ -95,6 +95,11 @@ EXAMPLES:
 			return fmt.Errorf("note already exists: %s", notePath)
 		}
 
+		// Enforce workflow rules before creating note
+		if err := enforceWorkflowForCreate(nb, notePath, customData); err != nil {
+			return err
+		}
+
 		// Create directories if needed
 		noteDir := filepath.Dir(notePath)
 		if err := os.MkdirAll(noteDir, 0755); err != nil {
