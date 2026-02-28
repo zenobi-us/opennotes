@@ -7,6 +7,7 @@ type WorkflowDefinition struct {
 	Description  string                             `json:"description"`
 	InitialState string                             `json:"initial_state"`
 	Mode         string                             `json:"mode"`
+	Field        string                             `json:"field"`
 	States       map[string]WorkflowStateDefinition `json:"states"`
 }
 

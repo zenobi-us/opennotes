@@ -31,6 +31,11 @@ func assertDiagnosticCodes(t *testing.T, diagnostics []WorkflowDiagnostic, expec
 	assert.ElementsMatch(t, expected, actual)
 }
 
+func TestWorkflowValidationHarness_LoadsWorkflowField(t *testing.T) {
+	def := loadWorkflowFixture(t, "project_story.json")
+	assert.Equal(t, "status", def.Field)
+}
+
 func TestWorkflowValidationHarness_ValidTransition(t *testing.T) {
 	def := loadWorkflowFixture(t, "project_story.json")
 

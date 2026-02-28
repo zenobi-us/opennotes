@@ -714,6 +714,7 @@ func TestNotebook_SaveConfig_PreservesWorkflows(t *testing.T) {
 				"description": "Project flow",
 				"initial_state": "proposed",
 				"mode": "enforce",
+				"field": "status",
 				"states": {
 					"proposed": {
 						"schema": {"type": "object"},
@@ -741,6 +742,131 @@ func TestNotebook_SaveConfig_PreservesWorkflows(t *testing.T) {
 	var parsed map[string]any
 	require.NoError(t, json.Unmarshal(updated, &parsed))
 	require.Contains(t, parsed, "workflows")
+}
+
+func TestNotebookService_LoadConfig_GroupWorkflowID(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "workflow-group-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "workflow-group-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Stories",
+				"globs": ["stories/**/*.md"],
+				"metadata": {"type": "story"},
+				"workflow_id": "project_story"
+			}
+		],
+		"workflows": {
+			"project_story": {
+				"description": "Project flow",
+				"initial_state": "proposed",
+				"mode": "enforce",
+				"field": "status",
+				"states": {
+					"proposed": {"schema": {"type": "object"}, "transitions": ["planned"]}
+				}
+			}
+		}
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	cfg, err := svc.LoadConfig(notebookDir)
+	require.NoError(t, err)
+	require.Len(t, cfg.Groups, 1)
+	assert.Equal(t, "project_story", cfg.Groups[0].WorkflowID)
+}
+
+func TestNotebookService_LoadConfig_LegacyGroupWorkflowObject_NormalizesWorkflowID(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "legacy-workflow-group-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "legacy-workflow-group-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Stories",
+				"globs": ["stories/**/*.md"],
+				"metadata": {"type": "story"},
+				"workflow": {
+					"id": "project_story",
+					"field": "status",
+					"on_create": true,
+					"on_edit": true
+				}
+			}
+		],
+		"workflows": {
+			"project_story": {
+				"description": "Project flow",
+				"initial_state": "proposed",
+				"mode": "enforce",
+				"field": "status",
+				"states": {
+					"proposed": {"schema": {"type": "object"}, "transitions": ["planned"]}
+				}
+			}
+		}
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	cfg, err := svc.LoadConfig(notebookDir)
+	require.NoError(t, err)
+	require.Len(t, cfg.Groups, 1)
+	assert.Equal(t, "project_story", cfg.Groups[0].WorkflowID)
+}
+
+func TestNotebook_SaveConfig_WritesWorkflowIDOnly(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "save-workflow-group-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "save-workflow-group-notebook",
+		"root": ".notes",
+		"contexts": ["` + notebookDir + `"],
+		"groups": [
+			{
+				"name": "Stories",
+				"globs": ["stories/**/*.md"],
+				"metadata": {"type": "story"},
+				"workflow_id": "project_story"
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	notebook, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+	err = notebook.SaveConfig(false, configSvc)
+	require.NoError(t, err)
+
+	updated, err := os.ReadFile(filepath.Join(notebookDir, NotebookConfigFile))
+	require.NoError(t, err)
+
+	var parsed map[string]any
+	require.NoError(t, json.Unmarshal(updated, &parsed))
+	groups, ok := parsed["groups"].([]any)
+	require.True(t, ok)
+	require.Len(t, groups, 1)
+	group, ok := groups[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "project_story", group["workflow_id"])
+	assert.NotContains(t, group, "workflow")
 }
 
 // requireNotebook priority tests

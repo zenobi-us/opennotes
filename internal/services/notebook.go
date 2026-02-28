@@ -20,10 +20,45 @@ import (
 
 // NotebookGroup defines a group of notes with shared properties.
 type NotebookGroup struct {
-	Name     string         `json:"name"`
-	Globs    []string       `json:"globs"`
-	Metadata map[string]any `json:"metadata"`
-	Template string         `json:"template,omitempty"`
+	Name       string         `json:"name"`
+	Globs      []string       `json:"globs"`
+	Metadata   map[string]any `json:"metadata"`
+	Template   string         `json:"template,omitempty"`
+	WorkflowID string         `json:"workflow_id,omitempty"`
+}
+
+type legacyGroupWorkflowBinding struct {
+	ID string `json:"id"`
+}
+
+type notebookGroupRaw struct {
+	Name       string                      `json:"name"`
+	Globs      []string                    `json:"globs"`
+	Metadata   map[string]any              `json:"metadata"`
+	Template   string                      `json:"template,omitempty"`
+	WorkflowID string                      `json:"workflow_id,omitempty"`
+	Workflow   *legacyGroupWorkflowBinding `json:"workflow,omitempty"`
+}
+
+// UnmarshalJSON supports the canonical workflow_id shape and legacy workflow object shape.
+func (g *NotebookGroup) UnmarshalJSON(data []byte) error {
+	var raw notebookGroupRaw
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	workflowID := raw.WorkflowID
+	if workflowID == "" && raw.Workflow != nil {
+		workflowID = raw.Workflow.ID
+	}
+
+	g.Name = raw.Name
+	g.Globs = raw.Globs
+	g.Metadata = raw.Metadata
+	g.Template = raw.Template
+	g.WorkflowID = workflowID
+
+	return nil
 }
 
 // Notebook config version constants.

@@ -2,6 +2,7 @@
   "description": "Project/story workflow",
   "initial_state": "proposed",
   "mode": "enforce",
+  "field": "status",
   "states": {
     "proposed": {
       "schema": {
