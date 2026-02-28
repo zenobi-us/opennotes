@@ -35,12 +35,13 @@ const (
 
 // StoredNotebookConfig is what's stored in .jot.json.
 type StoredNotebookConfig struct {
-	ConfigVersion Version           `json:"config_version,omitempty"`
-	Root          string            `json:"root"`
-	Name          string            `json:"name"`
-	Contexts      []string          `json:"contexts,omitempty"`
-	Templates     map[string]string `json:"templates,omitempty"`
-	Groups        []NotebookGroup   `json:"groups,omitempty"`
+	ConfigVersion Version                    `json:"config_version,omitempty"`
+	Root          string                     `json:"root"`
+	Name          string                     `json:"name"`
+	Contexts      []string                   `json:"contexts,omitempty"`
+	Templates     map[string]string          `json:"templates,omitempty"`
+	Groups        []NotebookGroup            `json:"groups,omitempty"`
+	Workflows     map[string]json.RawMessage `json:"workflows,omitempty"`
 }
 
 // NotebookConfig includes runtime-resolved paths.
@@ -129,6 +130,7 @@ func (s *NotebookService) LoadConfig(path string) (*NotebookConfig, error) {
 			Contexts:      stored.Contexts,
 			Templates:     stored.Templates,
 			Groups:        stored.Groups,
+			Workflows:     stored.Workflows,
 		},
 		Path: configPath,
 	}, nil
@@ -593,6 +595,7 @@ func (n *Notebook) SaveConfig(register bool, configService *ConfigService) error
 		Contexts:  n.Config.Contexts,
 		Templates: n.Config.Templates,
 		Groups:    n.Config.Groups,
+		Workflows: n.Config.Workflows,
 	}
 
 	data, err := json.MarshalIndent(stored, "", "  ")

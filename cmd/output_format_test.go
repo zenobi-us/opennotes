@@ -114,6 +114,22 @@ func TestNotebookInfoPayload_IncludesConfigPath(t *testing.T) {
 	}
 }
 
+func TestNotebookInfoPayload_IncludesWorkflows(t *testing.T) {
+	nb := &services.Notebook{}
+	nb.Config.Workflows = map[string]json.RawMessage{
+		"project_story": json.RawMessage(`{"initial_state":"proposed"}`),
+	}
+
+	payload := notebookInfoPayload(nb)
+	workflows, ok := payload["workflows"].(map[string]json.RawMessage)
+	if !ok {
+		t.Fatalf("expected workflows map in payload")
+	}
+	if _, exists := workflows["project_story"]; !exists {
+		t.Fatalf("expected project_story workflow in payload")
+	}
+}
+
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
 

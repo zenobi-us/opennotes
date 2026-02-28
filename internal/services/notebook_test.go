@@ -668,6 +668,81 @@ func TestNotebook_SaveConfig_AvoidsDuplicateRegistration(t *testing.T) {
 	assert.Equal(t, 1, count)
 }
 
+func TestNotebookService_LoadConfig_IncludesWorkflows(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "workflow-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "workflow-notebook",
+		"root": ".notes",
+		"workflows": {
+			"project_story": {
+				"description": "Project flow",
+				"initial_state": "proposed",
+				"mode": "enforce",
+				"states": {
+					"proposed": {
+						"schema": {"type": "object"},
+						"transitions": ["planned"]
+					}
+				}
+			}
+		}
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	cfg, err := svc.LoadConfig(notebookDir)
+	require.NoError(t, err)
+	require.Contains(t, cfg.Workflows, "project_story")
+}
+
+func TestNotebook_SaveConfig_PreservesWorkflows(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "workflow-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "workflow-notebook",
+		"root": ".notes",
+		"contexts": ["` + notebookDir + `"],
+		"workflows": {
+			"project_story": {
+				"description": "Project flow",
+				"initial_state": "proposed",
+				"mode": "enforce",
+				"states": {
+					"proposed": {
+						"schema": {"type": "object"},
+						"transitions": ["planned"]
+					}
+				}
+			}
+		}
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	notebook, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	notebook.Config.Name = "renamed"
+	err = notebook.SaveConfig(false, configSvc)
+	require.NoError(t, err)
+
+	updated, err := os.ReadFile(filepath.Join(notebookDir, NotebookConfigFile))
+	require.NoError(t, err)
+
+	var parsed map[string]any
+	require.NoError(t, json.Unmarshal(updated, &parsed))
+	require.Contains(t, parsed, "workflows")
+}
+
 // requireNotebook priority tests
 // Note: These test the priority behavior, actual requireNotebook function is in cmd/notes_list.go
 // We test the priority here by verifying Infer() behavior and manually simulating requireNotebook logic

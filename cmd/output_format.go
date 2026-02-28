@@ -61,6 +61,7 @@ func notebookInfoPayload(nb *services.Notebook) map[string]any {
 		"contexts":       nb.Config.Contexts,
 		"templates":      nb.Config.Templates,
 		"groups":         nb.Config.Groups,
+		"workflows":      nb.Config.Workflows,
 	}
 }
 
