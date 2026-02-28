@@ -1,0 +1,28 @@
+{
+  "description": "Project/story workflow",
+  "initial_state": "proposed",
+  "mode": "enforce",
+  "states": {
+    "proposed": {
+      "schema": {
+        "type": "object",
+        "required": ["title"]
+      },
+      "transitions": ["planned", "cancelled"]
+    },
+    "planned": {
+      "schema": {
+        "type": "object",
+        "required": ["title", "epic_id"]
+      },
+      "transitions": ["in-progress", "cancelled"]
+    },
+    "completed": {
+      "schema": {
+        "type": "object",
+        "required": ["title", "epic_id", "completed_at"]
+      },
+      "transitions": []
+    }
+  }
+}
