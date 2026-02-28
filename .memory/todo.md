@@ -1,25 +1,14 @@
 # Jot TODO
 
-## Epic: Jot Workflows (`b2f4e6a8`) [ACTIVE]
-- [x] [story-6f7a8b9c](story-6f7a8b9c-workflow-discovery-and-requirements.md) - Workflow discovery and requirements (execution-ready discovery complete)
-  - [x] [task-d1e2f3a4](task-d1e2f3a4-workflow-discovery-brief-and-question-set.md) - Discovery brief and question set
-  - [x] [task-e2f3a4b5](task-e2f3a4b5-capture-and-prioritize-workflow-use-cases.md) - Capture and prioritize workflow use cases
-  - [x] [task-f3a4b5c6](task-f3a4b5c6-record-workflow-constraints-and-non-goals.md) - Record constraints and non-goals
-  - [x] [task-1d2e3f4a](task-1d2e3f4a-workflow-codebase-discovery-and-ownership-map.md) - Codebase discovery and ownership map
-  - [x] [task-2e3f4a5b](task-2e3f4a5b-workflow-config-persistence-and-introspection-slice.md) - Persistence and introspection vertical slice
-  - [x] [task-3f4a5b6c](task-3f4a5b6c-workflow-validation-harness-foundation.md) - Validation harness foundation
-- [x] [story-7a8b9c0d](story-7a8b9c0d-workflow-spec-metadata-dsl.md) - Workflow spec metadata DSL
-  - [x] [task-a4b5c6d7](task-a4b5c6d7-define-workflow-object-schema-in-jot-json.md) - Define workflow object schema in .jot.json
-  - [x] [task-b5c6d7e8](task-b5c6d7e8-specify-state-validation-and-transition-semantics.md) - Specify state validation and transition semantics
-  - [x] [task-c6d7e8f9](task-c6d7e8f9-define-format-aware-diagnostics-contract.md) - Define format-aware diagnostics contract
-- [x] [story-8b9c0d1e](story-8b9c0d1e-workflow-execution-and-validation-engine.md) - Workflow execution and validation engine
-  - [x] [task-8c0d1e2f](task-8c0d1e2f-story8-first-slice-acceptance-and-task-breakdown.md) - Tighten first-slice acceptance criteria and ordered task plan
-  - [x] [task-9d1e2f3a](task-9d1e2f3a-workflow-evaluation-red-tests-and-contract.md) - Add TDD red tests and lock output contract
-  - [x] [task-ae2f3a4b](task-ae2f3a4b-apply-mode-enforce-implementation-and-validation.md) - Implement apply-mode hard enforcement evaluation path
-- [ ] [story-d1e9f2a3](story-d1e9f2a3-workflow-assignment-and-lifecycle-hook-enforcement.md) - Workflow assignment and lifecycle hook enforcement
-  - [x] [task-e2f9a3b4](task-e2f9a3b4-update-config-schema-for-group-workflow-id-and-workflow-field.md) - Refactor config schema and migration path
-  - [x] [task-f3a4b5c7](task-f3a4b5c7-define-and-implement-workflow-assignment-resolution.md) - Implement deterministic group workflow resolution
-  - [ ] [task-a4b5c6d8](task-a4b5c6d8-wire-lifecycle-hooks-into-note-create-edit-with-diagnostics.md) - Enforce workflows during note create/edit
+## Epic: Jot Workflows (`b2f4e6a8`) ✅ COMPLETE — [NEEDS-HUMAN] review before archival
+- [x] All 4 stories, 15 tasks complete. Learnings distilled: [learning-w4k9f2m1](learning-w4k9f2m1-jot-workflows-epic-complete.md)
+- [x] Epic: [epic-b2f4e6a8](epic-b2f4e6a8-jot-workflows.md)
+
+## Epic: JSON Schema Generation (`7c631839`) — proposed
+- [ ] [story-s1a2b3c4](story-s1a2b3c4-schema-generation-tooling.md) — Automated schema generation from Go structs
+- [ ] [story-s2b3c4d5](story-s2b3c4d5-schema-ci-drift-detection.md) — CI schema drift detection
+- [ ] [story-s3c4d5e6](story-s3c4d5e6-notebook-init-schema-copy.md) — Notebook init includes schema reference
+- [ ] [story-s4d5e6f7](story-s4d5e6f7-notebook-validate-command.md) — Notebook config validation command
 
 ## Epic: Jot Groups Verification Analysis (`c5d7e9b1`)
 - [ ] [story-9c0d1e2a](story-9c0d1e2a-group-driven-note-creation-verification.md) - Group driven note creation verification
