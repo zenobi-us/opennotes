@@ -29,6 +29,73 @@ type WorkflowValidationResult struct {
 	Diagnostics []WorkflowDiagnostic `json:"diagnostics,omitempty"`
 }
 
+// WorkflowExecutionRequest defines one workflow evaluation request.
+type WorkflowExecutionRequest struct {
+	Mode      string         `json:"mode"`
+	FromState string         `json:"from_state"`
+	ToState   string         `json:"to_state"`
+	Metadata  map[string]any `json:"metadata,omitempty"`
+}
+
+// WorkflowExecutionResult defines stable machine-readable workflow evaluation output.
+type WorkflowExecutionResult struct {
+	Valid       bool                 `json:"valid"`
+	Allowed     bool                 `json:"allowed"`
+	Applied     bool                 `json:"applied"`
+	Mode        string               `json:"mode"`
+	FromState   string               `json:"from_state"`
+	ToState     string               `json:"to_state"`
+	ResultState string               `json:"result_state"`
+	Diagnostics []WorkflowDiagnostic `json:"diagnostics,omitempty"`
+}
+
+// EvaluateWorkflow validates and evaluates workflow execution behavior for apply/dry-run modes.
+func EvaluateWorkflow(def WorkflowDefinition, req WorkflowExecutionRequest) WorkflowExecutionResult {
+	if req.Metadata == nil {
+		req.Metadata = map[string]any{}
+	}
+
+	if req.Mode != "apply" && req.Mode != "dry-run" {
+		return WorkflowExecutionResult{
+			Valid:       false,
+			Allowed:     false,
+			Applied:     false,
+			Mode:        req.Mode,
+			FromState:   req.FromState,
+			ToState:     req.ToState,
+			ResultState: req.FromState,
+			Diagnostics: []WorkflowDiagnostic{{
+				Code:    "workflow.invalid_execution_mode",
+				Message: fmt.Sprintf("unknown workflow execution mode: %s", req.Mode),
+				Path:    "mode",
+			}},
+		}
+	}
+
+	validation := ValidateWorkflowTransition(def, req.FromState, req.ToState, req.Metadata)
+	result := WorkflowExecutionResult{
+		Valid:       validation.Valid,
+		Allowed:     validation.Valid,
+		Applied:     false,
+		Mode:        req.Mode,
+		FromState:   req.FromState,
+		ToState:     req.ToState,
+		ResultState: req.FromState,
+		Diagnostics: validation.Diagnostics,
+	}
+
+	if req.Mode == "apply" {
+		if validation.Valid {
+			result.Applied = true
+			result.ResultState = req.ToState
+		} else {
+			result.Allowed = false
+		}
+	}
+
+	return result
+}
+
 // ValidateWorkflowTransition validates transition legality and target-state required metadata.
 func ValidateWorkflowTransition(def WorkflowDefinition, fromState, toState string, metadata map[string]any) WorkflowValidationResult {
 	diagnostics := make([]WorkflowDiagnostic, 0)
