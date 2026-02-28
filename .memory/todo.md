@@ -1,8 +1,14 @@
 # Jot TODO
 
-## Epic: Jot Workflows (`b2f4e6a8`)
-- [ ] [story-6f7a8b9c](story-6f7a8b9c-workflow-discovery-and-requirements.md) - Workflow discovery and requirements
-- [ ] [story-7a8b9c0d](story-7a8b9c0d-workflow-spec-metadata-dsl.md) - Workflow spec metadata DSL
+## Epic: Jot Workflows (`b2f4e6a8`) [ACTIVE]
+- [x] [story-6f7a8b9c](story-6f7a8b9c-workflow-discovery-and-requirements.md) - Workflow discovery and requirements
+  - [x] [task-d1e2f3a4](task-d1e2f3a4-workflow-discovery-brief-and-question-set.md) - Discovery brief and question set
+  - [x] [task-e2f3a4b5](task-e2f3a4b5-capture-and-prioritize-workflow-use-cases.md) - Capture and prioritize workflow use cases
+  - [x] [task-f3a4b5c6](task-f3a4b5c6-record-workflow-constraints-and-non-goals.md) - Record constraints and non-goals
+- [x] [story-7a8b9c0d](story-7a8b9c0d-workflow-spec-metadata-dsl.md) - Workflow spec metadata DSL
+  - [x] [task-a4b5c6d7](task-a4b5c6d7-define-workflow-object-schema-in-jot-json.md) - Define workflow object schema in .jot.json
+  - [x] [task-b5c6d7e8](task-b5c6d7e8-specify-state-validation-and-transition-semantics.md) - Specify state validation and transition semantics
+  - [x] [task-c6d7e8f9](task-c6d7e8f9-define-format-aware-diagnostics-contract.md) - Define format-aware diagnostics contract
 - [ ] [story-8b9c0d1e](story-8b9c0d1e-workflow-execution-and-validation-engine.md) - Workflow execution and validation engine
 
 ## Epic: Jot Groups Verification Analysis (`c5d7e9b1`)

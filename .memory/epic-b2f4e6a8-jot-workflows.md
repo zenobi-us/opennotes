@@ -2,27 +2,40 @@
 id: b2f4e6a8
 title: Jot Workflows
 created_at: 2026-02-27T08:01:43+10:30
-updated_at: 2026-02-27T08:01:43+10:30
-status: proposed
+updated_at: 2026-02-28T00:53:14+10:30
+status: in-progress
 ---
 
 # Jot Workflows
 
 ## Vision/Goal
-Introduce native Jot workflows to express multi-step operational flows, metadata-based routing, and validation gates beyond the current basic miniproject flow chart.
+Introduce native Jot workflows to express multi-step operational flows, metadata-based routing, and validation gates with machine-readable execution outcomes.
+
+## Scope
+- Define workflow model from real Jot usage patterns.
+- Specify metadata/transition DSL contract for notebook-scoped workflows.
+- Deliver execution + validation engine contract (dry-run/apply, diagnostics, status output).
 
 ## Success Criteria
-- Workflow definitions are first-class and executable by Jot.
-- Workflows can validate note metadata, required transitions, and completion criteria.
-- Workflows provide actionable status and clear failures for automation/agents.
-- Workflow definitions are composable and notebook-scoped.
+- Workflow definition schema is documented with required fields and examples.
+- Validation semantics (metadata requirements, transition constraints, failure handling) are explicit and testable.
+- Execution contract includes: entrypoint, dry-run/apply behavior, machine-readable output shape, and failure diagnostics.
+- Story-level outputs are linked and traceable from this epic.
 
-## Phases
-- Discovery/specification of workflow model.
-- Metadata validation and transition design.
-- Execution engine + status/reporting interface.
+## Phased Plan
+1. **Discovery & Requirements** (`story-6f7a8b9c`)  
+   Capture use cases, constraints, and non-goals; produce prioritized requirement baseline.
+2. **Workflow Spec & Metadata DSL** (`story-7a8b9c0d`)  
+   Define workflow definition format, transition model, and validation/error contracts.
+3. **Execution & Validation Engine** (`story-8b9c0d1e`)  
+   Implement evaluator behavior and machine-readable workflow status/diagnostics interface.
 
 ## Dependencies
-- Search/query DSL and views.
 - Metadata conventions across note groups/types.
-- Decision on workflow definition format (e.g., YAML in config vs notes).
+- Alignment with current search/query and notebook configuration contracts.
+- Decision on workflow definition storage/authoring location.
+
+## Linked Stories
+- [story-6f7a8b9c](story-6f7a8b9c-workflow-discovery-and-requirements.md)
+- [story-7a8b9c0d](story-7a8b9c0d-workflow-spec-metadata-dsl.md)
+- [story-8b9c0d1e](story-8b9c0d1e-workflow-execution-and-validation-engine.md)
