@@ -1,7 +1,7 @@
 # Jot Project Summary
 
 ## Current Focus
-- **Active epic**: [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md) (`status: proposed`, queued for activation)
+- **Active epic**: [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md) (`status: in-progress`, active)
 - **Completed epic**: [epic-b2f4e6a8](epic-b2f4e6a8-jot-workflows.md) (`status: completed`, pending human review before archival)
 - **NEW proposed epic**: [epic-7c631839](epic-7c631839-json-schema-generation.md) (`status: proposed`)
 
@@ -24,11 +24,11 @@ Addresses tech debt from commit `3e8fcbf` where schema generation was planned bu
 ## Next Steps
 1. **Human review** of epic `b2f4e6a8` completion before archival.
 2. **Prioritize** between `7c631839` (Schema Generation) and `c5d7e9b1` (Groups Verification).
-3. Begin research phase for selected epic.
+3. Begin research phase for selected epic; session-1772347138 has activated `c5d7e9b1` and will start planning.
 
 ## Active Planning Epics
 - [epic-7c631839](epic-7c631839-json-schema-generation.md) — JSON Schema Generation (proposed)
-- [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md) — Jot Groups Verification Analysis (queued)
+- [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md) — Jot Groups Verification Analysis (active)
 - [epic-6e1f2a9c](epic-6e1f2a9c-cli-config-normalization-layer.md) — CLI Config Normalization Layer (proposed/parked)
 
 ## Parked Work
