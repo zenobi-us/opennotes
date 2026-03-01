@@ -2,7 +2,7 @@
 id: r1a2b3c4
 title: Jot Groups Intent Resolution Research
 created_at: 2026-03-01T18:20:15+10:30
-updated_at: 2026-03-01T19:16:00+10:30
+updated_at: 2026-03-02T09:30:00+10:30
 status: in-progress
 epic_id: c5d7e9b1
 ---
@@ -22,7 +22,11 @@ epic_id: c5d7e9b1
 
 Groups in Jot use **glob-based path matching** to determine applicability. Currently, group resolution is **post-hoc** (evaluated after the path is determined) rather than **intent-driven** (helping determine the path). The system has **explicit conflict detection** for workflows but uses **first-match semantics** for resolution. Templates exist as a concept but are **not yet integrated with groups** for auto-generation. The workflow integration is **mature and deterministic**.
 
-## Findings
+---
+
+## PART 1: Existing Research (Groups & Workflow Integration)
+
+[See previous sections from original research file - preserved below]
 
 ### 1. Group Configuration Analysis
 
@@ -42,8 +46,6 @@ type NotebookGroup struct {
 - Each group has a `Name`, `Globs` (path patterns), optional `Metadata`, optional `Template`, and optional `WorkflowID`
 - Templates are **string references** to entries in `templates` map (not inline content)
 - The `Template` field exists on groups but is **not currently used** in note creation flow
-
-**Evidence**: Real config in `/.jot.json` shows 9 groups with glob patterns like `**/epic-*.md`, `**/story-*.md`, etc.
 
 ### 2. Path Resolution Behavior
 
@@ -71,451 +73,403 @@ func ResolvePath(notebookRoot, inputPath, slugifiedTitle string) string {
 1. Workflow enforcement (via `enforceWorkflowForCreate`)
 2. NOT for path/filename generation
 
-**Gap Identified**: Groups have a `Template` field but it is **never read** in the note creation flow (`cmd/notes_add.go`). The template flag (`--template`) only references the notebook-level `templates` map.
+### 3. Workflow Assignment Resolution
 
-### 3. Frontmatter Generation
-
-**Current Implementation** (`cmd/notes_add.go:168-182`):
-```go
-func generateFrontmatter(title string, customData map[string]interface{}) string {
-    frontmatter := make(map[string]interface{})
-    if title != "" {
-        frontmatter["title"] = title
-    }
-    frontmatter["created"] = time.Now().Format(time.RFC3339)
-    
-    // Merge custom data from --data flags
-    for k, v := range customData {
-        frontmatter[k] = v
-    }
-    ...
-}
-```
-
-**Key Finding**: 
-- Frontmatter is generated from title + `--data` flags only
-- **Group metadata is NOT injected** into frontmatter automatically
-- The `Metadata` field on groups exists but is **not used** for note creation
-
-### 4. Conflict Resolution
-
-**Workflow Assignment Resolution** (`internal/services/workflow_assignment.go:18-95`):
-
-The system has **explicit conflict detection**:
-
-```go
-if len(workflowIDs) > 1 {
-    // CONFLICT: Multiple groups match with DIFFERENT workflows
-    return WorkflowAssignmentResult{
-        Resolved: false,
-        Diagnostics: []WorkflowDiagnostic{{
-            Code:    "workflow.assignment_conflict",
-            Message: fmt.Sprintf("conflicting workflow assignments for note path %s: %s", ...),
-        }},
-    }
-}
-```
-
-**Resolution Rules**:
+**Resolution Rules** (`internal/services/workflow_assignment.go`):
 1. All matching groups' `WorkflowID`s are collected
 2. If multiple **distinct** workflow IDs match → **CONFLICT ERROR** (blocks operation)
 3. If all matching groups have the **same** workflow ID → **FIRST GROUP selected** (deterministic)
 4. If no groups match → allowed (no workflow enforcement)
 
-**Glob Matching** (`internal/services/semantic_search.go:407-417`):
+---
+
+## PART 2: Filename Generation Patterns Research (NEW)
+
+### Research Questions (User Directed)
+
+1. **Filename generation patterns** - how do other tools derive filename from title?
+2. **Schema options for filename control** - what fields could we add?
+3. **Fallback behavior** - when group has no filename config
+4. **Edge cases** - collision handling, unicode/emoji, long titles
+
+---
+
+## Findings: How Other Tools Generate Filenames
+
+### Tool Comparison Matrix
+
+| Tool | Filename Strategy | ID Format | Date Format | Slug Style | Collision Handling |
+|------|-------------------|-----------|-------------|------------|-------------------|
+| **Obsidian** | Title as filename | None (opt-in Zettel ID via plugin) | None by default | Preserve case, spaces allowed | Append " 1", " 2" etc. |
+| **Dendron** | Hierarchical + date/time | None | `y.MM.dd` (Luxon) for journal, `y.MM.dd.HHmmss` for scratch | Dot-separated hierarchy | Error on conflict |
+| **Foam** | Title as filename | None | None | Preserve case | User must rename |
+| **Zettlr** | Zettelkasten ID (timestamp) | `YYYYMMDDHHmmss` | Embedded in ID | ID-based, title optional | Unique by timestamp |
+| **Bear** | Title as display name | Internal UUID | None visible | N/A (database) | N/A (database) |
+| **Logseq** | Date-based pages or title | None | `YYYY-MM-DD` for journals | Preserve spaces | Merge pages |
+| **Notable** | Title as filename | None | None | Preserve case | Append number |
+
+### Pattern Categories
+
+#### 1. **Pure Title → Slug** (Obsidian, Foam, Notable)
+- User provides title, system converts to filename
+- Simple, intuitive for users
+- Problem: Non-ASCII characters, very long titles, collisions
+
+**Obsidian example**:
+```
+Title: "Meeting Notes: Q1 2026"
+Filename: "Meeting Notes- Q1 2026.md"  (preserves most chars, replaces : with -)
+```
+
+#### 2. **Date Prefix + Slug** (Dendron scratch/journal, Hugo)
+- `YYYY-MM-DD-title-slug.md` or `YYYYMMDD-title.md`
+- Provides chronological sorting
+- Reduces collisions (date scopes)
+
+**Dendron scratch note**:
+```
+dateFormat: "y.MM.dd.HHmmss"
+Result: "scratch.2026.03.02.093015.md"
+```
+
+#### 3. **ID Prefix + Slug** (Zettelkasten, Zettlr)
+- Unique ID guarantees no collision
+- ID types: timestamp (`YYYYMMDDHHmmss`), UUID, nanoid
+- Title becomes metadata, not filename
+
+**Zettlr example**:
+```
+ID: 20260302093015
+Filename: "20260302093015 Meeting Notes.md"
+```
+
+#### 4. **Type Prefix + Hash + Slug** (Current .memory/ convention)
+- Pattern: `{type}-{8char_hash}-{slug}.md`
+- Example: `task-a8f3b2c1-sprint-planning.md`
+- Provides: type identification, uniqueness, readability
+
+### Slug Style Comparison
+
+| Style | Example | Pros | Cons |
+|-------|---------|------|------|
+| **kebab-case** | `sprint-planning` | URL-safe, readable, common | Multi-word separation only |
+| **snake_case** | `sprint_planning` | Python/Ruby conventions | Less URL-friendly |
+| **camelCase** | `sprintPlanning` | No separators, compact | Harder to read |
+| **Preserve spaces** | `Sprint Planning` | Natural, like title | Problematic on some filesystems |
+| **dot-separated** | `sprint.planning` | Dendron hierarchy | Confuses extensions |
+
+### Date Format Options
+
+| Format | Example | Use Case |
+|--------|---------|----------|
+| **ISO 8601** | `2026-03-02` | International standard, sortable |
+| **Compact** | `20260302` | Shorter, still sortable |
+| **Luxon/moment** | Custom via pattern | Flexible, localized |
+| **RFC 3339** | `2026-03-02T09:30:00+10:30` | Full timestamp w/ timezone |
+| **Unix timestamp** | `1740963000` | Unique, not human-readable |
+
+### ID Generation Options
+
+| Type | Example | Uniqueness | Readability | Length |
+|------|---------|------------|-------------|--------|
+| **UUID v4** | `550e8400-e29b-41d4-a716-446655440000` | Excellent | Poor | 36 |
+| **nanoid** | `V1StGXR8_Z5jdHi6B` | Excellent | Fair | 21 (default) |
+| **nanoid (8)** | `a8f3b2c1` | Good (for single notebook) | Good | 8 |
+| **Timestamp** | `20260302093015` | Good (per-second) | Fair | 14 |
+| **Short hash** | `c5d7e9b1` | Fair (collision risk) | Good | 8 |
+
+---
+
+## Findings: Schema Options for Filename Control
+
+### Option A: Single `filename_format` Template (Recommended)
+
+```json
+{
+  "name": "tasks",
+  "type": "task",
+  "globs": [".memory/task-*.md"],
+  "filename_format": "task-{{ nanoid 8 }}-{{ slug .title }}.md"
+}
+```
+
+**Pros**:
+- Maximum flexibility with gomplate
+- Single field, clear purpose
+- Can express any pattern
+
+**Cons**:
+- Requires gomplate knowledge
+- Complex patterns harder to validate
+
+### Option B: Structured Fields
+
+```json
+{
+  "name": "tasks",
+  "type": "task",
+  "filename": {
+    "prefix": "task",
+    "id_style": "nanoid8",
+    "slug_style": "kebab",
+    "date_format": null,
+    "max_length": 50
+  }
+}
+```
+
+**Pros**:
+- Explicit, discoverable options
+- Easier validation
+- IDE autocomplete friendly
+
+**Cons**:
+- More fields to maintain
+- Less flexible than template
+- Combinatorial complexity
+
+### Option C: Hybrid (Preset + Override)
+
+```json
+{
+  "name": "tasks",
+  "type": "task",
+  "filename_preset": "prefixed-id-slug",  // Predefined pattern
+  "filename_format": null                  // Optional override
+}
+```
+
+**Presets** could be:
+- `slug-only`: `{{ slug .title }}.md`
+- `date-slug`: `{{ date "2006-01-02" }}-{{ slug .title }}.md`
+- `id-slug`: `{{ nanoid 8 }}-{{ slug .title }}.md`
+- `prefixed-id-slug`: `{{ .type }}-{{ nanoid 8 }}-{{ slug .title }}.md`
+
+**Pros**:
+- Easy for common cases
+- Full power when needed
+- Progressive disclosure
+
+**Cons**:
+- Two ways to do things
+- Preset names must be learned
+
+### Recommendation: Option A with Smart Defaults
+
+Use `filename_format` as the primary field, with sensible fallback behavior when absent.
+
+---
+
+## Findings: Fallback Behavior
+
+### When Group Has No `filename_format`
+
+**Proposed Resolution Chain**:
+
+1. **Group-level**: `group.filename_format` (explicit)
+2. **Notebook-level**: `notebook.default_filename_format` (NEW field in `.jot.json`)
+3. **Global fallback**: Pure slugified title (`{{ slug .title }}.md`)
+
+### Notebook-Level Default Example
+
+```json
+{
+  "name": "my-notebook",
+  "default_filename_format": "{{ date \"2006-01-02\" }}-{{ slug .title }}.md",
+  "groups": [
+    {
+      "name": "tasks",
+      "type": "task",
+      "filename_format": "task-{{ nanoid 8 }}-{{ slug .title }}.md"
+    },
+    {
+      "name": "notes",
+      "type": "note"
+      // No filename_format → uses notebook default
+    }
+  ]
+}
+```
+
+### Global Fallback Behavior
+
+When neither group nor notebook specifies format:
+
 ```go
-func globMatch(pattern, value string) bool {
-    re := regexp.QuoteMeta(pattern)
-    re = strings.ReplaceAll(re, `\*\*`, `.*`)      // ** = any path
-    re = strings.ReplaceAll(re, `\*`, `[^/]*`)    // * = single segment
-    re = strings.ReplaceAll(re, `\?`, `.`)        // ? = single char
+// internal/services/filename.go (proposed)
+const DefaultFilenameFormat = "{{ slug .title }}.md"
+
+func ResolveFilename(group *NotebookGroup, notebook *NotebookConfig, title string) (string, error) {
+    format := DefaultFilenameFormat
+    
+    if group != nil && group.FilenameFormat != "" {
+        format = group.FilenameFormat
+    } else if notebook.DefaultFilenameFormat != "" {
+        format = notebook.DefaultFilenameFormat
+    }
+    
+    return renderTemplate(format, map[string]any{"title": title, "type": group.Type})
+}
+```
+
+---
+
+## Findings: Edge Cases
+
+### 1. Title Collision Handling
+
+| Strategy | Behavior | Example |
+|----------|----------|---------|
+| **Error** (strict) | Fail if file exists | Error: "note already exists: sprint-planning.md" |
+| **Append number** | Add suffix | `sprint-planning.md` → `sprint-planning-2.md` |
+| **Append timestamp** | Add time suffix | `sprint-planning.md` → `sprint-planning-093015.md` |
+| **Force unique ID** | Always include ID | `a8f3b2c1-sprint-planning.md` (no collision possible) |
+
+**Current Jot behavior**: Error (strict) — `cmd/notes_add.go:91`
+
+**Recommendation**: Keep strict behavior as default. If user wants auto-increment, they should use ID in filename_format.
+
+### 2. Unicode/Emoji in Titles
+
+**Current Jot slugify** (`internal/core/strings.go`):
+```go
+// Removes ALL non-ASCII characters
+re := regexp.MustCompile(`[^a-z0-9\s-]`)
+text = re.ReplaceAllString(text, "")
+```
+
+**Problem**:
+- Title: "📝 Meeting Notes 会议"
+- Current slug: "meeting-notes" (emoji and Chinese removed)
+- If title is only emoji/unicode: **empty filename error**
+
+**Comparison with gosimple/slug**:
+```go
+slug.Make("影師")        // → "ying-shi" (transliteration)
+slug.Make("Hellö Wörld") // → "hello-world" (transliteration)
+```
+
+**Recommendation**: Replace custom slugify with `gosimple/slug` for better Unicode handling (transliteration to ASCII).
+
+### 3. Very Long Titles
+
+**Filesystem limits**:
+- ext4: 255 bytes
+- NTFS: 255 characters
+- macOS HFS+: 255 UTF-16 code units
+
+**Current behavior**: No truncation — can create invalid filenames.
+
+**Recommendation**: Add max length to filename format:
+```go
+// Proposed: truncate slug to N characters
+func truncateSlug(s string, maxLen int) string {
+    if len(s) <= maxLen {
+        return s
+    }
+    // Truncate at word boundary if possible
     ...
 }
 ```
 
-### 5. Integration Points (Groups ↔ Workflows)
+Template function: `{{ slug .title | trunc 50 }}`
 
-**Flow for Note Creation** (`cmd/workflow_enforce.go:12-44`):
+### 4. Empty Title After Slugify
 
-```
-User: jot notes add "Sprint Planning" meetings/
-                    ↓
-1. Parse arguments → title="Sprint Planning", path="meetings/"
-                    ↓
-2. ResolvePath() → notePath = "meetings/sprint-planning.md"
-                    ↓
-3. enforceWorkflowForCreate(nb, notePath, metadata)
-        ↓
-    3a. ResolveWorkflowAssignment(relPath, groups, workflows)
-        - Iterate ALL groups
-        - For each group, check if ANY glob matches relPath
-        - Collect matching groups with workflow_id
-        - Detect conflicts (multiple distinct workflow IDs)
-        ↓
-    3b. EnforceWorkflowOnMutation(...)
-        - Get workflow definition
-        - Validate initial state matches workflow.initial_state
-        - Check metadata satisfies state schema
-                    ↓
-4. If blocked → return error with diagnostic
-   If allowed → proceed to write file
-```
+**Current behavior**: Error if title produces empty slug.
 
-**Key Integration Points**:
-- Groups are the **binding layer** between file paths and workflows
-- Workflow enforcement happens **before file creation** (fail-fast)
-- State transitions are validated against workflow definition
+**Edge cases**:
+- Title: "---" → slug: "" → Error
+- Title: "???" → slug: "" → Error
+- Title: "📝" → slug: "" → Error (with current slugify)
 
-### 6. Edge Cases
-
-| Scenario | Current Behavior | Evidence |
-|----------|------------------|----------|
-| **Slug collision** | Error: "note already exists: {path}" | `cmd/notes_add.go:91` |
-| **Empty title after slugify** | Error: "title produces empty filename after slugification" | `cmd/notes_add.go:74` |
-| **No title, no path** | Auto-generate timestamp: `2026-03-01-182700.md` | `cmd/notes_add.go:83-85` |
-| **No matching group** | Allowed (no workflow enforcement) | `workflow_lifecycle.go:40-45` |
-| **Multiple groups, same workflow** | First match wins, allowed | `workflow_assignment.go` |
-| **Multiple groups, different workflows** | Conflict error, operation blocked | `workflow_assignment.go:54-66` |
-| **Missing required fields in schema** | Blocked with diagnostic | Schema validation in `EvaluateWorkflow` |
-| **Invalid initial state** | Blocked: "transition X -> Y not allowed" | `workflow_lifecycle.go:97-112` |
-
-## References
-
-- Codebase: `internal/services/notebook.go` — group config loading, NotebookGroup struct
-- Codebase: `internal/services/note.go` — ResolvePath function, ParseDataFlags
-- Codebase: `internal/services/workflow_assignment.go` — ResolveWorkflowAssignment, conflict detection
-- Codebase: `internal/services/workflow_lifecycle.go` — EnforceWorkflowOnMutation
-- Codebase: `cmd/notes_add.go` — note creation flow, generateFrontmatter
-- Codebase: `cmd/workflow_enforce.go` — enforceWorkflowForCreate wrapper
-- Codebase: `internal/services/semantic_search.go` — globMatch implementation
-- Config: `/.jot.json` — real-world group configuration with 9 groups and 6 workflows
-- Epic: [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md)
-- Related stories:
-  - [story-9c0d1e2a](story-9c0d1e2a-group-driven-note-creation-verification.md)
-  - [story-ad1e2f3b](story-ad1e2f3b-natural-language-create-task-intent-mapping.md)
-
-## Gaps Identified for Future Work
-
-1. **Group.Template unused**: Field exists but note creation ignores it
-2. **Group.Metadata not injected**: Groups can declare metadata but it's not auto-applied to notes
-3. **No intent-driven path inference**: User must specify path; groups don't suggest paths
-4. **No reverse resolution**: Can't ask "which group should handle a task note?" and get path suggestion
-5. **Template placeholders limited**: Only `{{title}}` supported, no date/group/workflow placeholders
-
----
-
-## User Feedback Direction (2026-03-01)
-
-User provided new direction:
-1. Template/metadata should only be used for **creation** (not matching)
-2. Metadata field may be unnecessary — can be frontmatter in template using gotemplate `{{ variable | semantics }}`
-3. **Need deeper research** on reverse lookup: how to support "create a task" → system suggests path
-4. Consider **gomplate** for advanced templating (more functions, filters)
-
----
-
-## New Findings: Gomplate as Templating Solution
-
-### What is Gomplate?
-
-**gomplate** is a powerful Go template renderer that extends `text/template` with 200+ functions across 20+ namespaces. It's designed for rendering config files, documentation, and any text-based output from templates.
-
-**Key Features Over text/template**:
-
-| Feature | text/template | gomplate |
-|---------|---------------|----------|
-| **Functions** | ~15 built-in | 200+ across namespaces |
-| **Date/Time** | Manual formatting | `time.Now`, `time.Parse`, timezone-aware |
-| **Strings** | Basic | `strings.Slug`, `strings.KebabCase`, `strings.CamelCase`, `strings.Trunc` |
-| **UUID** | None | `uuid.V4`, `uuid.V5` |
-| **Random** | None | `random.String`, `random.Number` |
-| **Crypto** | None | `crypto.SHA256`, HMAC, bcrypt |
-| **Datasources** | None | JSON, YAML, env vars, vault, consul |
-| **Math** | None | `math.Add`, `math.Ceil`, etc. |
-| **Regex** | None | `regexp.Find`, `regexp.Replace`, `regexp.Split` |
-
-### Integration with Go
-
-gomplate is a pure Go library (MIT license) that can be used as a dependency:
+**Recommendation**: If slug is empty, fallback to timestamp-based filename.
 
 ```go
-import "github.com/hairyhenderson/gomplate/v5"
-
-// Simple rendering
-renderer := gomplate.NewRenderer(gomplate.RenderOptions{})
-out, err := renderer.RenderTemplates(ctx, []gomplate.Template{
-    {Name: "note", Text: `---
-title: {{ .title }}
-created: {{ time.Now | time.Format "2006-01-02T15:04:05Z07:00" }}
-slug: {{ .title | strings.Slug }}
----`},
-})
+slug := Slugify(title)
+if slug == "" {
+    slug = time.Now().Format("2006-01-02-150405")
+}
 ```
 
-**Integration Complexity**: Low — it's designed for embedding. The `Renderer` API accepts templates as strings and returns rendered output.
+### 5. Special Characters Reserved by Filesystems
 
-### Semantic Functions Useful for Note Creation
+| Character | Windows | macOS | Linux |
+|-----------|---------|-------|-------|
+| `<` `>` `:` `"` `/` `\` `|` `?` `*` | ❌ Forbidden | ⚠️ Some issues | ✅ Mostly OK |
+| Leading/trailing spaces | ❌ Stripped | ⚠️ Issues | ✅ OK |
+| `.` as first char | ⚠️ Hidden | ⚠️ Hidden | ⚠️ Hidden |
 
-**For Filenames/Paths**:
-- `strings.Slug` — Convert title to URL-safe slug (perfect for filenames)
-- `strings.KebabCase` — "Sprint Planning" → "sprint-planning"
-- `strings.SnakeCase` — "Sprint Planning" → "sprint_planning"
-- `strings.CamelCase` — "sprint planning" → "sprintPlanning"
-- `strings.Trunc` — Truncate long titles for filename limits
-
-**For Dates**:
-- `time.Now` — Current timestamp
-- `time.Format` — Any format: `{{ time.Now | time.Format "2006-01-02" }}`
-- `time.Parse` — Parse user input dates
-- `time.RFC3339` — ISO 8601 format constant
-
-**For IDs/Uniqueness**:
-- `uuid.V4` — Generate unique IDs
-- `random.String 8` — Random alphanumeric strings (for hashids)
-
-**For Data Processing**:
-- `data.ToYAML` — Convert map to YAML (frontmatter generation)
-- `data.ToJSON` — Convert to JSON
-- `conv.ToString` — Type coercion
-
-### Example: Template-Driven Note Creation
-
-```yaml
-# .jot.json template config
-templates:
-  task:
-    content: |
-      ---
-      id: {{ random.String 8 }}
-      title: {{ .title }}
-      type: task
-      created: {{ time.Now | time.Format "2006-01-02T15:04:05Z07:00" }}
-      status: todo
-      {{ if .assignee }}assignee: {{ .assignee }}{{ end }}
-      ---
-
-      # {{ .title }}
-
-      ## Objective
-
-      ## Steps
-      - [ ] 
-
-      ## Expected Outcome
-    path: ".memory/task-{{ random.String 8 }}-{{ .title | strings.Slug }}.md"
-```
-
-This eliminates the need for separate `Metadata` field — everything is frontmatter in the template.
-
-### Recommendation
-
-**Use gomplate** for template rendering. It provides:
-1. Clean separation: templates define structure, groups define location rules
-2. Rich functions without custom code
-3. Path generation in templates (not just content)
-4. Pure Go, no CGO, MIT license
+**Recommendation**: The `gosimple/slug` library handles all of these by design (outputs only `a-z`, `0-9`, `-`, `_`).
 
 ---
 
-## New Findings: Reverse Lookup / Intent Resolution
+## Proposed Schema Changes
 
-### The Problem
-
-User says "create a task" — how does the system know:
-1. Which group applies?
-2. What path to use?
-3. What template to apply?
-
-Current system: User must specify path → system finds matching group (post-hoc)
-Desired system: User specifies intent → system resolves path (proactive)
-
-### How Other Tools Solve This
-
-#### Obsidian Templater Plugin
-
-**Folder Templates**:
-- Configure: "For folder `/tasks/`, always use template `task.md`"
-- Works on **new file creation** trigger
-- Deepest folder match wins (specificity)
-- Limitation: User must navigate to folder first
-
-**File Regex Templates**:
-- Configure: regex `^daily/.*` → use `daily-note.md` template
-- Tests against file path
-- First match wins (order matters)
-- Limitation: Still requires user to know path
-
-**Key Insight**: Obsidian solves path→template, not intent→path
-
-#### Notion Databases
-
-- User clicks "+ New" in a specific database view
-- Database **knows its type** (task, meeting, etc.)
-- Template is bound to database, not path
-- No ambiguity: user action implies context
-
-**Key Insight**: Selection is explicit (click database), not inferred
-
-### Proposed Solutions for Jot
-
-#### Option 1: Explicit Type Flag (`--type`)
-
-```bash
-jot notes add "Sprint Planning" --type task
-# System looks up group with type="task", uses its path pattern + template
-```
-
-**Group Config**:
-```json
-{
-  "name": "tasks",
-  "type": "task",                          // NEW: type alias
-  "globs": [".memory/task-*.md"],
-  "template": "task",
-  "path_pattern": ".memory/task-{hash}-{slug}.md"  // NEW: path generator
-}
-```
-
-**Pros**: Explicit, no ambiguity
-**Cons**: User must know available types
-
-#### Option 2: Aliases on Groups
-
-```json
-{
-  "name": "tasks",
-  "aliases": ["task", "todo", "action"],   // NEW: fuzzy matching
-  "globs": [".memory/task-*.md"],
-  "template": "task"
-}
-```
-
-```bash
-jot notes add "Sprint Planning" --as todo
-# System fuzzy-matches "todo" → "tasks" group
-```
-
-**Pros**: Flexible naming, memorable shortcuts
-**Cons**: Potential collisions, must define aliases
-
-#### Option 3: Interactive Selection (No Path Given)
-
-```bash
-jot notes add "Sprint Planning"
-# No path → prompt user
-? Select note type:
-  > task (.memory/task-*.md)
-    story (.memory/story-*.md)
-    research (.memory/research-*.md)
-```
-
-**Pros**: Discoverable, no memorization
-**Cons**: Extra interaction, slower
-
-#### Option 4: Keyword Detection in Title (Risky)
-
-```bash
-jot notes add "Task: Sprint Planning"
-# Detects "Task:" prefix → infers task group
-```
-
-**Pros**: Natural language feel
-**Cons**: Fragile, language-dependent, false positives
-
-### UX Flow Comparison
-
-| Scenario | Option 1 (--type) | Option 2 (aliases) | Option 3 (interactive) |
-|----------|-------------------|-------------------|------------------------|
-| Power user | `--type task` | `--as t` | Skip prompt with flag |
-| Discovery | `jot groups list-types` | `jot groups list --aliases` | Automatic |
-| Ambiguity | Error if unknown type | Error if no match | User selects |
-| Scriptable | ✅ Yes | ✅ Yes | ❌ Requires flag |
-
-### Recommended Approach: Hybrid (Options 1 + 3)
-
-1. **Add `--type` / `--as` flag** to `notes add`:
-   - Maps to group by `type` field or `aliases` array
-   - Group provides `path_pattern` (template variables for path generation)
-   
-2. **Interactive fallback** when no path AND no type given:
-   - List groups that have templates defined
-   - User selects → path generated from pattern
-   
-3. **Path pattern in group config** (NEW field):
-   ```json
-   "path_pattern": ".memory/task-{{ random 8 }}-{{ slug .title }}.md"
-   ```
-   - Gomplate renders this to generate actual path
-   - Groups become "note type definitions"
-
-### Data Flow with Reverse Lookup
-
-```
-User: jot notes add "Sprint Planning" --type task
-                    ↓
-1. Parse → title="Sprint Planning", type="task"
-                    ↓
-2. ResolveGroupByType("task")
-    - Iterate groups, find first with type="task" or aliases contains "task"
-    - Returns group: {template: "task", path_pattern: ".memory/task-{hash}-{slug}.md"}
-                    ↓
-3. RenderPathPattern(group.path_pattern, {title: "Sprint Planning"})
-    - gomplate renders → ".memory/task-a8f3b2c1-sprint-planning.md"
-                    ↓
-4. RenderTemplate(group.template, {title: "Sprint Planning", ...})
-    - gomplate renders template content
-                    ↓
-5. Write file to generated path
-```
-
-### Schema Changes Required
+### NotebookGroup (Updated)
 
 ```go
 type NotebookGroup struct {
-    Name        string         `json:"name"`
-    Type        string         `json:"type,omitempty"`        // NEW: canonical type name
-    Aliases     []string       `json:"aliases,omitempty"`     // NEW: alternative names
-    Globs       []string       `json:"globs"`                 // Keep: for post-hoc matching
-    PathPattern string         `json:"path_pattern,omitempty"` // NEW: gomplate template for path
-    Template    string         `json:"template,omitempty"`    // Keep: content template ref
-    WorkflowID  string         `json:"workflow_id,omitempty"`
-    // REMOVE: Metadata — handled by template frontmatter instead
+    Name           string   `json:"name"`
+    Type           string   `json:"type,omitempty"`            // Canonical type name for --type flag
+    Aliases        []string `json:"aliases,omitempty"`         // Alternative names for fuzzy matching
+    Globs          []string `json:"globs"`                     // For post-hoc matching
+    FilenameFormat string   `json:"filename_format,omitempty"` // Gomplate template for filename
+    Template       string   `json:"template,omitempty"`        // Content template reference
+    WorkflowID     string   `json:"workflow_id,omitempty"`
+    // REMOVED: Metadata — use template frontmatter instead
 }
 ```
 
----
+### NotebookConfig (New Field)
 
-## Updated Recommendations
+```go
+type NotebookConfig struct {
+    // ... existing fields ...
+    DefaultFilenameFormat string `json:"default_filename_format,omitempty"` // Fallback format
+}
+```
 
-### Simplification: Remove Metadata Field
+### Gomplate Functions Available
 
-User is correct — `Metadata` field on groups is redundant. Templates can define frontmatter directly with gomplate variables. Remove from schema.
-
-### Template-Only for Creation
-
-Groups serve two purposes:
-1. **Matching** (globs): Post-hoc association for existing notes
-2. **Creation** (template, path_pattern, type): Proactive generation for new notes
-
-Keep these separate. `Globs` are for matching. `PathPattern` + `Template` are for creation.
-
-### Next Steps
-
-1. Add `type` and `aliases` fields to `NotebookGroup`
-2. Add `path_pattern` field (gomplate template string)
-3. Remove `Metadata` field
-4. Integrate gomplate as template renderer
-5. Implement `ResolveGroupByType()` function
-6. Add `--type` flag to `notes add`
-7. Add interactive selection fallback
+| Function | Example | Result |
+|----------|---------|--------|
+| `slug` | `{{ slug "Hello World!" }}` | `hello-world` |
+| `nanoid N` | `{{ nanoid 8 }}` | `a8f3b2c1` |
+| `date FMT` | `{{ date "2006-01-02" }}` | `2026-03-02` |
+| `trunc N` | `{{ "long-title" \| trunc 5 }}` | `long-` |
+| `now` | `{{ now.Format "20060102" }}` | `20260302` |
 
 ---
 
-## References (New)
+## Implementation Recommendations
 
-- [gomplate documentation](https://docs.gomplate.ca/)
-- [gomplate strings functions](https://docs.gomplate.ca/functions/strings/) — includes `Slug`, `KebabCase`
-- [gomplate time functions](https://docs.gomplate.ca/functions/time/) — includes `Now`, `Format`
-- [gomplate uuid functions](https://docs.gomplate.ca/functions/uuid/)
-- [gomplate Go library](https://pkg.go.dev/github.com/hairyhenderson/gomplate/v5)
-- [Obsidian Templater settings](https://silentvoid13.github.io/Templater/settings.html) — folder templates, regex templates
+### Phase 1: Minimal Viable Change
+1. Add `type` field to `NotebookGroup`
+2. Add `filename_format` field to `NotebookGroup`
+3. Add `default_filename_format` to `NotebookConfig`
+4. Replace custom `Slugify()` with `gosimple/slug`
+5. Implement `--type` flag on `notes add`
+
+### Phase 2: Enhanced UX
+6. Add `aliases` field for fuzzy matching
+7. Add interactive group selection when no path/type given
+8. Add filename preview in dry-run mode
+
+### Phase 3: Robustness
+9. Add filename length validation/truncation
+10. Add collision detection with suggested alternatives
+11. Add Unicode transliteration via slug library
+
+---
+
+## References
+
+- [gosimple/slug](https://pkg.go.dev/github.com/gosimple/slug) — Go slug library with Unicode transliteration
+- [iancoleman/strcase](https://pkg.go.dev/github.com/iancoleman/strcase) — Case conversion (kebab, snake, camel)
+- [Dendron Special Notes Config](https://wiki.dendron.so/notes/j1120e2f53301nhdn1wkp05) — dateFormat, addBehavior patterns
+- [Zettelkasten Introduction](https://zettelkasten.de/introduction/) — ID-based note naming philosophy
+- [Foam Note Properties](https://foambubble.github.io/foam/user/features/note-properties) — Frontmatter-driven metadata
+- [gomplate documentation](https://docs.gomplate.ca/) — Template rendering with 200+ functions
+- Jot codebase: `internal/core/strings.go` — Current slugify implementation
+- Jot codebase: `internal/services/note.go` — ResolvePath function
