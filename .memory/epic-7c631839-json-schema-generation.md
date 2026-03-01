@@ -2,7 +2,7 @@
 id: 7c631839
 title: JSON Schema Generation from Go Structs
 created_at: 2026-03-01T01:45:00+10:30
-updated_at: 2026-03-01T01:45:00+10:30
+updated_at: 2026-03-01T12:20:00+10:30
 status: proposed
 ---
 
@@ -16,52 +16,95 @@ Currently:
 - Schema is hand-written and can drift from actual Go struct definitions
 - No automated way to regenerate schema when structs change
 - Schema validation is not enforced at runtime
+- **Storage and runtime types are not cleanly separated** (see Architecture section)
 
-Source of truth Go structs in `internal/services/notebook.go`:
-- `StoredNotebookConfig` — root configuration
-- `NotebookGroup` — group definitions with globs and metadata
-- `NotebookGroupWorkflow` — workflow definitions (new in workflows epic)
+## Architecture: Storage vs Runtime Types
+
+See [knowledge-config-transformation.md](knowledge-config-transformation.md) for detailed state machine.
+
+**Current State:**
+```
+.jot.json  ──▶  StoredNotebookConfig  ──▶  NotebookConfig  ──▶  Notebook
+(storage)       (storage type ✓)          (runtime type)       (full runtime)
+                                          embeds storage       has services
+```
+
+**Key Insight**: Schema generation must target **storage types only**, not runtime types.
+
+| Layer | Types | Schema Target? |
+|-------|-------|----------------|
+| **Storage** | `StoredNotebookConfig`, `NotebookGroup`, `WorkflowDefinition` | ✅ YES |
+| **Runtime** | `NotebookConfig`, `Notebook`, `NoteService` | ❌ NO |
+
+**Gap Identified**: Global config (`Config` in `config.go`) lacks storage/runtime separation. Both use the same struct.
 
 ## Vision/Goal
 
-Implement automated JSON schema generation from Go structs to ensure the schema file always reflects the actual configuration structure. The schema should be regeneratable via a simple command and optionally validated at runtime.
+1. **Cleanly separate storage types** into a dedicated package for schema generation
+2. **Auto-generate `jot.schema.json`** from storage types only
+3. **Prevent drift** via CI enforcement
+4. **Improve DX** with init schema reference and validate command
 
 ## Success Criteria
 
-1. **Single Source of Truth**: Go structs are the canonical definition; schema is derived
-2. **Reproducible Generation**: Running `mise run schema:generate` produces identical output
-3. **CI Integration**: Schema drift is detected in CI (generated vs committed mismatch)
-4. **IDE Support Preserved**: Generated schema provides equivalent or better IDE autocomplete
-5. **Runtime Validation (Optional)**: `jot notebook validate` command checks config against schema
+1. **Clear Type Boundaries**: Storage types are in a dedicated location, separate from runtime
+2. **Single Source of Truth**: Go storage structs are canonical; schema is derived
+3. **Reproducible Generation**: `mise run schema:generate` produces deterministic output
+4. **CI Enforcement**: Schema drift is detected before merge
+5. **IDE Support**: Generated schema provides autocomplete in VSCode/IntelliJ
+6. **Optional Runtime Validation**: `jot notebook validate` checks config against schema
 
 ## Phases
 
-1. **Phase 1: Research & Tooling Selection** — evaluate Go JSON schema libraries
-2. **Phase 2: Generation Implementation** — implement `go generate` or mise task
-3. **Phase 3: CI Integration** — add schema drift detection to GitHub Actions
-4. **Phase 4: Runtime Validation** — optional `jot notebook validate` command
+1. **Phase 0: Type Separation** — Extract storage types to clean boundary
+2. **Phase 1: Research & Tooling** — Evaluate Go JSON schema libraries
+3. **Phase 2: Generation Implementation** — Implement mise task
+4. **Phase 3: CI Integration** — Add schema drift detection
+5. **Phase 4: UX Improvements** — Init schema copy, validate command
 
 ## Stories
 
-- [story-s1a2b3c4](story-s1a2b3c4-schema-generation-tooling.md) — As a maintainer, I want automated schema generation
-- [story-s2b3c4d5](story-s2b3c4d5-schema-ci-drift-detection.md) — As a maintainer, I want CI to catch schema drift
-- [story-s3c4d5e6](story-s3c4d5e6-notebook-init-schema-copy.md) — As a user, I want `jot init` to include the schema file
-- [story-s4d5e6f7](story-s4d5e6f7-notebook-validate-command.md) — As a user, I want to validate my config against the schema
+| Priority | Story | Description |
+|----------|-------|-------------|
+| P0 | [story-s0z9y8x7](story-s0z9y8x7-storage-runtime-type-separation.md) | Separate storage types from runtime types |
+| P1 | [story-s1a2b3c4](story-s1a2b3c4-schema-generation-tooling.md) | Automated schema generation from Go structs |
+| P1 | [story-s2b3c4d5](story-s2b3c4d5-schema-ci-drift-detection.md) | CI schema drift detection |
+| P2 | [story-s3c4d5e6](story-s3c4d5e6-notebook-init-schema-copy.md) | Notebook init includes schema reference |
+| P3 | [story-s4d5e6f7](story-s4d5e6f7-notebook-validate-command.md) | Notebook config validation command |
+
+## Storage Types Inventory
+
+Types that should be schema generation targets:
+
+```go
+// Notebook config storage (.jot.json)
+StoredNotebookConfig     // internal/services/notebook.go
+NotebookGroup            // internal/services/notebook.go
+NotebookGroupWorkflow    // internal/services/notebook.go
+WorkflowDefinition       // internal/services/workflow_validation.go
+WorkflowState            // internal/services/workflow_validation.go
+
+// Global config storage (~/.config/jot/config.json)
+Config                   // internal/services/config.go (⚠️ needs StoredGlobalConfig)
+```
 
 ## Dependencies
 
-- Requires selection of a pure-Go JSON schema generation library (e.g., `invopop/jsonschema`)
+- Requires selection of pure-Go JSON schema library (e.g., `invopop/jsonschema`)
 - Must preserve existing schema features: examples, descriptions, patterns
-- Must handle custom types like `map[string]any` gracefully
+- Must handle `map[string]any` fields (metadata, additionalProperties)
+- Type separation should not break existing tests or API
 
 ## Research References
 
-- Git history analysis: schema was manually created, generation was planned but not implemented
-- Relevant commit: `3e8fcbf` (feat(schema): add JSON schema for notebook configuration)
-- Branch `feat/json-schema-generation` contains only manual schema, no generation code
+- Git history: schema manually created in `3e8fcbf`, generation planned but not implemented
+- Branch `feat/json-schema-generation` contains only manual schema
+- Architecture analysis: [knowledge-config-transformation.md](knowledge-config-transformation.md)
 
 ## Open Questions
 
-1. Should we embed the schema in the binary for runtime validation?
-2. Should `jot init` copy the schema file to the notebook directory or reference a URL?
-3. How do we handle `map[string]any` fields (metadata, additionalProperties)?
+1. **Package location**: `internal/schema/` or `internal/services/schema/` or `internal/config/`?
+2. **Embed schema in binary** for runtime validation portability?
+3. **Global config schema**: Should we also generate schema for `~/.config/jot/config.json`?
+4. **Handling `map[string]any`**: Use `additionalProperties: true` or define allowed keys?
+5. **jsonschema tags**: Use `jsonschema:"description=..."` or generate from doc comments?
