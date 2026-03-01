@@ -1,43 +1,41 @@
 package services
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func storyWorkflowRaw(t *testing.T) json.RawMessage {
-	t.Helper()
-	return mustWorkflowRaw(t, map[string]any{
-		"description":   "Project flow",
-		"initial_state": "proposed",
-		"mode":          "enforce",
-		"field":         "status",
-		"states": map[string]any{
-			"proposed": map[string]any{
-				"schema":      map[string]any{"type": "object", "required": []string{"title"}},
-				"transitions": []string{"planned", "cancelled"},
+func storyWorkflowDef() WorkflowDefinition {
+	return WorkflowDefinition{
+		Description:  "Project flow",
+		InitialState: "proposed",
+		Mode:         "enforce",
+		Field:        "status",
+		States: map[string]WorkflowStateDefinition{
+			"proposed": {
+				Schema:      map[string]any{"type": "object", "required": []string{"title"}},
+				Transitions: []string{"planned", "cancelled"},
 			},
-			"planned": map[string]any{
-				"schema":      map[string]any{"type": "object", "required": []string{"title", "epic_id"}},
-				"transitions": []string{"in-progress", "cancelled"},
+			"planned": {
+				Schema:      map[string]any{"type": "object", "required": []string{"title", "epic_id"}},
+				Transitions: []string{"in-progress", "cancelled"},
 			},
-			"in-progress": map[string]any{
-				"schema":      map[string]any{"type": "object", "required": []string{"title", "epic_id"}},
-				"transitions": []string{"completed", "cancelled"},
+			"in-progress": {
+				Schema:      map[string]any{"type": "object", "required": []string{"title", "epic_id"}},
+				Transitions: []string{"completed", "cancelled"},
 			},
-			"completed": map[string]any{
-				"schema":      map[string]any{"type": "object", "required": []string{"title", "epic_id", "completed_at"}},
-				"transitions": []string{},
+			"completed": {
+				Schema:      map[string]any{"type": "object", "required": []string{"title", "epic_id", "completed_at"}},
+				Transitions: []string{},
 			},
-			"cancelled": map[string]any{
-				"schema":      map[string]any{"type": "object"},
-				"transitions": []string{},
+			"cancelled": {
+				Schema:      map[string]any{"type": "object"},
+				Transitions: []string{},
 			},
 		},
-	})
+	}
 }
 
 func defaultTestGroups() []NotebookGroup {
@@ -46,9 +44,9 @@ func defaultTestGroups() []NotebookGroup {
 	}
 }
 
-func defaultTestWorkflows(t *testing.T) map[string]json.RawMessage {
-	return map[string]json.RawMessage{
-		"project_story": storyWorkflowRaw(t),
+func defaultTestWorkflows() map[string]WorkflowDefinition {
+	return map[string]WorkflowDefinition{
+		"project_story": storyWorkflowDef(),
 	}
 }
 
@@ -56,7 +54,7 @@ func defaultTestWorkflows(t *testing.T) map[string]json.RawMessage {
 
 func TestEnforceWorkflowOnMutation_CreateWithInitialState_Allowed(t *testing.T) {
 	groups := defaultTestGroups()
-	workflows := defaultTestWorkflows(t)
+	workflows := defaultTestWorkflows()
 
 	result := EnforceWorkflowOnMutation(
 		"stories/new-story.md",
@@ -76,7 +74,7 @@ func TestEnforceWorkflowOnMutation_CreateWithInitialState_Allowed(t *testing.T) 
 
 func TestEnforceWorkflowOnMutation_CreateWithNoStatusField_DefaultsToInitial(t *testing.T) {
 	groups := defaultTestGroups()
-	workflows := defaultTestWorkflows(t)
+	workflows := defaultTestWorkflows()
 
 	result := EnforceWorkflowOnMutation(
 		"stories/another.md",
@@ -94,7 +92,7 @@ func TestEnforceWorkflowOnMutation_CreateWithNoStatusField_DefaultsToInitial(t *
 
 func TestEnforceWorkflowOnMutation_CreateWithInvalidInitialState_Blocked(t *testing.T) {
 	groups := defaultTestGroups()
-	workflows := defaultTestWorkflows(t)
+	workflows := defaultTestWorkflows()
 
 	result := EnforceWorkflowOnMutation(
 		"stories/bad.md",
@@ -119,7 +117,7 @@ func TestEnforceWorkflowOnMutation_CreateWithInvalidInitialState_Blocked(t *test
 
 func TestEnforceWorkflowOnMutation_EditValidTransition_Allowed(t *testing.T) {
 	groups := defaultTestGroups()
-	workflows := defaultTestWorkflows(t)
+	workflows := defaultTestWorkflows()
 
 	result := EnforceWorkflowOnMutation(
 		"stories/s1.md",
@@ -138,7 +136,7 @@ func TestEnforceWorkflowOnMutation_EditValidTransition_Allowed(t *testing.T) {
 
 func TestEnforceWorkflowOnMutation_EditInvalidTransition_Blocked(t *testing.T) {
 	groups := defaultTestGroups()
-	workflows := defaultTestWorkflows(t)
+	workflows := defaultTestWorkflows()
 
 	result := EnforceWorkflowOnMutation(
 		"stories/s1.md",
@@ -156,7 +154,7 @@ func TestEnforceWorkflowOnMutation_EditInvalidTransition_Blocked(t *testing.T) {
 
 func TestEnforceWorkflowOnMutation_EditNoStateChange_Allowed(t *testing.T) {
 	groups := defaultTestGroups()
-	workflows := defaultTestWorkflows(t)
+	workflows := defaultTestWorkflows()
 
 	result := EnforceWorkflowOnMutation(
 		"stories/s1.md",
@@ -177,7 +175,7 @@ func TestEnforceWorkflowOnMutation_EditNoStateChange_Allowed(t *testing.T) {
 
 func TestEnforceWorkflowOnMutation_NoWorkflowMatch_AllowedNotEnforced(t *testing.T) {
 	groups := defaultTestGroups()
-	workflows := defaultTestWorkflows(t)
+	workflows := defaultTestWorkflows()
 
 	result := EnforceWorkflowOnMutation(
 		"docs/random.md", // doesn't match stories/*.md
@@ -199,7 +197,7 @@ func TestEnforceWorkflowOnMutation_ConflictingWorkflows_Blocked(t *testing.T) {
 		{Name: "Stories", Globs: []string{"stories/*.md"}, WorkflowID: "project_story"},
 		{Name: "All", Globs: []string{"**/*.md"}, WorkflowID: "other_flow"},
 	}
-	workflows := defaultTestWorkflows(t)
+	workflows := defaultTestWorkflows()
 
 	result := EnforceWorkflowOnMutation(
 		"stories/conflict.md",
@@ -223,7 +221,7 @@ func TestEnforceWorkflowOnMutation_UnknownWorkflowRef_Blocked(t *testing.T) {
 	result := EnforceWorkflowOnMutation(
 		"stories/s1.md",
 		groups,
-		map[string]json.RawMessage{}, // empty workflows
+		map[string]WorkflowDefinition{}, // empty workflows
 		nil,
 		map[string]any{"title": "S1"},
 		true,
@@ -239,7 +237,7 @@ func TestEnforceWorkflowOnMutation_UnknownWorkflowRef_Blocked(t *testing.T) {
 
 func TestEnforceWorkflowOnMutation_CreateMissingRequiredMetadata_Blocked(t *testing.T) {
 	groups := defaultTestGroups()
-	workflows := defaultTestWorkflows(t)
+	workflows := defaultTestWorkflows()
 
 	// Transition proposed -> planned requires "title" and "epic_id"
 	result := EnforceWorkflowOnMutation(

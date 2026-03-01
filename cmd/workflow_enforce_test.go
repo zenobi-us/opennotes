@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,27 +11,6 @@ import (
 func testNotebookWithWorkflow(t *testing.T, root string) *services.Notebook {
 	t.Helper()
 
-	wfDef, _ := json.Marshal(map[string]any{
-		"description":   "Test flow",
-		"initial_state": "draft",
-		"mode":          "enforce",
-		"field":         "status",
-		"states": map[string]any{
-			"draft": map[string]any{
-				"schema":      map[string]any{"type": "object", "required": []string{"title"}},
-				"transitions": []string{"review"},
-			},
-			"review": map[string]any{
-				"schema":      map[string]any{"type": "object", "required": []string{"title"}},
-				"transitions": []string{"published"},
-			},
-			"published": map[string]any{
-				"schema":      map[string]any{"type": "object", "required": []string{"title"}},
-				"transitions": []string{},
-			},
-		},
-	})
-
 	return &services.Notebook{
 		Config: services.NotebookConfig{
 			StoredNotebookConfig: services.StoredNotebookConfig{
@@ -41,8 +19,27 @@ func testNotebookWithWorkflow(t *testing.T, root string) *services.Notebook {
 				Groups: []services.NotebookGroup{
 					{Name: "Docs", Globs: []string{"docs/*.md"}, WorkflowID: "doc_flow"},
 				},
-				Workflows: map[string]json.RawMessage{
-					"doc_flow": wfDef,
+				Workflows: map[string]services.WorkflowDefinition{
+					"doc_flow": {
+						Description:  "Test flow",
+						InitialState: "draft",
+						Mode:         "enforce",
+						Field:        "status",
+						States: map[string]services.WorkflowStateDefinition{
+							"draft": {
+								Schema:      map[string]any{"type": "object", "required": []string{"title"}},
+								Transitions: []string{"review"},
+							},
+							"review": {
+								Schema:      map[string]any{"type": "object", "required": []string{"title"}},
+								Transitions: []string{"published"},
+							},
+							"published": {
+								Schema:      map[string]any{"type": "object", "required": []string{"title"}},
+								Transitions: []string{},
+							},
+						},
+					},
 				},
 			},
 		},

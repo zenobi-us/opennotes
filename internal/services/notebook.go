@@ -70,13 +70,13 @@ const (
 
 // StoredNotebookConfig is what's stored in .jot.json.
 type StoredNotebookConfig struct {
-	ConfigVersion Version                    `json:"config_version,omitempty"`
-	Root          string                     `json:"root"`
-	Name          string                     `json:"name"`
-	Contexts      []string                   `json:"contexts,omitempty"`
-	Templates     map[string]string          `json:"templates,omitempty"`
-	Groups        []NotebookGroup            `json:"groups,omitempty"`
-	Workflows     map[string]json.RawMessage `json:"workflows,omitempty"`
+	ConfigVersion Version                       `json:"config_version,omitempty"`
+	Root          string                        `json:"root"`
+	Name          string                        `json:"name"`
+	Contexts      []string                      `json:"contexts,omitempty"`
+	Templates     map[string]string             `json:"templates,omitempty"`
+	Groups        []NotebookGroup               `json:"groups,omitempty"`
+	Workflows     map[string]WorkflowDefinition `json:"workflows,omitempty"`
 }
 
 // NotebookConfig includes runtime-resolved paths.
@@ -154,6 +154,16 @@ func (s *NotebookService) LoadConfig(path string) (*NotebookConfig, error) {
 			}
 		} else {
 			return nil, fmt.Errorf("notes path error: %w", err)
+		}
+	}
+
+	for name, wf := range stored.Workflows {
+		if wf.InitialState == "" {
+			return nil, fmt.Errorf("workflow %q missing initial_state", name)
+		}
+
+		if _, ok := wf.States[wf.InitialState]; !ok {
+			return nil, fmt.Errorf("workflow %q initial_state %q not in states", name, wf.InitialState)
 		}
 	}
 

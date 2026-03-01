@@ -1,34 +1,26 @@
 package services
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func mustWorkflowRaw(t *testing.T, v any) json.RawMessage {
-	t.Helper()
-	data, err := json.Marshal(v)
-	require.NoError(t, err)
-	return data
-}
-
 func TestResolveWorkflowAssignment_SingleMatch(t *testing.T) {
 	groups := []NotebookGroup{
 		{Name: "Stories", Globs: []string{"stories/*.md"}, WorkflowID: "project_story"},
 	}
-	workflows := map[string]json.RawMessage{
-		"project_story": mustWorkflowRaw(t, map[string]any{
-			"description":   "Project flow",
-			"initial_state": "proposed",
-			"mode":          "enforce",
-			"field":         "status",
-			"states": map[string]any{
-				"proposed": map[string]any{"schema": map[string]any{"type": "object"}, "transitions": []string{"planned"}},
+	workflows := map[string]WorkflowDefinition{
+		"project_story": {
+			Description:  "Project flow",
+			InitialState: "proposed",
+			Mode:         "enforce",
+			Field:        "status",
+			States: map[string]WorkflowStateDefinition{
+				"proposed": {Schema: map[string]any{"type": "object"}, Transitions: []string{"planned"}},
 			},
-		}),
+		},
 	}
 
 	result := ResolveWorkflowAssignment("stories/s-1.md", groups, workflows)
@@ -44,16 +36,16 @@ func TestResolveWorkflowAssignment_MultiMatchSameWorkflowID(t *testing.T) {
 		{Name: "Stories", Globs: []string{"stories/*.md"}, WorkflowID: "project_story"},
 		{Name: "All", Globs: []string{"**/*.md"}, WorkflowID: "project_story"},
 	}
-	workflows := map[string]json.RawMessage{
-		"project_story": mustWorkflowRaw(t, map[string]any{
-			"description":   "Project flow",
-			"initial_state": "proposed",
-			"mode":          "enforce",
-			"field":         "status",
-			"states": map[string]any{
-				"proposed": map[string]any{"schema": map[string]any{"type": "object"}, "transitions": []string{"planned"}},
+	workflows := map[string]WorkflowDefinition{
+		"project_story": {
+			Description:  "Project flow",
+			InitialState: "proposed",
+			Mode:         "enforce",
+			Field:        "status",
+			States: map[string]WorkflowStateDefinition{
+				"proposed": {Schema: map[string]any{"type": "object"}, Transitions: []string{"planned"}},
 			},
-		}),
+		},
 	}
 
 	result := ResolveWorkflowAssignment("stories/s-1.md", groups, workflows)
@@ -68,7 +60,7 @@ func TestResolveWorkflowAssignment_ConflictAcrossGroups(t *testing.T) {
 		{Name: "All", Globs: []string{"**/*.md"}, WorkflowID: "task_flow"},
 	}
 
-	result := ResolveWorkflowAssignment("stories/s-1.md", groups, map[string]json.RawMessage{})
+	result := ResolveWorkflowAssignment("stories/s-1.md", groups, map[string]WorkflowDefinition{})
 	require.False(t, result.Resolved)
 	require.NotEmpty(t, result.Diagnostics)
 	assert.Equal(t, "workflow.assignment_conflict", result.Diagnostics[0].Code)
@@ -77,7 +69,7 @@ func TestResolveWorkflowAssignment_ConflictAcrossGroups(t *testing.T) {
 func TestResolveWorkflowAssignment_NoAssignment(t *testing.T) {
 	groups := []NotebookGroup{{Name: "Stories", Globs: []string{"stories/*.md"}, WorkflowID: "project_story"}}
 
-	result := ResolveWorkflowAssignment("tasks/t-1.md", groups, map[string]json.RawMessage{})
+	result := ResolveWorkflowAssignment("tasks/t-1.md", groups, map[string]WorkflowDefinition{})
 	require.False(t, result.Resolved)
 	require.NotEmpty(t, result.Diagnostics)
 	assert.Equal(t, "workflow.assignment_not_found", result.Diagnostics[0].Code)
@@ -86,7 +78,7 @@ func TestResolveWorkflowAssignment_NoAssignment(t *testing.T) {
 func TestResolveWorkflowAssignment_UnknownWorkflowID(t *testing.T) {
 	groups := []NotebookGroup{{Name: "Stories", Globs: []string{"stories/*.md"}, WorkflowID: "project_story"}}
 
-	result := ResolveWorkflowAssignment("stories/s-1.md", groups, map[string]json.RawMessage{})
+	result := ResolveWorkflowAssignment("stories/s-1.md", groups, map[string]WorkflowDefinition{})
 	require.False(t, result.Resolved)
 	require.NotEmpty(t, result.Diagnostics)
 	assert.Equal(t, "workflow.assignment_unknown_workflow", result.Diagnostics[0].Code)

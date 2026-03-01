@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -30,7 +29,7 @@ type WorkflowLifecycleResult struct {
 func EnforceWorkflowOnMutation(
 	notePath string,
 	groups []NotebookGroup,
-	workflows map[string]json.RawMessage,
+	workflows map[string]WorkflowDefinition,
 	existingMetadata map[string]any,
 	newMetadata map[string]any,
 	isCreate bool,

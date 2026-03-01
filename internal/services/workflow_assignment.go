@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -17,7 +16,7 @@ type WorkflowAssignmentResult struct {
 }
 
 // ResolveWorkflowAssignment finds the workflow assigned to a note path based on group matches.
-func ResolveWorkflowAssignment(notePath string, groups []NotebookGroup, workflows map[string]json.RawMessage) WorkflowAssignmentResult {
+func ResolveWorkflowAssignment(notePath string, groups []NotebookGroup, workflows map[string]WorkflowDefinition) WorkflowAssignmentResult {
 	type match struct {
 		groupName  string
 		workflowID string
@@ -74,25 +73,13 @@ func ResolveWorkflowAssignment(notePath string, groups []NotebookGroup, workflow
 	}
 
 	selected := matches[0]
-	raw, ok := workflows[selected.workflowID]
+	def, ok := workflows[selected.workflowID]
 	if !ok {
 		return WorkflowAssignmentResult{
 			Resolved: false,
 			Diagnostics: []WorkflowDiagnostic{{
 				Code:    "workflow.assignment_unknown_workflow",
 				Message: fmt.Sprintf("group %s references unknown workflow_id: %s", selected.groupName, selected.workflowID),
-				Path:    selected.workflowID,
-			}},
-		}
-	}
-
-	var def WorkflowDefinition
-	if err := json.Unmarshal(raw, &def); err != nil {
-		return WorkflowAssignmentResult{
-			Resolved: false,
-			Diagnostics: []WorkflowDiagnostic{{
-				Code:    "workflow.invalid_definition",
-				Message: fmt.Sprintf("failed to parse workflow definition %s: %v", selected.workflowID, err),
 				Path:    selected.workflowID,
 			}},
 		}
