@@ -12,6 +12,7 @@
 - [ ] **P3** [story-s4d5e6f7](story-s4d5e6f7-notebook-validate-command.md) — Notebook config validation command
 
 ## Epic: Jot Groups Verification Analysis (`c5d7e9b1`)
+- Active: session-1772347138 — planning & research started
 - [ ] [story-9c0d1e2a](story-9c0d1e2a-group-driven-note-creation-verification.md) - Group driven note creation verification
 - [ ] [story-ad1e2f3b](story-ad1e2f3b-natural-language-create-task-intent-mapping.md) - Natural language create task intent mapping
 
