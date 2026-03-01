@@ -1,33 +1,350 @@
 {
   "$schema": "jot.schema.json",
+  "config_version": 1,
   "root": ".memory",
   "name": "opennotes-project-memory",
   "contexts": ["/mnt/Store/Projects/Mine/Github/opennotes"],
   "groups": [
     {
       "name": "Archived",
-      "globs": ["**/archived/**/*.md"]
+      "globs": ["**/archive/**/*.md"]
+    },
+    {
+      "name": "Epics",
+      "globs": ["**/epic-*.md"],
+      "workflow_id": "epic_workflow"
+    },
+    {
+      "name": "Phases",
+      "globs": ["**/phase-*.md"],
+      "workflow_id": "phase_workflow"
+    },
+    {
+      "name": "Stories",
+      "globs": ["**/story-*.md"],
+      "workflow_id": "story_workflow"
+    },
+    {
+      "name": "Tasks",
+      "globs": ["**/task-*.md"],
+      "workflow_id": "task_workflow"
+    },
+    {
+      "name": "Research",
+      "globs": ["**/research-*.md"],
+      "workflow_id": "research_workflow"
+    },
+    {
+      "name": "Learning",
+      "globs": ["**/learning-*.md"],
+      "workflow_id": "learning_workflow"
+    },
+    {
+      "name": "Knowledge",
+      "globs": ["**/knowledge-*.md"]
     },
     {
       "name": "Default",
       "globs": ["**/*.md"],
       "metadata": {}
-    },
-    {
-      "name": "Epics",
-      "globs": ["**/epic-*.md"]
-    },
-    {
-      "name": "Research",
-      "globs": ["**/researh-*.md"]
-    },
-    {
-      "name": "Stories",
-      "globs": ["**/story-*.md"]
-    },
-    {
-      "name": "Tasks",
-      "globs": ["**/task-*.md"]
     }
-  ]
+  ],
+  "workflows": {
+    "epic_workflow": {
+      "description": "Epic lifecycle: ideation → planning → execution → completion. Only ONE epic active at a time. Cannot archive until all phases complete + learnings linked.",
+      "initial_state": "proposed",
+      "mode": "enforce",
+      "field": "status",
+      "states": {
+        "proposed": {
+          "schema": {
+            "type": "object",
+            "required": ["title"],
+            "properties": {
+              "title": {"type": "string"}
+            }
+          },
+          "transitions": ["planning", "rejected"]
+        },
+        "rejected": {
+          "schema": {"type": "object"},
+          "transitions": []
+        },
+        "planning": {
+          "schema": {
+            "type": "object",
+            "required": ["title"],
+            "properties": {
+              "title": {"type": "string"}
+            }
+          },
+          "transitions": ["todo"]
+        },
+        "todo": {
+          "schema": {"type": "object"},
+          "transitions": ["in-progress"]
+        },
+        "in-progress": {
+          "schema": {"type": "object"},
+          "transitions": ["completed", "blocked"]
+        },
+        "blocked": {
+          "schema": {"type": "object"},
+          "transitions": ["in-progress"]
+        },
+        "completed": {
+          "schema": {
+            "type": "object",
+            "required": ["distilled_learnings"],
+            "properties": {
+              "distilled_learnings": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 1
+              }
+            }
+          },
+          "transitions": ["archived"]
+        },
+        "archived": {
+          "schema": {"type": "object"},
+          "transitions": []
+        }
+      }
+    },
+    "phase_workflow": {
+      "description": "Phase lifecycle: planning → execution → completion → archive. Requires human review before task breakdown and after completion.",
+      "initial_state": "proposed",
+      "mode": "enforce",
+      "field": "status",
+      "states": {
+        "proposed": {
+          "schema": {
+            "type": "object",
+            "required": ["epic_id", "title"],
+            "properties": {
+              "epic_id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "transitions": ["planning"]
+        },
+        "planning": {
+          "schema": {
+            "type": "object",
+            "required": ["epic_id", "start_criteria", "end_criteria"]
+          },
+          "transitions": ["pending-review"]
+        },
+        "pending-review": {
+          "schema": {"type": "object"},
+          "transitions": ["todo", "planning"]
+        },
+        "todo": {
+          "schema": {"type": "object"},
+          "transitions": ["in-progress"]
+        },
+        "in-progress": {
+          "schema": {"type": "object"},
+          "transitions": ["completed", "blocked"]
+        },
+        "blocked": {
+          "schema": {"type": "object"},
+          "transitions": ["in-progress"]
+        },
+        "completed": {
+          "schema": {"type": "object"},
+          "transitions": ["archived"]
+        },
+        "archived": {
+          "schema": {"type": "object"},
+          "transitions": []
+        }
+      }
+    },
+    "story_workflow": {
+      "description": "Story lifecycle: definition → task breakdown → execution → test gate → completion. Stories are NEVER archived (remain as documentation). test_coverage must be 'full' to complete.",
+      "initial_state": "proposed",
+      "mode": "enforce",
+      "field": "status",
+      "states": {
+        "proposed": {
+          "schema": {
+            "type": "object",
+            "required": ["epic_id", "title"],
+            "properties": {
+              "epic_id": {"type": "string"},
+              "title": {"type": "string"},
+              "test_coverage": {"type": "string", "enum": ["none"]}
+            }
+          },
+          "transitions": ["planning"]
+        },
+        "planning": {
+          "schema": {
+            "type": "object",
+            "required": ["epic_id"],
+            "properties": {
+              "test_coverage": {"type": "string", "enum": ["none"]}
+            }
+          },
+          "transitions": ["todo"]
+        },
+        "todo": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "test_coverage": {"type": "string", "enum": ["none", "partial"]}
+            }
+          },
+          "transitions": ["in-progress"]
+        },
+        "in-progress": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "test_coverage": {"type": "string", "enum": ["none", "partial", "full"]}
+            }
+          },
+          "transitions": ["blocked", "test-gate"]
+        },
+        "blocked": {
+          "schema": {"type": "object"},
+          "transitions": ["in-progress"]
+        },
+        "test-gate": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "test_coverage": {"type": "string", "enum": ["partial", "full"]}
+            }
+          },
+          "transitions": ["in-progress", "completed"]
+        },
+        "completed": {
+          "schema": {
+            "type": "object",
+            "required": ["test_coverage"],
+            "properties": {
+              "test_coverage": {"type": "string", "enum": ["full"]}
+            }
+          },
+          "transitions": []
+        }
+      }
+    },
+    "task_workflow": {
+      "description": "Task lifecycle: breakdown → assignment → execution → completion → archive. Updates todo.md at EVERY step.",
+      "initial_state": "proposed",
+      "mode": "enforce",
+      "field": "status",
+      "states": {
+        "proposed": {
+          "schema": {
+            "type": "object",
+            "required": ["epic_id", "phase_id", "title"],
+            "properties": {
+              "epic_id": {"type": "string"},
+              "phase_id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "transitions": ["todo"]
+        },
+        "todo": {
+          "schema": {"type": "object"},
+          "transitions": ["in-progress"]
+        },
+        "in-progress": {
+          "schema": {
+            "type": "object",
+            "required": ["assigned_to"],
+            "properties": {
+              "assigned_to": {"type": "string"}
+            }
+          },
+          "transitions": ["blocked", "completed"]
+        },
+        "blocked": {
+          "schema": {"type": "object"},
+          "transitions": ["in-progress", "needs-human"]
+        },
+        "needs-human": {
+          "schema": {"type": "object"},
+          "transitions": ["in-progress", "blocked"]
+        },
+        "completed": {
+          "schema": {"type": "object"},
+          "transitions": ["archived"]
+        },
+        "archived": {
+          "schema": {"type": "object"},
+          "transitions": []
+        }
+      }
+    },
+    "research_workflow": {
+      "description": "Research lifecycle: delegate → investigate → complete. Research is NEVER archived (golden knowledge). Always delegated to Deep Researcher SubAgent.",
+      "initial_state": "proposed",
+      "mode": "enforce",
+      "field": "status",
+      "states": {
+        "proposed": {
+          "schema": {
+            "type": "object",
+            "required": ["epic_id", "title"],
+            "properties": {
+              "epic_id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "transitions": ["in-progress", "linked"]
+        },
+        "linked": {
+          "schema": {
+            "type": "object",
+            "required": ["linked_to"],
+            "properties": {
+              "linked_to": {"type": "string"}
+            }
+          },
+          "transitions": []
+        },
+        "in-progress": {
+          "schema": {"type": "object"},
+          "transitions": ["completed"]
+        },
+        "completed": {
+          "schema": {"type": "object"},
+          "transitions": []
+        }
+      }
+    },
+    "learning_workflow": {
+      "description": "Learning lifecycle: capture → complete. Learnings are NEVER archived or deleted (golden knowledge). Sources: rejected ideas, task execution, phase completion.",
+      "initial_state": "proposed",
+      "mode": "enforce",
+      "field": "status",
+      "states": {
+        "proposed": {
+          "schema": {
+            "type": "object",
+            "required": ["title"],
+            "properties": {
+              "title": {"type": "string"},
+              "tags": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          },
+          "transitions": ["completed"]
+        },
+        "completed": {
+          "schema": {"type": "object"},
+          "transitions": []
+        }
+      }
+    }
+  }
 }
