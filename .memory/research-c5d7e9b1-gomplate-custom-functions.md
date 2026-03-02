@@ -2,7 +2,7 @@
 id: c5d7e9b1-gomplate
 title: Gomplate Custom Functions Research
 created_at: 2026-03-02T11:27:00+10:30
-updated_at: 2026-03-02T13:28:00+10:30
+updated_at: 2026-03-02T13:40:00+10:30
 status: complete
 parent_epic: c5d7e9b1
 ---
@@ -292,6 +292,44 @@ For jot's use case (simple note templates), **Path A is sufficient**. Gomplate i
 - Cryptographic functions
 
 Add gomplate later if user demand exists.
+
+## Planned `jot` Namespace API
+
+Based on research findings, the following API is planned for jot's custom template functions.
+
+### Planned `jot` Namespace Functions
+
+| Function | Signature | Purpose | Example |
+|----------|-----------|---------|---------|
+| `jot.Slug` | `(s string) string` | Unicode-safe slugify via gosimple/slug | `{{ jot.Slug "会议 Notes" }}` → `hui-yi-notes` |
+| `jot.NanoID` | `(length int) string` | Short unique ID generation | `{{ jot.NanoID 8 }}` → `a1b2c3d4` |
+| `jot.Now` | `() time.Time` | Current timestamp (shorthand for time.Now) | `{{ jot.Now }}` |
+| `jot.DatePath` | `(t time.Time, sep string) string` | Format date as path segment | `{{ jot.DatePath jot.Now "/" }}` → `2026/03/01` |
+| `jot.Timestamp` | `() string` | ISO8601 timestamp string | `{{ jot.Timestamp }}` → `2026-03-01T18:30:00Z` |
+| `jot.UUID` | `() string` | UUID v4 generation | `{{ jot.UUID }}` → `550e8400-e29b-41d4-a716-446655440000` |
+
+### Top-Level Aliases (convenience)
+
+- `slug` → `jot.Slug` (for `{{ .title | slug }}` pattern)
+- `nanoid` → `jot.NanoID`
+
+### Example Templates
+
+**filename_format:**
+```gotemplate
+task-{{ jot.NanoID 8 }}-{{ jot.Slug .title }}.md
+{{ jot.DatePath jot.Now "/" }}/{{ jot.Slug .title }}.md
+```
+
+**template (content):**
+```gotemplate
+---
+title: {{ .title }}
+created: {{ jot.Timestamp }}
+id: {{ jot.UUID }}
+---
+# {{ .title }}
+```
 
 ## References
 
