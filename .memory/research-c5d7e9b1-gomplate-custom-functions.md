@@ -2,7 +2,7 @@
 id: c5d7e9b1-gomplate
 title: Gomplate Custom Functions Research
 created_at: 2026-03-02T11:27:00+10:30
-updated_at: 2026-03-02T11:27:00+10:30
+updated_at: 2026-03-02T13:28:00+10:30
 status: complete
 parent_epic: c5d7e9b1
 ---
@@ -11,224 +11,294 @@ parent_epic: c5d7e9b1
 
 ## Executive Summary
 
-**Good news: gomplate has `strings.Slug` built-in**, and it wraps `github.com/gosimple/slug` under the hood. However, **Jot uses Go's standard `text/template`**, not gomplate. Two paths forward exist.
+**Yes, gomplate fully supports custom functions when embedded as a library.** The `RenderOptions.Funcs` field accepts a standard `template.FuncMap` that merges with gomplate's built-in functions. You can also create custom namespaces using the same pattern gomplate uses internally.
 
 ## Key Findings
 
-### 1. Gomplate Has Built-in Slug
+### 1. Gomplate Library API
 
-From [gomplate docs](https://docs.gomplate.ca/functions/strings/):
-
-```
-strings.Slug
-
-Creates a "slug" from a given string - supports Unicode correctly.
-This wraps the github.com/gosimple/slug package.
-
-Usage:
-  strings.Slug input
-  input | strings.Slug
-
-Examples:
-  {{ "Hello, world!" | strings.Slug }}    → hello-world
-  {{ "Rock & Roll @ Cafe Wha?" | strings.Slug }} → rock-and-roll-at-cafe-wha
-```
-
-### 2. Jot's Current State
-
-Jot uses Go's **standard `text/template`** (not gomplate):
+Gomplate v4/v5 provides a clean embedding API:
 
 ```go
-// internal/services/templates.go
+import (
+    "context"
+    "github.com/hairyhenderson/gomplate/v4"  // or v5
+)
+
+// Create a renderer with options
+renderer := gomplate.NewRenderer(gomplate.RenderOptions{
+    Funcs: customFuncs,  // Your custom template.FuncMap
+})
+
+// Render templates
+err := renderer.Render(ctx, "template-name", templateText, outputWriter)
+```
+
+### 2. Custom Function Injection
+
+**Method 1: Direct FuncMap (Simple)**
+
+```go
 import "text/template"
 
-tmpl, err := template.New(name).Parse(string(content))
-```
-
-Jot already has `core.Slugify()` in `internal/core/strings.go`:
-- Custom regex-based implementation
-- Lowercase, remove special chars, spaces→hyphens
-- Does NOT use `gosimple/slug` (no Unicode transliteration)
-
-### 3. Options for Template Slug Function
-
-#### Option A: Add FuncMap to Existing Templates (Recommended)
-
-Minimal change - register `core.Slugify` as a template function:
-
-```go
-// internal/services/templates.go
-
-import (
-    "github.com/zenobi-us/jot/internal/core"
-    "text/template"
-)
-
-// Template function map
-var templateFuncs = template.FuncMap{
-    "slug":      core.Slugify,
-    "slugify":   core.Slugify,  // alias
-    "kebabCase": core.Slugify,  // alias for clarity
+customFuncs := template.FuncMap{
+    "nanoid":  generateNanoID,
+    "slug":    slugify,
+    "reverse": reverseString,
 }
 
-// loadTemplate loads a template with custom functions
-func loadTemplate(name string) (*template.Template, error) {
-    content, err := templateFiles.ReadFile(fmt.Sprintf("templates/%s.gotmpl", name))
-    if err != nil {
-        return nil, fmt.Errorf("failed to read template file: %w", err)
-    }
+renderer := gomplate.NewRenderer(gomplate.RenderOptions{
+    Funcs: customFuncs,
+})
+```
 
-    // IMPORTANT: .Funcs() must come BEFORE .Parse()
-    tmpl, err := template.New(name).Funcs(templateFuncs).Parse(string(content))
-    if err != nil {
-        return nil, fmt.Errorf("failed to parse template: %w", err)
-    }
+**Method 2: Merge with gomplate's Built-ins**
 
-    return tmpl, nil
+```go
+// Get all gomplate built-in functions
+funcs := gomplate.CreateFuncs(ctx)
+
+// Add your custom functions (overwrites on collision)
+funcs["nanoid"] = generateNanoID
+funcs["slug"] = mySlugify
+
+renderer := gomplate.NewRenderer(gomplate.RenderOptions{
+    Funcs: funcs,
+})
+```
+
+### 3. Creating Custom Namespaces
+
+Gomplate namespaces are implemented as struct methods returned by a factory function:
+
+```go
+// Define namespace struct
+type JotFuncs struct {
+    ctx context.Context
+}
+
+// Add methods to namespace
+func (f *JotFuncs) Slug(s string) string {
+    return core.Slugify(s)
+}
+
+func (f *JotFuncs) NanoID() string {
+    id, _ := nanoid.New()
+    return id
+}
+
+func (f *JotFuncs) Timestamp() string {
+    return time.Now().Format(time.RFC3339)
+}
+
+// Create FuncMap with namespace
+func CreateJotFuncs(ctx context.Context) template.FuncMap {
+    ns := &JotFuncs{ctx: ctx}
+    return template.FuncMap{
+        // Namespace access: {{ jot.Slug "Hello World" }}
+        "jot": func() any { return ns },
+        
+        // Top-level aliases: {{ slug "Hello World" }}
+        "slug":      ns.Slug,
+        "nanoid":    ns.NanoID,
+        "timestamp": ns.Timestamp,
+    }
 }
 ```
 
 **Template usage:**
 ```gotmpl
-{{ .title | slug }}
-{{ slug .title }}
+{{ jot.Slug "Hello World" }}     → hello-world
+{{ jot.NanoID }}                 → V1StGXR8_Z5jdHi6B-myT
+{{ "My Title" | slug }}          → my-title (using top-level alias)
 ```
 
-#### Option B: Import gomplate's FuncMap
-
-Use gomplate as a library to get all 200+ functions:
+### 4. Complete Implementation Example
 
 ```go
-import (
-    "text/template"
-    gfuncs "github.com/hairyhenderson/gomplate/v4/funcs"
-)
-
-func createTemplateFuncs() template.FuncMap {
-    f := template.FuncMap{}
-    gfuncs.AddStringFuncs(f)  // adds strings.Slug, etc.
-    gfuncs.AddCollFuncs(f)    // adds collection functions
-    // ... other namespaces as needed
-    return f
-}
-```
-
-**Template usage:**
-```gotmpl
-{{ strings.Slug .title }}
-```
-
-**Tradeoff:** Adds ~5MB to binary, many unused functions.
-
-#### Option C: Switch to gosimple/slug
-
-Replace custom `core.Slugify` with `github.com/gosimple/slug`:
-
-```go
-import "github.com/gosimple/slug"
-
-var templateFuncs = template.FuncMap{
-    "slug": slug.Make,
-}
-```
-
-**Pros:** Better Unicode support (e.g., "Héllo Wörld" → "hello-world")
-**Cons:** Adds dependency, current impl may be sufficient
-
-### 4. Pre-processing Alternative
-
-Instead of template functions, slug during data preparation:
-
-```go
-// Before passing to template
-data := map[string]any{
-    "title":    title,
-    "slug":     core.Slugify(title),  // pre-computed
-    "filename": core.Slugify(title) + ".md",
-}
-```
-
-**Template:**
-```gotmpl
-Path: {{ .slug }}.md
-```
-
-**Tradeoff:** Less flexible, can't slug arbitrary fields in template.
-
-## Recommendation
-
-**Use Option A** - minimal change, keeps existing `core.Slugify`:
-
-1. Add `templateFuncs` map to `templates.go`
-2. Call `.Funcs(templateFuncs)` before `.Parse()`
-3. Use `{{ .field | slug }}` in templates
-
-This approach:
-- Zero new dependencies
-- Reuses tested `core.Slugify`
-- Matches project philosophy (thin abstractions)
-- Can easily swap to `gosimple/slug` later if Unicode issues arise
-
-## Code Example
-
-Complete implementation:
-
-```go
-// internal/services/templates.go
+// internal/services/gomplate_renderer.go
 package services
 
 import (
     "bytes"
-    "embed"
-    "fmt"
+    "context"
     "text/template"
-    
+    "time"
+
+    "github.com/hairyhenderson/gomplate/v4"
+    "github.com/jaevor/go-nanoid"
     "github.com/zenobi-us/jot/internal/core"
 )
 
-//go:embed templates/*.gotmpl
-var templateFiles embed.FS
-
-// templateFuncs provides custom functions for all templates
-var templateFuncs = template.FuncMap{
-    "slug": core.Slugify,
+// JotFuncs provides jot-specific template functions
+type JotFuncs struct {
+    ctx context.Context
 }
 
-var loadedTemplates map[string]*template.Template
+func (f *JotFuncs) Slug(s string) string {
+    return core.Slugify(s)
+}
 
-func init() {
-    loadedTemplates = make(map[string]*template.Template)
+func (f *JotFuncs) NanoID() string {
+    gen, _ := nanoid.Standard(21)
+    return gen()
+}
 
-    templateNames := []string{"note-list", "note-detail", "notebook-info", "notebook-list", "note-search-semantic"}
-    for _, name := range templateNames {
-        tmpl, err := loadTemplate(name)
-        if err != nil {
-            fmt.Printf("warning: failed to load template %s: %v\n", name, err)
-            continue
-        }
-        loadedTemplates[name] = tmpl
+func (f *JotFuncs) ShortID() string {
+    gen, _ := nanoid.Standard(8)
+    return gen()
+}
+
+func (f *JotFuncs) Now() time.Time {
+    return time.Now()
+}
+
+// CreateJotFuncs creates the jot namespace functions
+func CreateJotFuncs(ctx context.Context) template.FuncMap {
+    ns := &JotFuncs{ctx: ctx}
+    return template.FuncMap{
+        // Namespace: {{ jot.Slug "text" }}
+        "jot": func() any { return ns },
+        
+        // Top-level shortcuts
+        "slug":    ns.Slug,
+        "nanoid":  ns.NanoID,
+        "shortid": ns.ShortID,
     }
 }
 
-func loadTemplate(name string) (*template.Template, error) {
-    content, err := templateFiles.ReadFile(fmt.Sprintf("templates/%s.gotmpl", name))
-    if err != nil {
-        return nil, fmt.Errorf("failed to read template file: %w", err)
-    }
+// GomplateRenderer wraps gomplate for jot templates
+type GomplateRenderer struct {
+    renderer gomplate.Renderer
+}
 
-    // Register custom functions BEFORE parsing
-    tmpl, err := template.New(name).Funcs(templateFuncs).Parse(string(content))
-    if err != nil {
-        return nil, fmt.Errorf("failed to parse template: %w", err)
+// NewGomplateRenderer creates a renderer with jot + gomplate functions
+func NewGomplateRenderer(ctx context.Context) *GomplateRenderer {
+    // Start with gomplate's 200+ built-in functions
+    funcs := gomplate.CreateFuncs(ctx)
+    
+    // Merge jot custom functions
+    for k, v := range CreateJotFuncs(ctx) {
+        funcs[k] = v
     }
+    
+    renderer := gomplate.NewRenderer(gomplate.RenderOptions{
+        Funcs: funcs,
+    })
+    
+    return &GomplateRenderer{renderer: renderer}
+}
 
-    return tmpl, nil
+// Render executes a template string with the given data
+func (r *GomplateRenderer) Render(ctx context.Context, name, tmpl string, data any) (string, error) {
+    buf := &bytes.Buffer{}
+    err := r.renderer.Render(ctx, name, tmpl, buf)
+    if err != nil {
+        return "", err
+    }
+    return buf.String(), nil
 }
 ```
 
+### 5. Available gomplate Functions (Partial List)
+
+When embedding gomplate, you get 200+ built-in functions:
+
+| Namespace | Key Functions |
+|-----------|--------------|
+| `strings` | `Slug`, `ToUpper`, `ToLower`, `TrimSpace`, `ReplaceAll`, `Split`, `Join` |
+| `coll` | `Dict`, `Slice`, `Keys`, `Values`, `Has`, `Merge`, `JQ`, `JSONPath` |
+| `conv` | `ToBool`, `ToInt`, `ToString`, `Default`, `Join` |
+| `time` | `Now`, `Parse`, `Format`, `ParseDuration` |
+| `math` | `Add`, `Sub`, `Mul`, `Div`, `Round`, `Floor`, `Ceil` |
+| `crypto` | `SHA256`, `Bcrypt`, `EncryptAES`, `DecryptAES` |
+| `base64` | `Encode`, `Decode` |
+| `regexp` | `Match`, `Find`, `Replace`, `Split` |
+| `filepath` | `Base`, `Dir`, `Ext`, `Join`, `Clean` |
+| `data` | `JSON`, `YAML`, `TOML`, `CSV` |
+| `random` | `ASCII`, `Alpha`, `AlphaNum`, `Number` |
+| `uuid` | `V4`, `V1`, `Parse` |
+
+**Note:** `strings.Slug` wraps `github.com/gosimple/slug` internally.
+
+### 6. Limitations
+
+| Limitation | Impact | Workaround |
+|------------|--------|------------|
+| Binary size | +5-8MB from gomplate dependencies | Acceptable for CLI tool |
+| Internal funcs package | `github.com/hairyhenderson/gomplate/v4/internal/funcs` not importable | Use `CreateFuncs()` then merge |
+| Cannot modify existing namespace | Can't add methods to `strings` namespace | Create parallel namespace or top-level func |
+| Context dependency | Some funcs need context (datasources, env) | Pass context to `CreateFuncs()` |
+
+### 7. Performance Considerations
+
+- **Template parsing**: One-time cost, cache parsed templates
+- **Function lookup**: O(1) map lookup, negligible
+- **gomplate overhead**: Minimal - just function registration
+- **Recommendation**: Parse templates at startup, reuse renderer
+
+```go
+// Cache parsed templates
+var templateCache = sync.Map{}
+
+func getCachedRenderer() *GomplateRenderer {
+    if r, ok := templateCache.Load("renderer"); ok {
+        return r.(*GomplateRenderer)
+    }
+    r := NewGomplateRenderer(context.Background())
+    templateCache.Store("renderer", r)
+    return r
+}
+```
+
+## Recommendation for Jot
+
+**Two viable paths:**
+
+### Path A: Stick with text/template + FuncMap (Current)
+
+If you only need a few custom functions (slug, nanoid):
+
+```go
+var templateFuncs = template.FuncMap{
+    "slug":   core.Slugify,
+    "nanoid": generateNanoID,
+}
+
+tmpl, _ := template.New(name).Funcs(templateFuncs).Parse(content)
+```
+
+**Pros:** Zero new deps, small binary, full control
+**Cons:** Manual function implementation, no data sources
+
+### Path B: Embed gomplate (Full Power)
+
+If you want gomplate's rich function library:
+
+```go
+renderer := gomplate.NewRenderer(gomplate.RenderOptions{
+    Funcs: CreateJotFuncs(ctx),
+})
+```
+
+**Pros:** 200+ functions, data sources, proven library
+**Cons:** +5MB binary, learning curve for users
+
+### Verdict
+
+For jot's use case (simple note templates), **Path A is sufficient**. Gomplate is overkill unless users need:
+- Remote data sources in templates
+- Complex data transformations
+- Cryptographic functions
+
+Add gomplate later if user demand exists.
+
 ## References
 
-- [gomplate strings.Slug docs](https://docs.gomplate.ca/functions/strings/)
+- [gomplate pkg.go.dev](https://pkg.go.dev/github.com/hairyhenderson/gomplate/v4)
+- [gomplate source: render.go](https://github.com/hairyhenderson/gomplate/blob/main/render.go)
+- [gomplate source: funcs.go](https://github.com/hairyhenderson/gomplate/blob/main/funcs.go)
+- [gomplate source: strings.go](https://github.com/hairyhenderson/gomplate/blob/main/internal/funcs/strings.go)
 - [Go text/template FuncMap](https://pkg.go.dev/text/template#FuncMap)
-- [gomplate funcs package](https://pkg.go.dev/github.com/hairyhenderson/gomplate/v4/funcs)
 - [gosimple/slug](https://github.com/gosimple/slug)
+- [go-nanoid](https://github.com/jaevor/go-nanoid)
