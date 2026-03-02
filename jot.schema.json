@@ -78,6 +78,12 @@
             "type": "string",
             "description": "Default template for notes in this group",
             "minLength": 1
+          },
+          "filename_format": {
+            "type": "string",
+            "description": "Gomplate template for generating note filenames. Must end with .md and not contain path separators.",
+            "pattern": "^[^/\\\\]*\\.md$",
+            "examples": ["{{ .title | slug }}.md", "{{ now | date \"2006-01-02\" }}-{{ .title | slug }}.md"]
           }
         },
         "additionalProperties": false
