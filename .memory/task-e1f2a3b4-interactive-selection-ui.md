@@ -3,7 +3,7 @@ id: e1f2a3b4
 title: Interactive Group Selection UI
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 3
 story_id: j5e6f7a8
@@ -90,8 +90,19 @@ Users see a beautiful interactive selector when group selection is needed.
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully implemented interactive group selection UI:
+
+- Added `github.com/charmbracelet/huh v0.8.0` dependency
+- Created `internal/services/prompt.go` with:
+  - `SelectGroupInteractively()` - main interactive selector using huh forms
+  - `BuildGroupSelectOptions()` - converts groups to huh options
+  - `BuildGroupLabel()` - creates display labels (Name + Type if different)
+- Created `internal/services/prompt_test.go` with tests for option building
+- Note: `NotebookGroup` has `Name` and `Type` but no `Description` - adapted label format
+- All 359 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- charmbracelet/huh provides beautiful TUI forms with minimal code
+- Always check the actual struct fields rather than assuming - `NotebookGroup` had `Type` not `Description`
+- Focus unit tests on option building logic since full TUI interaction is hard to automate

@@ -3,7 +3,7 @@ id: b2c3d4e5
 title: Slug Truncation Logic
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 1
 story_id: g2b3c4d5
@@ -69,8 +69,15 @@ Long titles produce reasonable filenames that don't exceed filesystem limits whi
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully implemented slug truncation logic:
+
+- Added `SlugWithMax(title string, max int) string` function
+- Updated `Slug()` to call `SlugWithMax(title, 50)` as default
+- Word boundary truncation finds last hyphen before max length
+- Falls back to hard truncate when hyphen is too early (< max/2)
+- Added 7 test cases covering all edge cases
+- All 362 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- The word boundary threshold (max/2) prevents awkward truncations where most of the content is lost just to avoid a hard cut

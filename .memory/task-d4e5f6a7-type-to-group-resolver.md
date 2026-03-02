@@ -3,7 +3,7 @@ id: d4e5f6a7
 title: Type-to-Group Resolver
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 1
 story_id: f1a2b3c4
@@ -87,8 +87,17 @@ Users can run `jot notes add --type task "My Task"` and have the note created in
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully implemented type-to-group resolver:
+
+- Added `Type` and `Aliases` fields to `NotebookGroup` struct
+- Implemented `ResolveGroupByType()` with case-insensitive matching (type field takes precedence over aliases)
+- Implemented `ListAvailableTypes()` for helpful error messages
+- Implemented `GetGroupDirectory()` to extract directory from group globs
+- Wired into `cmd/notes_add.go` - resolves `--type` flag and uses group's directory
+- Added 18 comprehensive tests covering all scenarios
+- All 362 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- Type field should take precedence over aliases when both match to ensure explicit mappings are honored
+- Extracting directory from glob patterns requires careful handling of `**/*.md` and nested paths

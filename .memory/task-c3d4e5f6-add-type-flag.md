@@ -3,7 +3,7 @@ id: c3d4e5f6
 title: Add --type Flag to Notes Add
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 1
 story_id: f1a2b3c4
@@ -64,8 +64,15 @@ The `--type` flag is available on `jot notes add`, ready to be wired to group re
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully added `--type` flag to `notes add` command:
+
+- Added `--type`/`-T` flag to `cmd/notes_add.go`
+- **Note**: Short form is `-T` (uppercase) because `-t` was already taken by `--template`
+- Flag value captured for future type-to-group resolver
+- Added example to help text showing `--type task` usage
+- Created `cmd/notes_add_test.go` with tests for flag parsing
+- All 362 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- Always check existing flag registrations before claiming a shorthand - `-t` was already used by `--template`, so we used `-T` for `--type`

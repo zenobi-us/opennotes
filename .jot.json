@@ -61,13 +61,13 @@
             "type": "object",
             "required": ["title"],
             "properties": {
-              "title": {"type": "string"}
+              "title": { "type": "string" }
             }
           },
           "transitions": ["planning", "rejected"]
         },
         "rejected": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": []
         },
         "planning": {
@@ -75,21 +75,21 @@
             "type": "object",
             "required": ["title"],
             "properties": {
-              "title": {"type": "string"}
+              "title": { "type": "string" }
             }
           },
           "transitions": ["todo"]
         },
         "todo": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["in-progress"]
         },
         "in-progress": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["completed", "blocked"]
         },
         "blocked": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["in-progress"]
         },
         "completed": {
@@ -99,7 +99,7 @@
             "properties": {
               "distilled_learnings": {
                 "type": "array",
-                "items": {"type": "string"},
+                "items": { "type": "string" },
                 "minItems": 1
               }
             }
@@ -107,7 +107,7 @@
           "transitions": ["archived"]
         },
         "archived": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": []
         }
       }
@@ -123,8 +123,8 @@
             "type": "object",
             "required": ["epic_id", "title"],
             "properties": {
-              "epic_id": {"type": "string"},
-              "title": {"type": "string"}
+              "epic_id": { "type": "string" },
+              "title": { "type": "string" }
             }
           },
           "transitions": ["planning"]
@@ -137,27 +137,27 @@
           "transitions": ["pending-review"]
         },
         "pending-review": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["todo", "planning"]
         },
         "todo": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["in-progress"]
         },
         "in-progress": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["completed", "blocked"]
         },
         "blocked": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["in-progress"]
         },
         "completed": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["archived"]
         },
         "archived": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": []
         }
       }
@@ -173,9 +173,9 @@
             "type": "object",
             "required": ["epic_id", "title"],
             "properties": {
-              "epic_id": {"type": "string"},
-              "title": {"type": "string"},
-              "test_coverage": {"type": "string", "enum": ["none"]}
+              "epic_id": { "type": "string" },
+              "title": { "type": "string" },
+              "test_coverage": { "type": "string", "enum": ["none"] }
             }
           },
           "transitions": ["planning"]
@@ -185,7 +185,7 @@
             "type": "object",
             "required": ["epic_id"],
             "properties": {
-              "test_coverage": {"type": "string", "enum": ["none"]}
+              "test_coverage": { "type": "string", "enum": ["none"] }
             }
           },
           "transitions": ["todo"]
@@ -194,7 +194,7 @@
           "schema": {
             "type": "object",
             "properties": {
-              "test_coverage": {"type": "string", "enum": ["none", "partial"]}
+              "test_coverage": { "type": "string", "enum": ["none", "partial"] }
             }
           },
           "transitions": ["in-progress"]
@@ -203,20 +203,23 @@
           "schema": {
             "type": "object",
             "properties": {
-              "test_coverage": {"type": "string", "enum": ["none", "partial", "full"]}
+              "test_coverage": {
+                "type": "string",
+                "enum": ["none", "partial", "full"]
+              }
             }
           },
           "transitions": ["blocked", "test-gate"]
         },
         "blocked": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["in-progress"]
         },
         "test-gate": {
           "schema": {
             "type": "object",
             "properties": {
-              "test_coverage": {"type": "string", "enum": ["partial", "full"]}
+              "test_coverage": { "type": "string", "enum": ["partial", "full"] }
             }
           },
           "transitions": ["in-progress", "completed"]
@@ -226,7 +229,7 @@
             "type": "object",
             "required": ["test_coverage"],
             "properties": {
-              "test_coverage": {"type": "string", "enum": ["full"]}
+              "test_coverage": { "type": "string", "enum": ["full"] }
             }
           },
           "transitions": []
@@ -244,15 +247,15 @@
             "type": "object",
             "required": ["epic_id", "phase_id", "title"],
             "properties": {
-              "epic_id": {"type": "string"},
-              "phase_id": {"type": "string"},
-              "title": {"type": "string"}
+              "epic_id": { "type": "string" },
+              "phase_id": { "type": "string" },
+              "title": { "type": "string" }
             }
           },
           "transitions": ["todo"]
         },
         "todo": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["in-progress"]
         },
         "in-progress": {
@@ -260,25 +263,25 @@
             "type": "object",
             "required": ["assigned_to"],
             "properties": {
-              "assigned_to": {"type": "string"}
+              "assigned_to": { "type": "string" }
             }
           },
           "transitions": ["blocked", "completed"]
         },
         "blocked": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["in-progress", "needs-human"]
         },
         "needs-human": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["in-progress", "blocked"]
         },
         "completed": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["archived"]
         },
         "archived": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": []
         }
       }
@@ -294,8 +297,8 @@
             "type": "object",
             "required": ["epic_id", "title"],
             "properties": {
-              "epic_id": {"type": "string"},
-              "title": {"type": "string"}
+              "epic_id": { "type": "string" },
+              "title": { "type": "string" }
             }
           },
           "transitions": ["in-progress", "linked"]
@@ -305,17 +308,17 @@
             "type": "object",
             "required": ["linked_to"],
             "properties": {
-              "linked_to": {"type": "string"}
+              "linked_to": { "type": "string" }
             }
           },
           "transitions": []
         },
         "in-progress": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": ["completed"]
         },
         "completed": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": []
         }
       }
@@ -331,17 +334,17 @@
             "type": "object",
             "required": ["title"],
             "properties": {
-              "title": {"type": "string"},
+              "title": { "type": "string" },
               "tags": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": { "type": "string" }
               }
             }
           },
           "transitions": ["completed"]
         },
         "completed": {
-          "schema": {"type": "object"},
+          "schema": { "type": "object" },
           "transitions": []
         }
       }

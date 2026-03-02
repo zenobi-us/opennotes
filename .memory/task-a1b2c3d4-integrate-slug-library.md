@@ -3,7 +3,7 @@ id: a1b2c3d4
 title: Integrate gosimple/slug Library
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 1
 story_id: g2b3c4d5
@@ -73,8 +73,15 @@ A `Slug()` function exists that can be called throughout the codebase, correctly
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully integrated `gosimple/slug` library:
+
+- Created `internal/services/slug.go` with `Slug()` wrapper function
+- Configured `slug.Lowercase = true` via `init()`
+- Implemented "untitled" fallback for empty results (all-emoji input)
+- Created `internal/services/slug_test.go` with 14 comprehensive test cases
+- Added dependencies: `github.com/gosimple/slug v1.15.0`, `github.com/gosimple/unidecode v1.0.1`
+- All 361 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- The slug library transliterates symbols like `&` → "and" and `@` → "at" rather than simply removing them — useful behavior for readable filenames

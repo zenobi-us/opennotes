@@ -3,7 +3,7 @@ id: e5f6a7b8
 title: Add filename_format to Group Schema
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 2
 story_id: h3c4d5e6
@@ -73,8 +73,16 @@ Groups can define custom filename patterns in their config that will be processe
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully added `filename_format` to group schema:
+
+- Added `FilenameFormat` field to `NotebookGroup` and `notebookGroupRaw` structs
+- Defined `DefaultFilenameFormat` constant: `{{ .title | slug }}.md`
+- Added `GetFilenameFormat()` helper with fallback to default
+- Added `ValidateFilenameFormat()` validation (must end with `.md`, no path separators)
+- Updated `jot.schema.json` with pattern validation and examples
+- Added 12 comprehensive tests
+- All 362 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- Validation at schema level (must end with `.md`, no path separators) catches configuration errors early before template processing

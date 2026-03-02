@@ -3,7 +3,7 @@ id: c9d0e1f2
 title: Content Template Processing
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 3
 story_id: i4d5e6f7
@@ -91,8 +91,19 @@ Notes are created with rendered content from group templates, including proper f
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully implemented content template processing:
+
+- `Template` field already existed in `NotebookGroup` (no schema change needed)
+- Added `DefaultContentTemplate` constant with YAML frontmatter and `jot.Now`
+- Added `GetTemplate()` method with fallback to default
+- Added `GenerateContent()` function in template.go
+- Integrated into `cmd/notes_add.go` - uses group template when `--type` provided
+- Template data includes: `title`, `filename`, `group`, plus custom `--data` fields
+- All jot functions work in content templates
+- Added tests in template_test.go and notebook_test.go
+- All 361 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- The Template field was already in the schema - always check existing code before assuming new fields are needed
+- Content templates benefit from the same template engine used for filenames - code reuse pays off

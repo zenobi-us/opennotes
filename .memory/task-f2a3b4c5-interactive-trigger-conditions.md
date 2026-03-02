@@ -3,7 +3,7 @@ id: f2a3b4c5
 title: Interactive Prompt Trigger Conditions
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 3
 story_id: j5e6f7a8
@@ -91,8 +91,23 @@ Interactive selector only appears when appropriate conditions are met.
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully implemented interactive prompt trigger conditions:
+
+- Created `InteractiveContext` struct with all condition fields
+- Implemented `ShouldShowInteractiveSelector()` with all condition checks:
+  - NoInteractive flag → false
+  - TypeFlag provided → false
+  - ExplicitPath provided → false
+  - Single/no groups → false
+  - Not TTY → false
+  - All conditions met → true
+- Added `IsTTY()` helper using `golang.org/x/term`
+- Integrated into `cmd/notes_add.go` - calls selector when conditions met
+- Added 16 comprehensive tests (9 main + 3 edge cases)
+- `NoInteractive` defaults to false (flag wiring in next task)
+- All 359 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- Separating condition logic into a pure function (`ShouldShowInteractiveSelector`) makes it highly testable
+- Including future flags in the context struct now avoids refactoring later

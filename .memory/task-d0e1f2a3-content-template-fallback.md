@@ -3,7 +3,7 @@ id: d0e1f2a3
 title: Content Template Fallback and Error Handling
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 3
 story_id: i4d5e6f7
@@ -90,8 +90,19 @@ Users get helpful error messages with line numbers when template syntax is wrong
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully implemented template fallback and error handling:
+
+- Created `TemplateSyntaxError` custom error type in `errors.go`
+- Added `Validate()` method to `TemplateEngine` for syntax checking
+- Wrapped parse/execute errors in `Render()` with `TemplateSyntaxError`
+- Added `ValidateGroupTemplates()` to validate all group templates at once
+- Validates both `Template` and `FilenameFormat` fields
+- Supports `errors.As()` for type assertions
+- Fallback behavior uses existing `GetTemplate()` and `GetFilenameFormat()` methods
+- Comprehensive tests added
+- All 359 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- Wrapping errors at the point of failure with context (template source, original error) makes debugging much easier
+- Validating templates upfront (at config load) can catch errors before note creation fails

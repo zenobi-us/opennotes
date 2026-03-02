@@ -3,7 +3,7 @@ id: b8c9d0e1
 title: Filename Collision Detection
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 2
 story_id: h3c4d5e6
@@ -84,8 +84,17 @@ Users get clear error messages when filename collisions occur, with suggestions 
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully implemented filename collision detection:
+
+- Created `internal/services/errors.go` with `FilenameCollisionError` custom error type
+- Implemented `CheckFilenameCollision()` function
+- Error includes helpful suggestion: "Use a different title or add {{ jot.NanoID 8 }} to filename_format for uniqueness"
+- Integrated into `cmd/notes_add.go` note creation flow
+- Created `internal/services/errors_test.go` with 6 comprehensive tests
+- Supports `errors.As()` for type assertions
+- All tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- Custom error types with struct fields enable rich error messages with actionable suggestions
+- Using `os.Stat()` catches both file and directory collisions

@@ -3,7 +3,7 @@ id: a7b8c9d0
 title: Implement jot Namespace Functions
 created_at: 2026-03-02T17:47:00+10:30
 updated_at: 2026-03-02T17:47:00+10:30
-status: todo
+status: done
 epic_id: c5d7e9b1
 phase_id: 2
 story_id: h3c4d5e6
@@ -108,8 +108,17 @@ Users can use `{{ jot.NanoID 8 }}` and similar functions in their filename_forma
 
 ## Actual Outcome
 
-_To be filled after completion_
+✅ Successfully implemented jot namespace functions:
+
+- Created `internal/services/template_funcs.go` with `JotNamespace` struct
+- Implemented all 6 methods: `Slug`, `NanoID`, `Timestamp`, `DatePath`, `UUID`, `Now`
+- Registered `jot` namespace in template engine
+- Added `github.com/jaevor/go-nanoid v1.4.0` dependency
+- Created comprehensive test suite (33 new tests)
+- Template syntax works: `{{ jot.Slug "text" }}` and `{{ .title | jot.Slug }}`
+- All 359 tests pass
 
 ## Lessons Learned
 
-_To be filled after completion_
+- Go templates support method calls on struct values, enabling namespace-like syntax (`jot.Method`)
+- NanoID with URL-safe alphabet is ideal for filenames - no special characters to escape

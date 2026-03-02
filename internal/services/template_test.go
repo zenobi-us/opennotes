@@ -357,7 +357,7 @@ slug: {{ jot.Slug .title }}
 			wantErr: false,
 		},
 		{
-			name: "Template with pipe functions",
+			name:     "Template with pipe functions",
 			template: `{{ .title | lower }}`,
 			data: map[string]interface{}{
 				"title": "UPPERCASE TITLE",
