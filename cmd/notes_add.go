@@ -38,7 +38,10 @@ EXAMPLES:
   echo "# Content" | jot notes add "My Note"
   
   # Use template
-  jot notes add "Bug Report" bugs/ --template bug`,
+  jot notes add "Bug Report" bugs/ --template bug
+  
+  # Create note with type (maps to group)
+  jot notes add "Fix login bug" --type task`,
 	Args: cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		nb, err := requireNotebook(cmd)
@@ -50,11 +53,52 @@ EXAMPLES:
 		titleFlag, _ := cmd.Flags().GetString("title")
 		titleFlagProvided := cmd.Flags().Changed("title")
 		dataFlags, _ := cmd.Flags().GetStringArray("data")
+		noteType, _ := cmd.Flags().GetString("type")
+		noInteractive, _ := cmd.Flags().GetBool("no-interactive")
+
+		// Environment variable can also enable no-interactive mode
+		if os.Getenv("JOT_NO_INTERACTIVE") == "1" {
+			noInteractive = true
+		}
 
 		// Parse arguments (title and optional path)
 		title, pathArg, err := parseArguments(args, titleFlag, titleFlagProvided)
 		if err != nil {
 			return err
+		}
+
+		// Resolve --type flag to group if provided
+		var resolvedGroup *services.NotebookGroup
+		if noteType != "" {
+			resolvedGroup, err = notebookService.ResolveGroupByType(nb, noteType)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Check if interactive group selection is needed
+		if resolvedGroup == nil {
+			ctx := services.InteractiveContext{
+				TypeFlag:      noteType,
+				ExplicitPath:  pathArg,
+				Groups:        nb.Config.Groups,
+				IsTTY:         services.IsTTY(),
+				NoInteractive: noInteractive,
+			}
+
+			if services.ShouldShowInteractiveSelector(ctx) {
+				selectedGroup, err := services.SelectGroupInteractively(nb.Config.Groups)
+				if err != nil {
+					return err
+				}
+				resolvedGroup = selectedGroup
+			} else if noInteractive && noteType == "" && pathArg == "" && len(nb.Config.Groups) > 1 {
+				// Non-interactive mode: try to use default group
+				resolvedGroup, err = notebookService.GetDefaultGroup(nb)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		// Show deprecation warning if --title flag used
@@ -77,6 +121,17 @@ EXAMPLES:
 				return fmt.Errorf("title produces empty filename after slugification")
 			}
 			notePath = services.ResolvePath(nb.Config.Root, pathArg, slugifiedTitle)
+		} else if resolvedGroup != nil {
+			// If --type resolved to a group, use the group's directory and filename_format
+			groupDir := notebookService.GetGroupDirectory(nb, resolvedGroup)
+			generatedFilename, err := services.GenerateFilename(resolvedGroup.GetFilenameFormat(), title)
+			if err != nil {
+				return fmt.Errorf("generating filename from template: %w", err)
+			}
+			if generatedFilename == "" || generatedFilename == ".md" {
+				return fmt.Errorf("title produces empty filename after template processing")
+			}
+			notePath = filepath.Join(nb.Config.Root, groupDir, generatedFilename)
 		} else if title != "" {
 			// If only title is provided, slugify it
 			slugifiedTitle := core.Slugify(title)
@@ -91,8 +146,8 @@ EXAMPLES:
 		}
 
 		// Check if file already exists
-		if _, err := os.Stat(notePath); err == nil {
-			return fmt.Errorf("note already exists: %s", notePath)
+		if err := services.CheckFilenameCollision(notePath); err != nil {
+			return err
 		}
 
 		// Enforce workflow rules before creating note
@@ -112,25 +167,44 @@ EXAMPLES:
 			return fmt.Errorf("reading stdin: %w", err)
 		}
 
-		// Generate content (stdin > template > default)
-		var content string
+		// Generate content (stdin > group template > named template > default)
+		var finalContent string
 		if stdinContent != "" {
-			content = stdinContent
+			// Stdin provided: use it with generated frontmatter
+			frontmatter := generateFrontmatter(title, customData)
+			finalContent = fmt.Sprintf("---\n%s---\n\n%s", frontmatter, stdinContent)
+		} else if resolvedGroup != nil {
+			// Group resolved via --type: use group's content template
+			templateData := map[string]interface{}{
+				"title":    title,
+				"filename": filepath.Base(notePath),
+				"group":    resolvedGroup.Name,
+			}
+			// Merge custom data into template data
+			for k, v := range customData {
+				templateData[k] = v
+			}
+			content, err := services.GenerateContent(resolvedGroup.GetTemplate(), templateData)
+			if err != nil {
+				return fmt.Errorf("generating content from group template: %w", err)
+			}
+			finalContent = content
 		} else if template != "" {
-			content = generateNoteContent(title, template, nb.Config.Templates)
+			// Named template from --template flag
+			content := generateNoteContent(title, template, nb.Config.Templates)
+			frontmatter := generateFrontmatter(title, customData)
+			finalContent = fmt.Sprintf("---\n%s---\n\n%s", frontmatter, content)
 		} else {
+			// Default: simple content with frontmatter
+			var content string
 			if title != "" {
 				content = fmt.Sprintf("# %s\n\n", title)
 			} else {
 				content = "\n"
 			}
+			frontmatter := generateFrontmatter(title, customData)
+			finalContent = fmt.Sprintf("---\n%s---\n\n%s", frontmatter, content)
 		}
-
-		// Generate frontmatter with custom data
-		frontmatter := generateFrontmatter(title, customData)
-
-		// Construct final content with frontmatter
-		finalContent := fmt.Sprintf("---\n%s---\n\n%s", frontmatter, content)
 
 		// Write the file
 		if err := os.WriteFile(notePath, []byte(finalContent), 0644); err != nil {
@@ -146,6 +220,8 @@ func init() {
 	notesAddCmd.Flags().StringP("template", "t", "", "Template to use")
 	notesAddCmd.Flags().String("title", "", "Note title (DEPRECATED: use positional argument)")
 	notesAddCmd.Flags().StringArray("data", []string{}, "Set frontmatter field (repeatable, format: field=value)")
+	notesAddCmd.Flags().StringP("type", "T", "", "Note type (maps to group, e.g., task, meeting)")
+	notesAddCmd.Flags().Bool("no-interactive", false, "Disable interactive prompts (use default_group or error)")
 	notesCmd.AddCommand(notesAddCmd)
 }
 
