@@ -39,7 +39,9 @@ While power users will memorize type names, casual users benefit from guided sel
 
 ## Tasks
 
-_To be populated during task breakdown_
+- [task-e1f2a3b4](task-e1f2a3b4-interactive-selection-ui.md) — Interactive group selection UI (Phase 3)
+- [task-f2a3b4c5](task-f2a3b4c5-interactive-trigger-conditions.md) — Interactive prompt trigger conditions (Phase 3)
+- [task-a3b4c5d6](task-a3b4c5d6-no-interactive-flag.md) — Add --no-interactive flag and fallback (Phase 3)
 
 ## Test Specification
 

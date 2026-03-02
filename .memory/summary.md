@@ -19,18 +19,23 @@ Learnings distilled: [learning-w4k9f2m1](learning-w4k9f2m1-jot-workflows-epic-co
 
 **Goal**: Verify groups can handle intent-level commands (e.g., "create a task titled X") with automatic naming/path/metadata conventions.
 
-### Phase Structure (3 phases, inline in epic)
+### Phase Structure (3 phases, 13 tasks total)
 
-| Phase | Focus | Stories | Status |
-|-------|-------|---------|--------|
-| Phase 1: Foundation | Slugify, type flag | g2b3c4d5, f1a2b3c4 | planned |
-| Phase 2: Schema & Resolution | Filename patterns, intent mapping | h3c4d5e6, 9c0d1e2a, ad1e2f3b | planned |
-| Phase 3: User Experience | Templates, interactive selection | i4d5e6f7, j5e6f7a8 | planned |
+| Phase | Focus | Stories | Tasks | Status |
+|-------|-------|---------|-------|--------|
+| Phase 1: Foundation | Slugify, type flag | g2b3c4d5, f1a2b3c4 | 4 | **todo** |
+| Phase 2: Schema & Resolution | Filename patterns, gomplate | h3c4d5e6 | 4 | planned |
+| Phase 3: User Experience | Templates, interactive selection | i4d5e6f7, j5e6f7a8 | 5 | planned |
+
+### Task Breakdown Complete ✅
+- **13 tasks** created across 3 phases
+- Each task dual-links to story (WHAT) and phase (WHEN)
+- Phase 1 ready to begin
 
 ### Stories (7 total, phase-agnostic)
-- 2 Foundation stories (P0)
-- 3 Schema & Resolution stories (P1)  
-- 2 User Experience stories (P2)
+- 2 Foundation stories (P0) → 4 tasks
+- 3 Schema & Resolution stories (P1) → 4 tasks  
+- 2 User Experience stories (P2) → 5 tasks
 
 ## New Epic: JSON Schema Generation (`7c631839`)
 Addresses tech debt from commit `3e8fcbf` where schema generation was planned but never implemented.
@@ -40,7 +45,7 @@ Addresses tech debt from commit `3e8fcbf` where schema generation was planned bu
 
 ## Next Steps
 1. **Human review** of epic `b2f4e6a8` completion before archival.
-2. Begin task breakdown for epic `c5d7e9b1` Phase 1 (Foundation).
+2. **Begin Phase 1 execution** — start with task-a1b2c3d4 (integrate slug library)
 3. Continue research if needed: [research-r1a2b3c4](research-r1a2b3c4-jot-groups-intent-resolution.md)
 
 ## Active Planning Epics

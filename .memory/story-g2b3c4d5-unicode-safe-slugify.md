@@ -38,7 +38,8 @@ The current slugify implementation strips non-ASCII characters, resulting in emp
 
 ## Tasks
 
-_To be populated during task breakdown_
+- [task-a1b2c3d4](task-a1b2c3d4-integrate-slug-library.md) — Integrate gosimple/slug library (Phase 1)
+- [task-b2c3d4e5](task-b2c3d4e5-slug-truncation-logic.md) — Slug truncation logic (Phase 1)
 
 ## Test Specification
 

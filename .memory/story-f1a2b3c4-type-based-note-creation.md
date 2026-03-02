@@ -40,7 +40,8 @@ Groups already define collections of related notes. This story extends that by a
 
 ## Tasks
 
-_To be populated during task breakdown_
+- [task-c3d4e5f6](task-c3d4e5f6-add-type-flag.md) — Add --type flag to notes add (Phase 1)
+- [task-d4e5f6a7](task-d4e5f6a7-type-to-group-resolver.md) — Type-to-group resolver (Phase 1)
 
 ## Test Specification
 

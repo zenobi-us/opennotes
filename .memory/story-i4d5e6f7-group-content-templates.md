@@ -39,7 +39,8 @@ When creating notes of a specific type, users expect consistent structure. A "ta
 
 ## Tasks
 
-_To be populated during task breakdown_
+- [task-c9d0e1f2](task-c9d0e1f2-content-template-processing.md) — Content template processing (Phase 3)
+- [task-d0e1f2a3](task-d0e1f2a3-content-template-fallback.md) — Content template fallback and error handling (Phase 3)
 
 ## Test Specification
 

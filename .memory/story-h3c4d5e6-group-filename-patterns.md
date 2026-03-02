@@ -41,7 +41,10 @@ Research in [research-c5d7e9b1](research-c5d7e9b1-gomplate-custom-functions.md) 
 
 ## Tasks
 
-_To be populated during task breakdown_
+- [task-e5f6a7b8](task-e5f6a7b8-filename-format-schema.md) — Add filename_format to group schema (Phase 2)
+- [task-f6a7b8c9](task-f6a7b8c9-gomplate-integration.md) — Gomplate template engine integration (Phase 2)
+- [task-a7b8c9d0](task-a7b8c9d0-jot-namespace-funcs.md) — Implement jot namespace functions (Phase 2)
+- [task-b8c9d0e1](task-b8c9d0e1-filename-collision-detection.md) — Filename collision detection (Phase 2)
 
 ## Test Specification
 

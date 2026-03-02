@@ -15,18 +15,33 @@
 
 Epic: [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md)
 
-### Phase 1: Foundation (planned)
-- [ ] [story-g2b3c4d5](story-g2b3c4d5-unicode-safe-slugify.md) — Unicode-safe slugify (CJK, emoji, accents) **P0**
-- [ ] [story-f1a2b3c4](story-f1a2b3c4-type-based-note-creation.md) — Type-based note creation (`--type task`) **P0**
+### Phase 1: Foundation (todo) — 4 tasks
 
-### Phase 2: Schema & Resolution (planned)
-- [ ] [story-h3c4d5e6](story-h3c4d5e6-group-filename-patterns.md) — Group filename patterns (gomplate) **P1**
-- [ ] [story-9c0d1e2a](story-9c0d1e2a-group-driven-note-creation-verification.md) — Group driven note creation verification
-- [ ] [story-ad1e2f3b](story-ad1e2f3b-natural-language-create-task-intent-mapping.md) — Natural language create task intent mapping **P1**
+| Task | Story | Description |
+|------|-------|-------------|
+| [task-a1b2c3d4](task-a1b2c3d4-integrate-slug-library.md) | g2b3c4d5 | Integrate gosimple/slug library |
+| [task-b2c3d4e5](task-b2c3d4e5-slug-truncation-logic.md) | g2b3c4d5 | Slug truncation logic |
+| [task-c3d4e5f6](task-c3d4e5f6-add-type-flag.md) | f1a2b3c4 | Add --type flag to notes add |
+| [task-d4e5f6a7](task-d4e5f6a7-type-to-group-resolver.md) | f1a2b3c4 | Type-to-group resolver |
 
-### Phase 3: User Experience (planned)
-- [ ] [story-i4d5e6f7](story-i4d5e6f7-group-content-templates.md) — Group content templates (frontmatter) **P2**
-- [ ] [story-j5e6f7a8](story-j5e6f7a8-interactive-group-selection.md) — Interactive group selection prompt **P2**
+### Phase 2: Schema & Resolution (planned) — 4 tasks
+
+| Task | Story | Description |
+|------|-------|-------------|
+| [task-e5f6a7b8](task-e5f6a7b8-filename-format-schema.md) | h3c4d5e6 | Add filename_format to group schema |
+| [task-f6a7b8c9](task-f6a7b8c9-gomplate-integration.md) | h3c4d5e6 | Gomplate template engine integration |
+| [task-a7b8c9d0](task-a7b8c9d0-jot-namespace-funcs.md) | h3c4d5e6 | Implement jot namespace functions |
+| [task-b8c9d0e1](task-b8c9d0e1-filename-collision-detection.md) | h3c4d5e6 | Filename collision detection |
+
+### Phase 3: User Experience (planned) — 5 tasks
+
+| Task | Story | Description |
+|------|-------|-------------|
+| [task-c9d0e1f2](task-c9d0e1f2-content-template-processing.md) | i4d5e6f7 | Content template processing |
+| [task-d0e1f2a3](task-d0e1f2a3-content-template-fallback.md) | i4d5e6f7 | Content template fallback and error handling |
+| [task-e1f2a3b4](task-e1f2a3b4-interactive-selection-ui.md) | j5e6f7a8 | Interactive group selection UI |
+| [task-f2a3b4c5](task-f2a3b4c5-interactive-trigger-conditions.md) | j5e6f7a8 | Interactive prompt trigger conditions |
+| [task-a3b4c5d6](task-a3b4c5d6-no-interactive-flag.md) | j5e6f7a8 | Add --no-interactive flag and fallback |
 
 ### Research
 - [ ] [research-r1a2b3c4](research-r1a2b3c4-jot-groups-intent-resolution.md) — Groups intent resolution research
