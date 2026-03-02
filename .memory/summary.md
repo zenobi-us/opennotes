@@ -1,55 +1,55 @@
 # Jot Project Summary
 
 ## Current Focus
-- **Active epic**: [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md) (`status: in-progress`, 3 phases planned)
+- **Active epic**: [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md) — **REVIEW COMPLETE**: Implementation aligned, artifacts need status updates
 - **Completed epic**: [epic-b2f4e6a8](epic-b2f4e6a8-jot-workflows.md) (`status: completed`, pending human review before archival)
 - **Proposed epic**: [epic-7c631839](epic-7c631839-json-schema-generation.md) (`status: proposed`)
 
-## Latest Milestone — Jot Workflows Epic Complete ✅
-Epic `b2f4e6a8` delivered a full workflow enforcement system across 4 stories and 15 tasks:
-1. **Discovery & Requirements** — use cases, constraints, non-goals, codebase integration map
-2. **Workflow Spec & Metadata DSL** — `.jot.json` schema, transition semantics, diagnostics contract
-3. **Execution & Validation Engine** — `EvaluateWorkflow()` with apply/dry-run, machine-readable output
-4. **Assignment & Lifecycle Hooks** — group→workflow resolution, `notes add`/`notes update` enforcement
+## Latest Milestone — Groups Verification Epic Review ✅
 
-Key deliverables: `ExitCodeWorkflowBlocked` (exit 4), 7 stable `WF_*` error codes, 33+ new tests, zero regressions.
+**Review artifact**: [research-f40dde4c](research-f40dde4c-codebase-alignment-review.md)
+
+**Key Finding**: Implementation is AHEAD of artifacts. All 3 phases of epic c5d7e9b1 have working code:
+
+| Phase | Features | Code Status | Test Count |
+|-------|----------|-------------|------------|
+| Phase 1: Foundation | slug library, --type flag | ✅ Complete | 8+ tests |
+| Phase 2: Schema & Resolution | filename_format, jot namespace, collision detection | ✅ Complete | 33+ tests |
+| Phase 3: User Experience | content templates, interactive selection, --no-interactive | ✅ Complete | 7+ tests |
+
+**Implementation highlights**:
+- `gosimple/slug` integrated for Unicode-safe slugification
+- `--type` flag maps to groups via type/aliases field
+- Template engine uses Go's text/template (not gomplate) with JotNamespace
+- `SelectGroupInteractively()` using charmbracelet/huh
+- `CheckFilenameCollision()` for duplicate detection
+- All features have unit tests
+
+**[NEEDS-HUMAN] Review epic c5d7e9b1 completion**:
+1. Update story statuses from `proposed` → `completed`
+2. Update task checkboxes in todo.md
+3. Create distilled learnings artifact
+4. Update epic status to `completed`
+
+---
+
+## Completed Epic: Jot Workflows (`b2f4e6a8`) ✅
+Epic delivered a full workflow enforcement system across 4 stories and 15 tasks.
 Learnings distilled: [learning-w4k9f2m1](learning-w4k9f2m1-jot-workflows-epic-complete.md)
 
-## Active Epic: Jot Groups Verification Analysis (`c5d7e9b1`)
+**[NEEDS-HUMAN] Review before archival**
 
-**Goal**: Verify groups can handle intent-level commands (e.g., "create a task titled X") with automatic naming/path/metadata conventions.
+---
 
-### Phase Structure (3 phases, 13 tasks total)
-
-| Phase | Focus | Stories | Tasks | Status |
-|-------|-------|---------|-------|--------|
-| Phase 1: Foundation | Slugify, type flag | g2b3c4d5, f1a2b3c4 | 4 | **todo** |
-| Phase 2: Schema & Resolution | Filename patterns, gomplate | h3c4d5e6 | 4 | planned |
-| Phase 3: User Experience | Templates, interactive selection | i4d5e6f7, j5e6f7a8 | 5 | planned |
-
-### Task Breakdown Complete ✅
-- **13 tasks** created across 3 phases
-- Each task dual-links to story (WHAT) and phase (WHEN)
-- Phase 1 ready to begin
-
-### Stories (7 total, phase-agnostic)
-- 2 Foundation stories (P0) → 4 tasks
-- 3 Schema & Resolution stories (P1) → 4 tasks  
-- 2 User Experience stories (P2) → 5 tasks
-
-## New Epic: JSON Schema Generation (`7c631839`)
-Addresses tech debt from commit `3e8fcbf` where schema generation was planned but never implemented.
-- **Goal**: Auto-generate `jot.schema.json` from Go structs to prevent drift
+## Proposed Epic: JSON Schema Generation (`7c631839`)
+Addresses tech debt — auto-generate `jot.schema.json` from Go structs.
 - **5 Stories**: Type separation, generation tooling, CI drift detection, init schema copy, validate command
-- **Drivers**: Schema already drifted (missing workflow fields), manual maintenance is error-prone
+- **Status**: Proposed, awaiting prioritization
 
-## Next Steps
-1. **Human review** of epic `b2f4e6a8` completion before archival.
-2. **Begin Phase 1 execution** — start with task-a1b2c3d4 (integrate slug library)
-3. Continue research if needed: [research-r1a2b3c4](research-r1a2b3c4-jot-groups-intent-resolution.md)
+---
 
 ## Active Planning Epics
-- [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md) — Jot Groups Verification Analysis (active, refactored)
+- [epic-c5d7e9b1](epic-c5d7e9b1-jot-groups-verification-analysis.md) — Jot Groups Verification Analysis (implementation complete, artifacts need update)
 - [epic-7c631839](epic-7c631839-json-schema-generation.md) — JSON Schema Generation (proposed)
 - [epic-6e1f2a9c](epic-6e1f2a9c-cli-config-normalization-layer.md) — CLI Config Normalization Layer (proposed/parked)
 
@@ -59,7 +59,7 @@ Addresses tech debt from commit `3e8fcbf` where schema generation was planned bu
 - [phase-4adb81db](phase-4adb81db-dsl-views-deferred-followups.md) — Deferred DSL views follow-up phase
 
 ## Memory Structure Note
-Epic `c5d7e9b1` refactored to new miniproject model (2026-03-02):
+Epic artifacts follow miniproject model:
 - Phases are INLINE sections in epic files (not separate files)
 - Stories are phase-agnostic (define WHAT, linked to epic only)
 - Tasks link to both story (WHAT) and phase (WHEN)
