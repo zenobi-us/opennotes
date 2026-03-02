@@ -18,13 +18,60 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// DefaultFilenameFormat is the default gomplate template for generating note filenames.
+const DefaultFilenameFormat = "{{ .title | slug }}.md"
+
+// DefaultContentTemplate is the default template for generating initial note content.
+// Uses Go template syntax with jot functions available.
+const DefaultContentTemplate = `---
+title: {{ .title }}
+created_at: {{ jot.Now "2006-01-02T15:04:05Z07:00" }}
+---
+
+# {{ .title }}
+`
+
 // NotebookGroup defines a group of notes with shared properties.
 type NotebookGroup struct {
-	Name       string         `json:"name"`
-	Globs      []string       `json:"globs"`
-	Metadata   map[string]any `json:"metadata"`
-	Template   string         `json:"template,omitempty"`
-	WorkflowID string         `json:"workflow_id,omitempty"`
+	Name           string         `json:"name"`
+	Globs          []string       `json:"globs"`
+	Metadata       map[string]any `json:"metadata"`
+	Template       string         `json:"template,omitempty"`
+	WorkflowID     string         `json:"workflow_id,omitempty"`
+	Type           string         `json:"type,omitempty"`
+	Aliases        []string       `json:"aliases,omitempty"`
+	FilenameFormat string         `json:"filename_format,omitempty"`
+}
+
+// GetFilenameFormat returns the filename format template, falling back to DefaultFilenameFormat if empty.
+func (g *NotebookGroup) GetFilenameFormat() string {
+	if g.FilenameFormat == "" {
+		return DefaultFilenameFormat
+	}
+	return g.FilenameFormat
+}
+
+// GetTemplate returns the content template, falling back to DefaultContentTemplate if empty.
+func (g *NotebookGroup) GetTemplate() string {
+	if g.Template == "" {
+		return DefaultContentTemplate
+	}
+	return g.Template
+}
+
+// ValidateFilenameFormat checks that the filename format is valid.
+// It must end with .md and not contain path separators.
+func (g *NotebookGroup) ValidateFilenameFormat() error {
+	if g.FilenameFormat == "" {
+		return nil // Empty is valid, will use default
+	}
+	if !strings.HasSuffix(g.FilenameFormat, ".md") {
+		return fmt.Errorf("filename_format must end with .md, got: %s", g.FilenameFormat)
+	}
+	if strings.Contains(g.FilenameFormat, "/") || strings.Contains(g.FilenameFormat, "\\") {
+		return fmt.Errorf("filename_format must not contain path separators, got: %s", g.FilenameFormat)
+	}
+	return nil
 }
 
 type legacyGroupWorkflowBinding struct {
@@ -32,12 +79,15 @@ type legacyGroupWorkflowBinding struct {
 }
 
 type notebookGroupRaw struct {
-	Name       string                      `json:"name"`
-	Globs      []string                    `json:"globs"`
-	Metadata   map[string]any              `json:"metadata"`
-	Template   string                      `json:"template,omitempty"`
-	WorkflowID string                      `json:"workflow_id,omitempty"`
-	Workflow   *legacyGroupWorkflowBinding `json:"workflow,omitempty"`
+	Name           string                      `json:"name"`
+	Globs          []string                    `json:"globs"`
+	Metadata       map[string]any              `json:"metadata"`
+	Template       string                      `json:"template,omitempty"`
+	WorkflowID     string                      `json:"workflow_id,omitempty"`
+	Workflow       *legacyGroupWorkflowBinding `json:"workflow,omitempty"`
+	Type           string                      `json:"type,omitempty"`
+	Aliases        []string                    `json:"aliases,omitempty"`
+	FilenameFormat string                      `json:"filename_format,omitempty"`
 }
 
 // UnmarshalJSON supports the canonical workflow_id shape and legacy workflow object shape.
@@ -57,6 +107,9 @@ func (g *NotebookGroup) UnmarshalJSON(data []byte) error {
 	g.Metadata = raw.Metadata
 	g.Template = raw.Template
 	g.WorkflowID = workflowID
+	g.Type = raw.Type
+	g.Aliases = raw.Aliases
+	g.FilenameFormat = raw.FilenameFormat
 
 	return nil
 }
@@ -77,6 +130,7 @@ type StoredNotebookConfig struct {
 	Templates     map[string]string             `json:"templates,omitempty"`
 	Groups        []NotebookGroup               `json:"groups,omitempty"`
 	Workflows     map[string]WorkflowDefinition `json:"workflows,omitempty"`
+	DefaultGroup  string                        `json:"default_group,omitempty"`
 }
 
 // NotebookConfig includes runtime-resolved paths.
@@ -176,6 +230,7 @@ func (s *NotebookService) LoadConfig(path string) (*NotebookConfig, error) {
 			Templates:     stored.Templates,
 			Groups:        stored.Groups,
 			Workflows:     stored.Workflows,
+			DefaultGroup:  stored.DefaultGroup,
 		},
 		Path: configPath,
 	}, nil
@@ -704,4 +759,137 @@ func (s *NotebookService) GetViews(notebookPath string) (map[string]json.RawMess
 	}
 
 	return result, nil
+}
+
+// ResolveGroupByType resolves a type name to a group configuration.
+// It performs case-insensitive matching, first checking the Type field,
+// then the Aliases array.
+func (s *NotebookService) ResolveGroupByType(nb *Notebook, typeName string) (*NotebookGroup, error) {
+	if typeName == "" {
+		return nil, fmt.Errorf("type name cannot be empty")
+	}
+
+	typeNameLower := strings.ToLower(typeName)
+
+	// First pass: check Type field (exact match, case-insensitive)
+	for i := range nb.Config.Groups {
+		group := &nb.Config.Groups[i]
+		if group.Type != "" && strings.ToLower(group.Type) == typeNameLower {
+			return group, nil
+		}
+	}
+
+	// Second pass: check Aliases array (case-insensitive)
+	for i := range nb.Config.Groups {
+		group := &nb.Config.Groups[i]
+		for _, alias := range group.Aliases {
+			if strings.ToLower(alias) == typeNameLower {
+				return group, nil
+			}
+		}
+	}
+
+	// Not found - return error with available types
+	available := s.ListAvailableTypes(nb)
+	if available == "" {
+		return nil, fmt.Errorf("unknown type %q: no types defined in this notebook", typeName)
+	}
+	return nil, fmt.Errorf("unknown type %q: available types are: %s", typeName, available)
+}
+
+// GetDefaultGroup returns the default group configured in the notebook.
+// Returns an error if no default_group is configured or if the configured
+// group doesn't exist. This is used as a fallback when interactive mode is disabled.
+func (s *NotebookService) GetDefaultGroup(nb *Notebook) (*NotebookGroup, error) {
+	if nb.Config.DefaultGroup == "" {
+		return nil, fmt.Errorf(
+			"no group specified and interactive mode disabled. " +
+				"Use --type flag or set default_group in notebook config")
+	}
+
+	defaultNameLower := strings.ToLower(nb.Config.DefaultGroup)
+	for i := range nb.Config.Groups {
+		group := &nb.Config.Groups[i]
+		// Match by name
+		if strings.ToLower(group.Name) == defaultNameLower {
+			return group, nil
+		}
+		// Match by type
+		if group.Type != "" && strings.ToLower(group.Type) == defaultNameLower {
+			return group, nil
+		}
+	}
+
+	return nil, fmt.Errorf(
+		"default_group %q not found in notebook groups. "+
+			"Available groups: %s", nb.Config.DefaultGroup, s.listGroupNames(nb))
+}
+
+// listGroupNames returns a comma-separated list of group names.
+func (s *NotebookService) listGroupNames(nb *Notebook) string {
+	var names []string
+	for _, g := range nb.Config.Groups {
+		names = append(names, g.Name)
+	}
+	return strings.Join(names, ", ")
+}
+
+// ListAvailableTypes returns a comma-separated list of all types and aliases
+// defined in the notebook's groups.
+func (s *NotebookService) ListAvailableTypes(nb *Notebook) string {
+	var types []string
+	seen := make(map[string]bool)
+
+	for _, group := range nb.Config.Groups {
+		// Add the primary type
+		if group.Type != "" && !seen[strings.ToLower(group.Type)] {
+			types = append(types, group.Type)
+			seen[strings.ToLower(group.Type)] = true
+		}
+
+		// Add aliases
+		for _, alias := range group.Aliases {
+			if !seen[strings.ToLower(alias)] {
+				types = append(types, alias)
+				seen[strings.ToLower(alias)] = true
+			}
+		}
+	}
+
+	return strings.Join(types, ", ")
+}
+
+// GetGroupDirectory returns the directory path for a group based on its globs.
+// If the group has globs, it extracts the directory from the first glob pattern.
+// Returns empty string if no directory can be determined.
+func (s *NotebookService) GetGroupDirectory(nb *Notebook, group *NotebookGroup) string {
+	if len(group.Globs) == 0 {
+		return ""
+	}
+
+	// Use the first glob pattern to determine directory
+	glob := group.Globs[0]
+
+	// Extract directory from glob (e.g., "tasks/*.md" -> "tasks", "meetings/**/*.md" -> "meetings")
+	dir := filepath.Dir(glob)
+
+	// Handle patterns like "**/*.md" which should return empty
+	if dir == "." || dir == "**" {
+		return ""
+	}
+
+	// Remove any ** from the path
+	parts := strings.Split(dir, string(filepath.Separator))
+	var cleanParts []string
+	for _, part := range parts {
+		if part != "**" && part != "*" {
+			cleanParts = append(cleanParts, part)
+		}
+	}
+
+	if len(cleanParts) == 0 {
+		return ""
+	}
+
+	return filepath.Join(cleanParts...)
 }

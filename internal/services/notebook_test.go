@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -1021,4 +1022,953 @@ func TestNotebookService_Infer_ContextBeforeAncestorWithoutCurrentDir(t *testing
 	require.NoError(t, err)
 	require.NotNil(t, notebook)
 	assert.Equal(t, "context-notebook", notebook.Config.Name)
+}
+
+// ResolveGroupByType tests
+
+func TestNotebookService_ResolveGroupByType_ExactTypeMatch(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "type-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "type-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/*.md"],
+				"type": "task",
+				"metadata": {"type": "task"}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group, err := svc.ResolveGroupByType(nb, "task")
+	require.NoError(t, err)
+	assert.Equal(t, "Tasks", group.Name)
+	assert.Equal(t, "task", group.Type)
+}
+
+func TestNotebookService_ResolveGroupByType_CaseInsensitiveMatch(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "case-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "case-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/*.md"],
+				"type": "Task",
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	// Test different case variations
+	for _, typeName := range []string{"task", "TASK", "Task", "tAsK"} {
+		group, err := svc.ResolveGroupByType(nb, typeName)
+		require.NoError(t, err, "failed for type name: %s", typeName)
+		assert.Equal(t, "Tasks", group.Name)
+	}
+}
+
+func TestNotebookService_ResolveGroupByType_AliasMatch(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "alias-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "alias-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/*.md"],
+				"type": "task",
+				"aliases": ["todo", "item", "work"],
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	// Test alias matching
+	for _, alias := range []string{"todo", "item", "work", "TODO", "WORK"} {
+		group, err := svc.ResolveGroupByType(nb, alias)
+		require.NoError(t, err, "failed for alias: %s", alias)
+		assert.Equal(t, "Tasks", group.Name)
+	}
+
+	// Primary type should also work
+	group, err := svc.ResolveGroupByType(nb, "task")
+	require.NoError(t, err)
+	assert.Equal(t, "Tasks", group.Name)
+}
+
+func TestNotebookService_ResolveGroupByType_NotFoundError(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "notfound-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "notfound-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/*.md"],
+				"type": "task",
+				"aliases": ["todo"],
+				"metadata": {}
+			},
+			{
+				"name": "Meetings",
+				"globs": ["meetings/*.md"],
+				"type": "meeting",
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	_, err = svc.ResolveGroupByType(nb, "nonexistent")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown type \"nonexistent\"")
+	assert.Contains(t, err.Error(), "available types are:")
+	assert.Contains(t, err.Error(), "task")
+	assert.Contains(t, err.Error(), "meeting")
+	assert.Contains(t, err.Error(), "todo")
+}
+
+func TestNotebookService_ResolveGroupByType_EmptyTypeName(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "empty-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "empty-notebook",
+		"root": ".notes",
+		"groups": []
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	_, err = svc.ResolveGroupByType(nb, "")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "type name cannot be empty")
+}
+
+func TestNotebookService_ResolveGroupByType_NoTypesDefinedError(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "notypes-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "notypes-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Notes",
+				"globs": ["*.md"],
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	_, err = svc.ResolveGroupByType(nb, "task")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no types defined in this notebook")
+}
+
+func TestNotebookService_ResolveGroupByType_TypePrecedenceOverAlias(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "precedence-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	// Create a scenario where "item" is a primary type for one group
+	// and an alias for another - primary type should win
+	configJSON := `{
+		"name": "precedence-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/*.md"],
+				"type": "task",
+				"aliases": ["item"],
+				"metadata": {}
+			},
+			{
+				"name": "Items",
+				"globs": ["items/*.md"],
+				"type": "item",
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	// "item" should resolve to Items group (exact type match, not alias)
+	group, err := svc.ResolveGroupByType(nb, "item")
+	require.NoError(t, err)
+	assert.Equal(t, "Items", group.Name)
+
+	// "task" should resolve to Tasks group
+	group, err = svc.ResolveGroupByType(nb, "task")
+	require.NoError(t, err)
+	assert.Equal(t, "Tasks", group.Name)
+}
+
+// ListAvailableTypes tests
+
+func TestNotebookService_ListAvailableTypes(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "list-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "list-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/*.md"],
+				"type": "task",
+				"aliases": ["todo", "item"],
+				"metadata": {}
+			},
+			{
+				"name": "Meetings",
+				"globs": ["meetings/*.md"],
+				"type": "meeting",
+				"aliases": ["mtg"],
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	types := svc.ListAvailableTypes(nb)
+	assert.Contains(t, types, "task")
+	assert.Contains(t, types, "todo")
+	assert.Contains(t, types, "item")
+	assert.Contains(t, types, "meeting")
+	assert.Contains(t, types, "mtg")
+}
+
+func TestNotebookService_ListAvailableTypes_NoDuplicates(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "dedup-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	// Both groups use "shared" as an alias (shouldn't duplicate)
+	configJSON := `{
+		"name": "dedup-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/*.md"],
+				"type": "task",
+				"aliases": ["shared", "todo"],
+				"metadata": {}
+			},
+			{
+				"name": "Notes",
+				"globs": ["notes/*.md"],
+				"type": "note",
+				"aliases": ["shared"],
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	types := svc.ListAvailableTypes(nb)
+	// Count occurrences of "shared" - should only appear once
+	count := strings.Count(types, "shared")
+	assert.Equal(t, 1, count, "shared should only appear once")
+}
+
+func TestNotebookService_ListAvailableTypes_Empty(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "empty-types-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "empty-types-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Notes",
+				"globs": ["*.md"],
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	types := svc.ListAvailableTypes(nb)
+	assert.Equal(t, "", types)
+}
+
+// GetGroupDirectory tests
+
+func TestNotebookService_GetGroupDirectory_SimpleGlob(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "dir-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "dir-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/*.md"],
+				"type": "task",
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group := &nb.Config.Groups[0]
+	dir := svc.GetGroupDirectory(nb, group)
+	assert.Equal(t, "tasks", dir)
+}
+
+func TestNotebookService_GetGroupDirectory_NestedGlob(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "nested-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "nested-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["projects/tasks/*.md"],
+				"type": "task",
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group := &nb.Config.Groups[0]
+	dir := svc.GetGroupDirectory(nb, group)
+	assert.Equal(t, filepath.Join("projects", "tasks"), dir)
+}
+
+func TestNotebookService_GetGroupDirectory_RecursiveGlob(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "recursive-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "recursive-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/**/*.md"],
+				"type": "task",
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group := &nb.Config.Groups[0]
+	dir := svc.GetGroupDirectory(nb, group)
+	assert.Equal(t, "tasks", dir)
+}
+
+func TestNotebookService_GetGroupDirectory_RootGlob(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "root-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "root-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "All Notes",
+				"globs": ["*.md"],
+				"type": "note",
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group := &nb.Config.Groups[0]
+	dir := svc.GetGroupDirectory(nb, group)
+	assert.Equal(t, "", dir)
+}
+
+func TestNotebookService_GetGroupDirectory_NoGlobs(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "noglob-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "noglob-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Empty",
+				"globs": [],
+				"type": "empty",
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group := &nb.Config.Groups[0]
+	dir := svc.GetGroupDirectory(nb, group)
+	assert.Equal(t, "", dir)
+}
+
+func TestNotebookService_GetGroupDirectory_DoubleStarOnly(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "doublestar-notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "doublestar-notebook",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "All",
+				"globs": ["**/*.md"],
+				"type": "all",
+				"metadata": {}
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group := &nb.Config.Groups[0]
+	dir := svc.GetGroupDirectory(nb, group)
+	assert.Equal(t, "", dir)
+}
+
+// NotebookGroup FilenameFormat tests
+
+func TestNotebookGroup_GetFilenameFormat_EmptyReturnsDefault(t *testing.T) {
+	group := NotebookGroup{
+		Name:  "Test",
+		Globs: []string{"**/*.md"},
+	}
+	assert.Equal(t, DefaultFilenameFormat, group.GetFilenameFormat())
+}
+
+func TestNotebookGroup_GetFilenameFormat_CustomFormatPreserved(t *testing.T) {
+	customFormat := "{{ now | date \"2006-01-02\" }}-{{ .title | slug }}.md"
+	group := NotebookGroup{
+		Name:           "Test",
+		Globs:          []string{"**/*.md"},
+		FilenameFormat: customFormat,
+	}
+	assert.Equal(t, customFormat, group.GetFilenameFormat())
+}
+
+func TestNotebookGroup_FilenameFormat_ParsesFromJSON(t *testing.T) {
+	jsonData := `{
+		"name": "Test Group",
+		"globs": ["**/*.md"],
+		"filename_format": "{{ .title | slug }}-custom.md"
+	}`
+
+	var group NotebookGroup
+	err := json.Unmarshal([]byte(jsonData), &group)
+	require.NoError(t, err)
+	assert.Equal(t, "{{ .title | slug }}-custom.md", group.FilenameFormat)
+}
+
+func TestNotebookGroup_FilenameFormat_EmptyWhenOmittedFromJSON(t *testing.T) {
+	jsonData := `{
+		"name": "Test Group",
+		"globs": ["**/*.md"]
+	}`
+
+	var group NotebookGroup
+	err := json.Unmarshal([]byte(jsonData), &group)
+	require.NoError(t, err)
+	assert.Empty(t, group.FilenameFormat)
+	assert.Equal(t, DefaultFilenameFormat, group.GetFilenameFormat())
+}
+
+func TestNotebookGroup_ValidateFilenameFormat_EmptyIsValid(t *testing.T) {
+	group := NotebookGroup{
+		Name:  "Test",
+		Globs: []string{"**/*.md"},
+	}
+	assert.NoError(t, group.ValidateFilenameFormat())
+}
+
+func TestNotebookGroup_ValidateFilenameFormat_ValidFormat(t *testing.T) {
+	group := NotebookGroup{
+		Name:           "Test",
+		Globs:          []string{"**/*.md"},
+		FilenameFormat: "{{ .title | slug }}.md",
+	}
+	assert.NoError(t, group.ValidateFilenameFormat())
+}
+
+func TestNotebookGroup_ValidateFilenameFormat_MustEndWithMd(t *testing.T) {
+	group := NotebookGroup{
+		Name:           "Test",
+		Globs:          []string{"**/*.md"},
+		FilenameFormat: "{{ .title | slug }}.txt",
+	}
+	err := group.ValidateFilenameFormat()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must end with .md")
+}
+
+func TestNotebookGroup_ValidateFilenameFormat_NoForwardSlash(t *testing.T) {
+	group := NotebookGroup{
+		Name:           "Test",
+		Globs:          []string{"**/*.md"},
+		FilenameFormat: "subdir/{{ .title | slug }}.md",
+	}
+	err := group.ValidateFilenameFormat()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must not contain path separators")
+}
+
+func TestNotebookGroup_ValidateFilenameFormat_NoBackslash(t *testing.T) {
+	group := NotebookGroup{
+		Name:           "Test",
+		Globs:          []string{"**/*.md"},
+		FilenameFormat: "subdir\\{{ .title | slug }}.md",
+	}
+	err := group.ValidateFilenameFormat()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must not contain path separators")
+}
+
+func TestNotebookService_LoadConfig_IncludesFilenameFormat(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "notebook")
+
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "Test",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/**/*.md"],
+				"filename_format": "{{ now | date \"2006-01-02\" }}-{{ .title | slug }}.md"
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	cfg, err := svc.LoadConfig(notebookDir)
+	require.NoError(t, err)
+	require.Len(t, cfg.Groups, 1)
+	assert.Equal(t, "{{ now | date \"2006-01-02\" }}-{{ .title | slug }}.md", cfg.Groups[0].FilenameFormat)
+}
+
+// NotebookGroup GetTemplate tests
+
+func TestNotebookGroup_GetTemplate_EmptyReturnsDefault(t *testing.T) {
+	group := NotebookGroup{
+		Name:  "Test",
+		Globs: []string{"**/*.md"},
+	}
+	assert.Equal(t, DefaultContentTemplate, group.GetTemplate())
+}
+
+func TestNotebookGroup_GetTemplate_CustomTemplatePreserved(t *testing.T) {
+	customTemplate := `---
+title: {{ .title }}
+type: custom
+---
+
+Custom content here.
+`
+	group := NotebookGroup{
+		Name:     "Test",
+		Globs:    []string{"**/*.md"},
+		Template: customTemplate,
+	}
+	assert.Equal(t, customTemplate, group.GetTemplate())
+}
+
+func TestNotebookGroup_Template_ParsesFromJSON(t *testing.T) {
+	configJSON := `{
+		"name": "Tasks",
+		"globs": ["tasks/**/*.md"],
+		"template": "---\ntitle: {{ .title }}\n---\n"
+	}`
+
+	var group NotebookGroup
+	err := json.Unmarshal([]byte(configJSON), &group)
+	require.NoError(t, err)
+	assert.Equal(t, "---\ntitle: {{ .title }}\n---\n", group.Template)
+}
+
+func TestNotebookGroup_Template_EmptyWhenOmittedFromJSON(t *testing.T) {
+	configJSON := `{
+		"name": "Tasks",
+		"globs": ["tasks/**/*.md"]
+	}`
+
+	var group NotebookGroup
+	err := json.Unmarshal([]byte(configJSON), &group)
+	require.NoError(t, err)
+	assert.Equal(t, DefaultContentTemplate, group.GetTemplate())
+}
+
+func TestNotebookService_LoadConfig_IncludesTemplate(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "notebook")
+
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "Test",
+		"root": ".notes",
+		"groups": [
+			{
+				"name": "Tasks",
+				"globs": ["tasks/**/*.md"],
+				"template": "---\ntitle: {{ .title }}\ntype: task\n---\n# {{ .title }}\n"
+			}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	cfg, err := svc.LoadConfig(notebookDir)
+	require.NoError(t, err)
+	require.Len(t, cfg.Groups, 1)
+	assert.Equal(t, "---\ntitle: {{ .title }}\ntype: task\n---\n# {{ .title }}\n", cfg.Groups[0].Template)
+}
+
+// GetDefaultGroup tests
+
+func TestNotebookService_GetDefaultGroup_ReturnsConfiguredDefault(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "Test",
+		"root": ".notes",
+		"default_group": "Tasks",
+		"groups": [
+			{"name": "Tasks", "globs": ["tasks/**/*.md"], "type": "task"},
+			{"name": "Notes", "globs": ["notes/**/*.md"], "type": "note"}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group, err := svc.GetDefaultGroup(nb)
+	require.NoError(t, err)
+	assert.Equal(t, "Tasks", group.Name)
+	assert.Equal(t, "task", group.Type)
+}
+
+func TestNotebookService_GetDefaultGroup_MatchesByType(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "Test",
+		"root": ".notes",
+		"default_group": "task",
+		"groups": [
+			{"name": "Daily Tasks", "globs": ["tasks/**/*.md"], "type": "task"},
+			{"name": "Notes", "globs": ["notes/**/*.md"], "type": "note"}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group, err := svc.GetDefaultGroup(nb)
+	require.NoError(t, err)
+	assert.Equal(t, "Daily Tasks", group.Name)
+	assert.Equal(t, "task", group.Type)
+}
+
+func TestNotebookService_GetDefaultGroup_ErrorsWithoutDefault(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "Test",
+		"root": ".notes",
+		"groups": [
+			{"name": "Tasks", "globs": ["tasks/**/*.md"], "type": "task"},
+			{"name": "Notes", "globs": ["notes/**/*.md"], "type": "note"}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	_, err = svc.GetDefaultGroup(nb)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no group specified and interactive mode disabled")
+	assert.Contains(t, err.Error(), "Use --type flag or set default_group")
+}
+
+func TestNotebookService_GetDefaultGroup_ErrorsWithInvalidDefault(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "Test",
+		"root": ".notes",
+		"default_group": "NonExistent",
+		"groups": [
+			{"name": "Tasks", "globs": ["tasks/**/*.md"], "type": "task"},
+			{"name": "Notes", "globs": ["notes/**/*.md"], "type": "note"}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	_, err = svc.GetDefaultGroup(nb)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "default_group \"NonExistent\" not found")
+	assert.Contains(t, err.Error(), "Available groups: Tasks, Notes")
+}
+
+func TestNotebookService_GetDefaultGroup_CaseInsensitive(t *testing.T) {
+	tmpDir := t.TempDir()
+	notebookDir := filepath.Join(tmpDir, "notebook")
+	require.NoError(t, os.MkdirAll(filepath.Join(notebookDir, ".notes"), 0755))
+
+	configJSON := `{
+		"name": "Test",
+		"root": ".notes",
+		"default_group": "TASKS",
+		"groups": [
+			{"name": "Tasks", "globs": ["tasks/**/*.md"], "type": "task"},
+			{"name": "Notes", "globs": ["notes/**/*.md"], "type": "note"}
+		]
+	}`
+	require.NoError(t, os.WriteFile(filepath.Join(notebookDir, NotebookConfigFile), []byte(configJSON), 0644))
+
+	configSvc := createTestConfigService(t, tmpDir, nil)
+	svc := NewNotebookService(configSvc)
+
+	nb, err := svc.Open(notebookDir)
+	require.NoError(t, err)
+
+	group, err := svc.GetDefaultGroup(nb)
+	require.NoError(t, err)
+	assert.Equal(t, "Tasks", group.Name)
+}
+
+// Integration test: GetFilenameFormat with GenerateFilename
+// This tests the full flow used by notes add command when creating notes with groups
+
+func TestNotebookGroup_FilenameFormat_IntegrationWithGenerateFilename(t *testing.T) {
+	tests := []struct {
+		name           string
+		filenameFormat string
+		title          string
+		expectedName   string
+	}{
+		{
+			name:           "default format produces slugified filename",
+			filenameFormat: "", // Will use DefaultFilenameFormat
+			title:          "My Task Title",
+			expectedName:   "my-task-title.md",
+		},
+		{
+			name:           "custom format with prefix",
+			filenameFormat: "task-{{ .title | slug }}.md",
+			title:          "Fix Login Bug",
+			expectedName:   "task-fix-login-bug.md",
+		},
+		{
+			name:           "custom format with uppercase",
+			filenameFormat: "{{ .title | upper | slug }}.md",
+			title:          "Hello World",
+			expectedName:   "hello-world.md",
+		},
+		{
+			name:           "custom format with max length",
+			filenameFormat: "{{ slugmax .title 10 }}.md",
+			title:          "This Is A Very Long Title That Should Be Truncated",
+			expectedName:   "this-is-a.md",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			group := NotebookGroup{
+				Name:           "Tasks",
+				Globs:          []string{"tasks/**/*.md"},
+				FilenameFormat: tt.filenameFormat,
+			}
+
+			// Get the format (falls back to default if empty)
+			format := group.GetFilenameFormat()
+
+			// Generate the filename (simulates what notes add does)
+			generatedFilename, err := GenerateFilename(format, tt.title)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedName, generatedFilename,
+				"filename format %q with title %q", format, tt.title)
+		})
+	}
+}
+
+func TestNotebookGroup_FilenameFormat_ErrorHandling(t *testing.T) {
+	// Test that invalid templates are handled gracefully
+	group := NotebookGroup{
+		Name:           "Tasks",
+		Globs:          []string{"tasks/**/*.md"},
+		FilenameFormat: "{{ .title | unknownfunction }}.md",
+	}
+
+	format := group.GetFilenameFormat()
+	_, err := GenerateFilename(format, "Test Title")
+	assert.Error(t, err, "should error on invalid template function")
 }
