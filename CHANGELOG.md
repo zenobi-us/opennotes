@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.0.0](https://github.com/zenobi-us/jot/compare/v0.2.0...v1.0.0) (2026-03-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **search:** 'jot notes search query' is no longer available; use 'jot notes search "<dsl>"' instead.
+
+### Features
+
+* **config:** add comprehensive workflow definitions to .jot.json ([3b0acca](https://github.com/zenobi-us/jot/commit/3b0acca50bf5f9ea4a0a8b2d32de9b160b4a60b5))
+* **errors:** add custom error types for collision and template errors ([3a77565](https://github.com/zenobi-us/jot/commit/3a775656a0eed0900cf1cd666c6c622969adb23d))
+* **memory:** task breakdown for epic c5d7e9b1 - 13 tasks across 3 phases ([125d178](https://github.com/zenobi-us/jot/commit/125d1787069fe7ea22cbf6532617ec9b9ce988f7))
+* **notebook:** add group resolution and filename_format support ([2b76593](https://github.com/zenobi-us/jot/commit/2b765935c4fc12e8ab72f20af16e0d30444a3043))
+* **notebook:** cache index for repeated notebook opens ([8986fb1](https://github.com/zenobi-us/jot/commit/8986fb1c720b24c5ab09cc4be4ebc7d598f2df2a))
+* **notebook:** preserve workflows in config load/save ([7067216](https://github.com/zenobi-us/jot/commit/70672160a70cab583b9133c8be055d02748bf7c8))
+* **notes-add:** wire filename_format template into note creation ([4f5176e](https://github.com/zenobi-us/jot/commit/4f5176e778c618369b02d536c91c9c89e1da0228))
+* **prompt:** add interactive group selection UI ([272fa1e](https://github.com/zenobi-us/jot/commit/272fa1e402757f8fc86de6c109e72e85bdde8ad3))
+* **schema:** add filename_format field to notebook group schema ([33eb302](https://github.com/zenobi-us/jot/commit/33eb302528272ba0f90f83b7c5b037ca0da859fc))
+* **search:** deprecate legacy query path with runtime warning ([60edd35](https://github.com/zenobi-us/jot/commit/60edd3501ed061b422fb6f4f27f7303212872760))
+* **search:** remove legacy query subcommand ([d9ecf19](https://github.com/zenobi-us/jot/commit/d9ecf19c9171947677678b75a38af5b9ae310745))
+* **search:** route DSL queries through parser ([96cab38](https://github.com/zenobi-us/jot/commit/96cab3884eb068b33d5365a9e9d6e1f31f8dd66d))
+* **template:** add template engine with jot namespace functions ([fc9621c](https://github.com/zenobi-us/jot/commit/fc9621ce98723511fbfe08711f1672c727e25b8a))
+* **workflow:** add evaluation entrypoint with apply enforcement ([a67127f](https://github.com/zenobi-us/jot/commit/a67127f5366dc0a8786629b3ed2c9438973c5ce8))
+* **workflow:** add group workflow_id schema and assignment resolver ([651a852](https://github.com/zenobi-us/jot/commit/651a852fde500032b57d8a574788d6471d42f5e2))
+* **workflow:** add transition validation harness baseline ([34287bc](https://github.com/zenobi-us/jot/commit/34287bc8bc43f585e4d363c038db8956a7d30146))
+* **workflow:** wire lifecycle enforcement into note create/edit mutation paths ([2c0581c](https://github.com/zenobi-us/jot/commit/2c0581c953454761a267d172831538f74d6a89fb))
+
 ## [0.2.0](https://github.com/zenobi-us/jot/compare/v0.1.0...v0.2.0) (2026-02-22)
 
 
